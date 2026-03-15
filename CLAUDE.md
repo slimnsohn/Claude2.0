@@ -18,6 +18,7 @@ NEW PROJECT START HERE/   Default Claude Code entry point
 - API keys live in Windows environment variables. Never hardcode. Never commit.
 - GEMINI_API_KEY is available system-wide for the shared chat widget.
 - TODO.md files are manually controlled. Never auto-append dead ends from exploration.
+- Never commit or push to git unless explicitly asked. Stage changes silently if needed, but wait for the user to say "commit" or "push".
 - Keep all CLAUDE.md files under 50 lines.
 - Data files use JSON or CSV. No proprietary formats.
 - Run security-audit skill before any deploy.
@@ -45,6 +46,5 @@ NEW PROJECT START HERE/   Default Claude Code entry point
 
 ## Problem-Solving
 
-- When stuck, try 2-3 different approaches before stopping.
-- If none work, explain what was tried, why each failed, and what the options are.
+- When stuck, try 2-3 different approaches before stopping. If none work, explain what was tried and what the options are.
 - Don't ask permission to try the next approach — just try it.
