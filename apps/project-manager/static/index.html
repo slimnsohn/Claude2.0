@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Claude 2.0 Workspace — Project Manager Dashboard">
+<title>Project Manager</title>
+<style>
+:root {
+  --bg: #0d1117; --surface: #161b22; --surface2: #1c2333;
+  --border: #30363d; --text: #e6edf3; --text2: #8b949e;
+  --accent: #58a6ff; --green: #3fb950; --red: #f85149;
+  --orange: #d29922; --purple: #bc8cff; --gold: #e3b341;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+  background: var(--bg); color: var(--text); font-size: 13px;
+  display: flex; flex-direction: column; height: 100vh; overflow: hidden;
+}
+
+/* ── Header ─────────────────────────────────── */
+.header {
+  background: var(--surface); border-bottom: 1px solid var(--border);
+  padding: 12px 24px; display: flex; align-items: center; gap: 20px; flex-shrink: 0;
+}
+.header h1 { font-size: 16px; font-weight: 700; }
+.header h1 span { color: var(--accent); }
+.header-stats { display: flex; gap: 16px; margin-left: auto; }
+.stat {
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  padding: 4px 12px; background: var(--surface2); border-radius: 6px;
+  border: 1px solid var(--border);
+}
+.stat-val { font-size: 18px; font-weight: 700; }
+.stat-lbl { font-size: 10px; color: var(--text2); text-transform: uppercase; letter-spacing: 0.5px; }
+.stat-val.warn { color: var(--orange); }
+.stat-val.danger { color: var(--red); }
+
+/* ── Nav ────────────────────────────────────── */
+.nav {
+  display: flex; gap: 0; background: var(--surface);
+  border-bottom: 1px solid var(--border); padding: 0 24px; flex-shrink: 0;
+}
+.nav-tab {
+  padding: 8px 16px; font-size: 12px; font-weight: 600; color: var(--text2);
+  cursor: pointer; border-bottom: 2px solid transparent; user-select: none;
+}
+.nav-tab:hover { color: var(--text); }
+.nav-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+/* ── Filters ────────────────────────────────── */
+.filter-bar {
+  display: flex; gap: 8px; padding: 10px 24px; background: var(--surface2);
+  border-bottom: 1px solid var(--border); flex-shrink: 0; align-items: center;
+  flex-wrap: wrap;
+}
+.filter-group { display: flex; gap: 4px; align-items: center; }
+.filter-group label { font-size: 11px; color: var(--text2); margin-right: 4px; }
+.filter-btn {
+  padding: 3px 10px; font-size: 11px; background: var(--surface);
+  border: 1px solid var(--border); border-radius: 4px; color: var(--text2);
+  cursor: pointer;
+}
+.filter-btn:hover { border-color: var(--text2); color: var(--text); }
+.filter-btn.active { background: var(--accent); color: #000; border-color: var(--accent); }
+.search-input {
+  padding: 4px 10px; background: var(--bg); border: 1px solid var(--border);
+  border-radius: 4px; color: var(--text); font-size: 12px; outline: none;
+  width: 200px; margin-left: auto;
+}
+.search-input:focus { border-color: var(--accent); }
+
+/* ── Content ────────────────────────────────── */
+.content { flex: 1; overflow: auto; padding: 20px 24px; }
+
+/* ── Board View (Kanban) ────────────────────── */
+.board {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px;
+  height: 100%; align-content: start;
+}
+.board-col {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+  display: flex; flex-direction: column; min-height: 200px; max-height: calc(100vh - 200px);
+}
+.board-col-header {
+  padding: 10px 14px; border-bottom: 1px solid var(--border);
+  font-weight: 700; font-size: 12px; display: flex; align-items: center; gap: 8px;
+  flex-shrink: 0;
+}
+.board-col-count {
+  background: var(--surface2); padding: 2px 8px; border-radius: 10px;
+  font-size: 10px; color: var(--text2);
+}
+.board-col-body { flex: 1; overflow-y: auto; padding: 8px; display: flex; flex-direction: column; gap: 6px; }
+.board-card {
+  background: var(--surface2); border: 1px solid var(--border); border-radius: 6px;
+  padding: 10px; cursor: default;
+}
+.board-card:hover { border-color: var(--text2); }
+.board-card-name { font-weight: 600; font-size: 12px; margin-bottom: 4px; }
+.board-card-desc { font-size: 11px; color: var(--text2); margin-bottom: 6px; }
+.board-card-meta { display: flex; gap: 6px; flex-wrap: wrap; }
+.badge {
+  padding: 2px 6px; border-radius: 3px; font-size: 10px; font-weight: 600;
+}
+.badge-browser { background: rgba(88,166,255,0.15); color: var(--accent); }
+.badge-electron { background: rgba(188,140,255,0.15); color: var(--purple); }
+.badge-other { background: rgba(139,148,158,0.15); color: var(--text2); }
+.badge-stale { background: rgba(210,153,34,0.15); color: var(--orange); }
+.badge-todo { background: rgba(63,185,80,0.15); color: var(--green); }
+.badge-missing { background: rgba(248,81,73,0.15); color: var(--red); }
+
+/* ── List View ──────────────────────────────── */
+.list-table {
+  width: 100%; border-collapse: separate; border-spacing: 0; font-size: 12px;
+}
+.list-table th {
+  padding: 8px 12px; text-align: left; font-weight: 600; color: var(--text2);
+  border-bottom: 1px solid var(--border); background: var(--surface);
+  position: sticky; top: 0; z-index: 1; cursor: pointer; user-select: none;
+  font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;
+}
+.list-table th:hover { color: var(--text); }
+.list-table th .sort-arrow { margin-left: 4px; font-size: 10px; }
+.list-table td {
+  padding: 8px 12px; border-bottom: 1px solid var(--border);
+}
+.list-table tr:hover td { background: var(--surface2); }
+
+/* ── Type View ──────────────────────────────── */
+.type-group { margin-bottom: 24px; }
+.type-group-header {
+  font-size: 14px; font-weight: 700; margin-bottom: 10px; padding-bottom: 6px;
+  border-bottom: 2px solid var(--border); display: flex; align-items: center; gap: 10px;
+}
+.type-group-header .count { font-size: 12px; color: var(--text2); font-weight: 400; }
+.type-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 10px; }
+.type-card {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+  padding: 14px; display: flex; flex-direction: column; gap: 6px;
+}
+.type-card-header { display: flex; align-items: center; justify-content: space-between; }
+.type-card-name { font-weight: 600; }
+.type-card-desc { font-size: 11px; color: var(--text2); }
+.type-card-footer { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 4px; }
+.reclassify-select {
+  padding: 2px 6px; font-size: 10px; background: var(--bg); border: 1px solid var(--border);
+  border-radius: 3px; color: var(--text); cursor: pointer; outline: none;
+}
+
+/* ── Scope View ─────────────────────────────── */
+.scope-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.scope-card {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+  padding: 18px;
+}
+.scope-card h3 {
+  font-size: 13px; font-weight: 700; margin-bottom: 12px; color: var(--accent);
+  text-transform: uppercase; letter-spacing: 0.5px;
+}
+.scope-item {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 6px 0; border-bottom: 1px solid var(--border);
+  font-size: 12px;
+}
+.scope-item:last-child { border-bottom: none; }
+.scope-empty { color: var(--text2); font-style: italic; font-size: 12px; padding: 8px 0; }
+.scope-bar {
+  height: 6px; background: var(--surface2); border-radius: 3px; margin-top: 10px; overflow: hidden;
+}
+.scope-bar-fill { height: 100%; border-radius: 3px; transition: width 0.3s; }
+
+/* ── Move Modal ─────────────────────────────── */
+.modal-overlay {
+  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.6); z-index: 5000; display: none;
+  align-items: center; justify-content: center;
+}
+.modal-overlay.open { display: flex; }
+.modal {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+  padding: 24px; width: 360px;
+}
+.modal h3 { margin-bottom: 16px; }
+.modal-btns { display: flex; flex-direction: column; gap: 8px; }
+.modal-btn {
+  padding: 10px; background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 6px; color: var(--text); cursor: pointer; font-size: 13px;
+  text-align: left;
+}
+.modal-btn:hover { border-color: var(--accent); background: var(--bg); }
+.modal-btn.current { opacity: 0.4; cursor: default; }
+.modal-cancel {
+  margin-top: 8px; padding: 8px; background: none; border: 1px solid var(--border);
+  border-radius: 6px; color: var(--text2); cursor: pointer; font-size: 12px;
+  text-align: center;
+}
+.modal-cancel:hover { color: var(--text); }
+
+/* ── Hidden views ───────────────────────────── */
+.view { display: none; }
+.view.active { display: block; }
+.view-board.active { display: grid; }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+  <h1><span>Project</span> Manager</h1>
+  <div class="header-stats" id="headerStats"></div>
+</div>
+
+<!-- Nav -->
+<div class="nav">
+  <div class="nav-tab active" data-view="board">Board</div>
+  <div class="nav-tab" data-view="list">List</div>
+  <div class="nav-tab" data-view="type">By Type</div>
+  <div class="nav-tab" data-view="scope">Scope</div>
+</div>
+
+<!-- Filters -->
+<div class="filter-bar">
+  <div class="filter-group">
+    <label>Status:</label>
+    <button class="filter-btn active" data-filter="status" data-value="all">All</button>
+    <button class="filter-btn" data-filter="status" data-value="incoming">Incoming</button>
+    <button class="filter-btn" data-filter="status" data-value="active">Active</button>
+    <button class="filter-btn" data-filter="status" data-value="shipped">Shipped</button>
+    <button class="filter-btn" data-filter="status" data-value="sandbox">Sandbox</button>
+  </div>
+  <div class="filter-group">
+    <label>Type:</label>
+    <button class="filter-btn active" data-filter="type" data-value="all">All</button>
+    <button class="filter-btn" data-filter="type" data-value="BROWSER">Browser</button>
+    <button class="filter-btn" data-filter="type" data-value="ELECTRON">Electron</button>
+    <button class="filter-btn" data-filter="type" data-value="OTHER">Other</button>
+  </div>
+  <input class="search-input" id="searchInput" placeholder="Search projects..." />
+</div>
+
+<!-- Content -->
+<div class="content" id="content">
+
+  <!-- Board View -->
+  <div class="board view view-board active" id="viewBoard">
+    <div class="board-col" data-status="incoming">
+      <div class="board-col-header">Incoming <span class="board-col-count" id="countIncoming">0</span></div>
+      <div class="board-col-body" id="colIncoming"></div>
+    </div>
+    <div class="board-col" data-status="active">
+      <div class="board-col-header">Active <span class="board-col-count" id="countActive">0</span></div>
+      <div class="board-col-body" id="colActive"></div>
+    </div>
+    <div class="board-col" data-status="sandbox">
+      <div class="board-col-header">Sandbox <span class="board-col-count" id="countSandbox">0</span></div>
+      <div class="board-col-body" id="colSandbox"></div>
+    </div>
+    <div class="board-col" data-status="shipped">
+      <div class="board-col-header">Shipped <span class="board-col-count" id="countShipped">0</span></div>
+      <div class="board-col-body" id="colShipped"></div>
+    </div>
+  </div>
+
+  <!-- List View -->
+  <div class="view" id="viewList">
+    <table class="list-table">
+      <thead>
+        <tr>
+          <th data-sort="name">Name <span class="sort-arrow"></span></th>
+          <th data-sort="type">Type <span class="sort-arrow"></span></th>
+          <th data-sort="status">Status <span class="sort-arrow"></span></th>
+          <th data-sort="techStack">Stack <span class="sort-arrow"></span></th>
+          <th data-sort="fileCount">Files <span class="sort-arrow"></span></th>
+          <th data-sort="openTodos">TODOs <span class="sort-arrow"></span></th>
+          <th data-sort="lastModified">Last Modified <span class="sort-arrow"></span></th>
+          <th>DNA</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="listBody"></tbody>
+    </table>
+  </div>
+
+  <!-- Type View -->
+  <div class="view" id="viewType"></div>
+
+  <!-- Scope View -->
+  <div class="view" id="viewScope"></div>
+
+</div>
+
+<!-- Move Modal -->
+<div class="modal-overlay" id="moveModal">
+  <div class="modal">
+    <h3>Move <span id="moveProjectName"></span></h3>
+    <div class="modal-btns" id="moveButtons"></div>
+    <button class="modal-cancel" onclick="closeModal()">Cancel</button>
+  </div>
+</div>
+
+<script>
+// ── State ──────────────────────────────────────────────────
+let allProjects = [];
+let stats = {};
+let currentView = 'board';
+let filters = { status: 'all', type: 'all', search: '' };
+let sortCol = 'name';
+let sortDir = 1;
+
+// ── Init ───────────────────────────────────────────────────
+async function init() {
+  await loadProjects();
+  setupNav();
+  setupFilters();
+  setupSearch();
+  setupSort();
+  render();
+  // Auto-refresh every 30s
+  setInterval(loadProjects, 30000);
+}
+
+async function loadProjects() {
+  try {
+    const resp = await fetch('/api/projects');
+    const data = await resp.json();
+    allProjects = data.projects;
+    stats = data.stats;
+    render();
+  } catch (e) {
+    console.error('Failed to load projects:', e);
+  }
+}
+
+// ── Filtering ──────────────────────────────────────────────
+function getFiltered() {
+  return allProjects.filter(p => {
+    if (filters.status !== 'all' && p.status !== filters.status) return false;
+    if (filters.type !== 'all' && p.type !== filters.type) return false;
+    if (filters.search) {
+      const s = filters.search.toLowerCase();
+      const haystack = `${p.name} ${p.description} ${p.techStack.join(' ')}`.toLowerCase();
+      if (!haystack.includes(s)) return false;
+    }
+    return true;
+  });
+}
+
+function getSorted(projects) {
+  return [...projects].sort((a, b) => {
+    let va = a[sortCol], vb = b[sortCol];
+    if (Array.isArray(va)) va = va.join(',');
+    if (Array.isArray(vb)) vb = vb.join(',');
+    if (va == null) va = '';
+    if (vb == null) vb = '';
+    if (typeof va === 'string') return va.localeCompare(vb) * sortDir;
+    return ((va || 0) - (vb || 0)) * sortDir;
+  });
+}
+
+// ── Render ─────────────────────────────────────────────────
+function render() {
+  renderStats();
+  const filtered = getFiltered();
+  renderBoard(filtered);
+  renderList(getSorted(filtered));
+  renderTypeView(filtered);
+  renderScopeView();
+}
+
+function renderStats() {
+  const el = document.getElementById('headerStats');
+  const s = stats;
+  el.innerHTML = `
+    <div class="stat">
+      <div class="stat-val">${s.total || 0}</div>
+      <div class="stat-lbl">Projects</div>
+    </div>
+    <div class="stat">
+      <div class="stat-val${(s.byStatus?.incoming || 0) > 0 ? ' warn' : ''}">${s.byStatus?.incoming || 0}</div>
+      <div class="stat-lbl">To Port</div>
+    </div>
+    <div class="stat">
+      <div class="stat-val">${s.byStatus?.active || 0}</div>
+      <div class="stat-lbl">Active</div>
+    </div>
+    <div class="stat">
+      <div class="stat-val${s.totalOpenTodos > 10 ? ' warn' : ''}">${s.totalOpenTodos || 0}</div>
+      <div class="stat-lbl">Open TODOs</div>
+    </div>
+    <div class="stat">
+      <div class="stat-val${s.staleCount > 0 ? ' danger' : ''}">${s.staleCount || 0}</div>
+      <div class="stat-lbl">Stale</div>
+    </div>
+  `;
+}
+
+function renderBoard(projects) {
+  const cols = { incoming: [], active: [], sandbox: [], shipped: [] };
+  projects.forEach(p => { if (cols[p.status]) cols[p.status].push(p); });
+
+  for (const [status, items] of Object.entries(cols)) {
+    const body = document.getElementById('col' + status.charAt(0).toUpperCase() + status.slice(1));
+    const count = document.getElementById('count' + status.charAt(0).toUpperCase() + status.slice(1));
+    count.textContent = items.length;
+    body.innerHTML = items.map(p => `
+      <div class="board-card" onclick="openMoveModal('${esc(p.name)}', '${p.status}')">
+        <div class="board-card-name">${esc(p.name)}</div>
+        ${p.description ? `<div class="board-card-desc">${esc(p.description)}</div>` : ''}
+        <div class="board-card-meta">
+          <span class="badge badge-${p.type.toLowerCase()}">${p.type}</span>
+          ${p.openTodos > 0 ? `<span class="badge badge-todo">${p.openTodos} TODO</span>` : ''}
+          ${p.isStale ? '<span class="badge badge-stale">STALE</span>' : ''}
+          ${!p.hasClaudeMd || !p.hasStartBat ? '<span class="badge badge-missing">NO DNA</span>' : ''}
+        </div>
+      </div>
+    `).join('');
+  }
+}
+
+function renderList(projects) {
+  const body = document.getElementById('listBody');
+  body.innerHTML = projects.map(p => {
+    const dna = [];
+    if (p.hasClaudeMd) dna.push('CLAUDE');
+    if (p.hasTodoMd) dna.push('TODO');
+    if (p.hasStartBat) dna.push('BAT');
+    if (p.hasChatWidget) dna.push('CHAT');
+    return `<tr>
+      <td><strong>${esc(p.name)}</strong>${p.description ? `<br><span style="color:var(--text2);font-size:11px">${esc(p.description)}</span>` : ''}</td>
+      <td><span class="badge badge-${p.type.toLowerCase()}">${p.type}</span></td>
+      <td>${p.status}</td>
+      <td style="color:var(--text2)">${p.techStack.join(', ') || '—'}</td>
+      <td>${p.fileCount}</td>
+      <td>${p.openTodos > 0 ? `<span style="color:var(--green)">${p.openTodos} open</span>` : '—'}${p.doneTodos > 0 ? ` / ${p.doneTodos} done` : ''}</td>
+      <td style="color:${p.isStale ? 'var(--orange)' : 'var(--text2)'}">${p.lastModifiedFmt}${p.isStale ? ' (stale)' : ''}</td>
+      <td>${dna.map(d => `<span style="font-size:10px;color:var(--green)">${d}</span>`).join(' ')}</td>
+      <td>
+        <select class="reclassify-select" onchange="reclassify('${esc(p.name)}', this.value)">
+          <option value="">reclassify...</option>
+          <option value="BROWSER"${p.type==='BROWSER'?' disabled':''}>Browser</option>
+          <option value="ELECTRON"${p.type==='ELECTRON'?' disabled':''}>Electron</option>
+          <option value="OTHER"${p.type==='OTHER'?' disabled':''}>Other</option>
+        </select>
+        <button class="filter-btn" style="margin-left:4px" onclick="openMoveModal('${esc(p.name)}', '${p.status}')">Move</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function renderTypeView(projects) {
+  const el = document.getElementById('viewType');
+  const groups = { BROWSER: [], ELECTRON: [], OTHER: [] };
+  projects.forEach(p => { if (groups[p.type]) groups[p.type].push(p); });
+
+  el.innerHTML = Object.entries(groups).map(([type, items]) => `
+    <div class="type-group">
+      <div class="type-group-header">
+        ${type} <span class="count">(${items.length} projects)</span>
+      </div>
+      <div class="type-cards">
+        ${items.map(p => `
+          <div class="type-card">
+            <div class="type-card-header">
+              <span class="type-card-name">${esc(p.name)}</span>
+              <select class="reclassify-select" onchange="reclassify('${esc(p.name)}', this.value)">
+                <option value="">reclassify...</option>
+                <option value="BROWSER"${type==='BROWSER'?' disabled':''}>Browser</option>
+                <option value="ELECTRON"${type==='ELECTRON'?' disabled':''}>Electron</option>
+                <option value="OTHER"${type==='OTHER'?' disabled':''}>Other</option>
+              </select>
+            </div>
+            ${p.description ? `<div class="type-card-desc">${esc(p.description)}</div>` : ''}
+            <div class="type-card-footer">
+              <span class="badge" style="background:var(--surface2);color:var(--text2)">${p.status}</span>
+              ${p.techStack.map(t => `<span class="badge" style="background:var(--surface2);color:var(--text2)">${t}</span>`).join('')}
+              ${p.openTodos > 0 ? `<span class="badge badge-todo">${p.openTodos} TODO</span>` : ''}
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderScopeView() {
+  const el = document.getElementById('viewScope');
+  const active = allProjects.filter(p => p.status === 'active');
+  const stale = allProjects.filter(p => p.isStale);
+  const incoming = allProjects.filter(p => p.status === 'incoming');
+  const missingDna = allProjects.filter(p => !p.hasClaudeMd || !p.hasTodoMd || !p.hasStartBat);
+  const browserNoCw = allProjects.filter(p => p.type === 'BROWSER' && !p.hasChatWidget && p.status !== 'incoming');
+  const totalTodos = allProjects.reduce((s, p) => s + p.openTodos, 0);
+  const totalDone = allProjects.reduce((s, p) => s + p.doneTodos, 0);
+  const todoRatio = totalTodos + totalDone > 0 ? (totalDone / (totalTodos + totalDone)) * 100 : 0;
+
+  el.innerHTML = `
+    <div class="scope-grid">
+      <div class="scope-card">
+        <h3>Active Work (${active.length} projects)</h3>
+        ${active.length === 0 ? '<div class="scope-empty">No active projects</div>' : ''}
+        ${active.map(p => `
+          <div class="scope-item">
+            <span>${esc(p.name)}</span>
+            <span>
+              <span class="badge badge-${p.type.toLowerCase()}">${p.type}</span>
+              ${p.openTodos > 0 ? `<span class="badge badge-todo">${p.openTodos} TODO</span>` : ''}
+            </span>
+          </div>
+        `).join('')}
+      </div>
+
+      <div class="scope-card">
+        <h3>Port Queue (${incoming.length} projects)</h3>
+        ${incoming.length === 0 ? '<div class="scope-empty">Nothing to port</div>' : ''}
+        ${incoming.map(p => `
+          <div class="scope-item">
+            <span>${esc(p.name)}</span>
+            <span class="badge badge-${p.type.toLowerCase()}">${p.type}</span>
+          </div>
+        `).join('')}
+      </div>
+
+      <div class="scope-card">
+        <h3>Stale Projects (${stale.length})</h3>
+        ${stale.length === 0 ? '<div class="scope-empty">Nothing stale — nice.</div>' : ''}
+        ${stale.map(p => {
+          const days = p.lastModified ? Math.floor((Date.now()/1000 - p.lastModified) / 86400) : '?';
+          return `<div class="scope-item">
+            <span>${esc(p.name)}</span>
+            <span class="badge badge-stale">${days} days</span>
+          </div>`;
+        }).join('')}
+      </div>
+
+      <div class="scope-card">
+        <h3>TODO Progress</h3>
+        <div class="scope-item">
+          <span>Open</span><span style="color:var(--orange)">${totalTodos}</span>
+        </div>
+        <div class="scope-item">
+          <span>Done</span><span style="color:var(--green)">${totalDone}</span>
+        </div>
+        <div class="scope-bar">
+          <div class="scope-bar-fill" style="width:${todoRatio}%;background:var(--green)"></div>
+        </div>
+      </div>
+
+      <div class="scope-card">
+        <h3>Missing DNA (${missingDna.length})</h3>
+        ${missingDna.length === 0 ? '<div class="scope-empty">All projects have CLAUDE.md + TODO.md + start.bat</div>' : ''}
+        ${missingDna.map(p => {
+          const missing = [];
+          if (!p.hasClaudeMd) missing.push('CLAUDE.md');
+          if (!p.hasTodoMd) missing.push('TODO.md');
+          if (!p.hasStartBat) missing.push('start.bat');
+          return `<div class="scope-item">
+            <span>${esc(p.name)}</span>
+            <span class="badge badge-missing">${missing.join(', ')}</span>
+          </div>`;
+        }).join('')}
+      </div>
+
+      <div class="scope-card">
+        <h3>Browser Apps Without Chat Widget (${browserNoCw.length})</h3>
+        ${browserNoCw.length === 0 ? '<div class="scope-empty">All browser apps have the chat widget</div>' : ''}
+        ${browserNoCw.map(p => `
+          <div class="scope-item">
+            <span>${esc(p.name)}</span>
+            <span class="badge badge-missing">No widget</span>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `;
+}
+
+// ── Nav ────────────────────────────────────────────────────
+function setupNav() {
+  document.querySelectorAll('.nav-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      currentView = tab.dataset.view;
+      document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+      document.getElementById('view' + currentView.charAt(0).toUpperCase() + currentView.slice(1)).classList.add('active');
+    });
+  });
+}
+
+// ── Filters ────────────────────────────────────────────────
+function setupFilters() {
+  document.querySelectorAll('.filter-btn[data-filter]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const group = btn.dataset.filter;
+      document.querySelectorAll(`.filter-btn[data-filter="${group}"]`).forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      filters[group] = btn.dataset.value;
+      render();
+    });
+  });
+}
+
+function setupSearch() {
+  document.getElementById('searchInput').addEventListener('input', (e) => {
+    filters.search = e.target.value;
+    render();
+  });
+}
+
+// ── Sorting ────────────────────────────────────────────────
+function setupSort() {
+  document.querySelectorAll('.list-table th[data-sort]').forEach(th => {
+    th.addEventListener('click', () => {
+      const col = th.dataset.sort;
+      if (sortCol === col) { sortDir *= -1; }
+      else { sortCol = col; sortDir = 1; }
+      // Update arrows
+      document.querySelectorAll('.sort-arrow').forEach(a => a.textContent = '');
+      th.querySelector('.sort-arrow').textContent = sortDir === 1 ? '\u25B2' : '\u25BC';
+      render();
+    });
+  });
+}
+
+// ── Actions ────────────────────────────────────────────────
+async function reclassify(name, newType) {
+  if (!newType) return;
+  try {
+    const resp = await fetch(`/api/projects/${encodeURIComponent(name)}/reclassify`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: newType }),
+    });
+    if (resp.ok) await loadProjects();
+  } catch (e) {
+    console.error('Reclassify failed:', e);
+  }
+}
+
+let moveTarget = null;
+function openMoveModal(name, currentStatus) {
+  moveTarget = { name, currentStatus };
+  document.getElementById('moveProjectName').textContent = name;
+
+  const statuses = ['incoming', 'active', 'sandbox', 'shipped'];
+  const labels = { incoming: 'Incoming (Port Queue)', active: 'Active (apps/)', sandbox: 'Sandbox', shipped: 'Shipped' };
+  document.getElementById('moveButtons').innerHTML = statuses.map(s => `
+    <button class="modal-btn${s === currentStatus ? ' current' : ''}"
+      ${s === currentStatus ? 'disabled' : `onclick="moveProject('${name}', '${s}')"`}>
+      ${labels[s]}${s === currentStatus ? ' (current)' : ''}
+    </button>
+  `).join('');
+
+  document.getElementById('moveModal').classList.add('open');
+}
+
+function closeModal() {
+  document.getElementById('moveModal').classList.remove('open');
+  moveTarget = null;
+}
+
+async function moveProject(name, targetStatus) {
+  try {
+    const resp = await fetch(`/api/projects/${encodeURIComponent(name)}/move`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: targetStatus }),
+    });
+    if (resp.ok) {
+      closeModal();
+      await loadProjects();
+    } else {
+      const err = await resp.json();
+      alert(err.error || 'Move failed');
+    }
+  } catch (e) {
+    console.error('Move failed:', e);
+  }
+}
+
+// ── Util ───────────────────────────────────────────────────
+function esc(str) {
+  const d = document.createElement('div');
+  d.textContent = str || '';
+  return d.innerHTML;
+}
+
+// Close modal on overlay click
+document.getElementById('moveModal').addEventListener('click', (e) => {
+  if (e.target === e.currentTarget) closeModal();
+});
+
+// Go
+init();
+</script>
+
+<!-- Chat Widget -->
+<script>
+  window.CHAT_WIDGET_CONFIG = {
+    appName: "Project Manager",
+    welcomeMessage: "Ask me about your workspace — e.g. 'what projects are stale?' or 'how many browser apps do I have?'",
+    contextFn: () => {
+      const summary = allProjects.map(p =>
+        `${p.name} [${p.type}] (${p.status}) — ${p.openTodos} TODOs, last modified ${p.lastModifiedFmt}`
+      ).join('\n');
+      return `Workspace projects:\n${summary}\n\nStats: ${JSON.stringify(stats)}`;
+    },
+  };
+</script>
+<script src="../../_skills/llm-chat-widget/dist/chat-widget.js"></script>
+
+</body>
+</html>

@@ -1,0 +1,35 @@
+# Secrets & credentials
+.env
+.env.*
+*.key
+*.pem
+*.p12
+
+# Node
+node_modules/
+
+# Python
+venv/
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+
+# Build output
+dist/
+!_skills/llm-chat-widget/dist/
+
+# IDE
+.vscode/
+.idea/
+
+# OS junk
+.DS_Store
+Thumbs.db
+desktop.ini
+*.swp
+*.swo
+
+# Generated / runtime
+launch-error.log
+SECURITY_AUDIT.md

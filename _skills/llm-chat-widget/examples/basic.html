@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Demo page showing the Gemini chat widget integration">
+<title>Chat Widget Demo</title>
+<style>
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #0d1117; color: #e6edf3; padding: 40px;
+    max-width: 800px; margin: 0 auto;
+  }
+  h1 { color: #58a6ff; }
+  h2 { color: #8b949e; margin-top: 30px; }
+  table {
+    width: 100%; border-collapse: collapse; margin: 16px 0;
+  }
+  th, td {
+    padding: 8px 12px; border: 1px solid #30363d; text-align: left;
+  }
+  th { background: #161b22; color: #58a6ff; }
+  td { background: #0d1117; }
+  code {
+    background: #161b22; padding: 2px 6px; border-radius: 4px;
+    font-size: 13px;
+  }
+  .card {
+    background: #161b22; border: 1px solid #30363d; border-radius: 8px;
+    padding: 16px; margin: 12px 0;
+  }
+</style>
+</head>
+<body>
+
+<h1>Chat Widget Demo</h1>
+<p>This page demonstrates the drop-in Gemini chat widget. Click the chat bubble in the bottom-right corner to try it.</p>
+
+<h2>Sample Data</h2>
+<table>
+  <thead>
+    <tr><th>Metric</th><th>Value</th><th>Change</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Active Users</td><td>12,847</td><td>+14.2%</td></tr>
+    <tr><td>Revenue (MTD)</td><td>$284,391</td><td>+8.7%</td></tr>
+    <tr><td>Avg Session</td><td>4m 32s</td><td>-2.1%</td></tr>
+    <tr><td>Conversion Rate</td><td>3.8%</td><td>+0.3pp</td></tr>
+  </tbody>
+</table>
+
+<h2>How It Works</h2>
+<div class="card">
+  <p>The widget reads page content automatically and sends it as context to Gemini. Try asking:</p>
+  <ul>
+    <li>"What's the conversion rate?"</li>
+    <li>"Which metrics are declining?"</li>
+    <li>"How was this page built?"</li>
+  </ul>
+</div>
+
+<h2>Integration</h2>
+<div class="card">
+  <p>Add to any page with one line:</p>
+  <p><code>&lt;script src="path/to/chat-widget.js"&gt;&lt;/script&gt;</code></p>
+</div>
+
+<!-- Optional: customize the widget -->
+<script>
+  window.CHAT_WIDGET_CONFIG = {
+    appName: "Demo Dashboard",
+    welcomeMessage: "Hi! I can answer questions about the dashboard data above. Try asking about any metric.",
+  };
+</script>
+
+<!-- Load the widget -->
+<script src="../dist/chat-widget.js"></script>
+
+</body>
+</html>

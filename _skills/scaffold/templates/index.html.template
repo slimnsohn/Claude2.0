@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="{PROJECT_DESCRIPTION}">
+<title>{PROJECT_NAME}</title>
+
+<!-- Shared base styles (dark/light theme variables + resets) -->
+<link rel="stylesheet" href="../../_shared/styles/base.css">
+
+<style>
+  /* Project-specific styles go here. Base variables available:
+     var(--bg), var(--surface), var(--surface2), var(--border),
+     var(--text), var(--text2), var(--accent), var(--green),
+     var(--red), var(--orange), var(--purple)
+  */
+  .container {
+    max-width: 1200px; margin: 0 auto; padding: 20px;
+  }
+  .header {
+    background: var(--surface); border-bottom: 1px solid var(--border);
+    padding: 12px 24px; margin: -20px -20px 20px;
+  }
+  .header h1 { font-size: 16px; font-weight: 700; }
+  .header h1 span { color: var(--accent); }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div class="header">
+    <h1><span>{PROJECT_NAME}</span></h1>
+  </div>
+
+  <main id="app">
+    <!-- Your content here -->
+  </main>
+</div>
+
+<!-- Shared fetch wrapper (retry, rate limiting, timeouts) -->
+<script src="../../_shared/fetch-wrapper.js"></script>
+
+<!-- Gemini chat widget -->
+<script>
+  window.CHAT_WIDGET_CONFIG = {
+    appName: "{PROJECT_NAME}",
+  };
+</script>
+<script src="../../_skills/llm-chat-widget/dist/chat-widget.js"></script>
+
+</body>
+</html>

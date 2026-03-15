@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "projects": [],
+  "types": [
+    "BROWSER",
+    "ELECTRON",
+    "OTHER"
+  ],
+  "statuses": [
+    "incoming",
+    "active",
+    "shipped",
+    "sandbox"
+  ]
+}
