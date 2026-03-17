@@ -1,8 +1,20 @@
 import json
+import math
 from pathlib import Path
 from flask import Blueprint, jsonify, request, current_app
 
 profiles_bp = Blueprint("profiles", __name__)
+
+
+def _clean_nans(obj):
+    """Replace NaN/Infinity values with None for JSON serialization."""
+    if isinstance(obj, dict):
+        return {k: _clean_nans(v) for k, v in obj.items()}
+    if isinstance(obj, list):
+        return [_clean_nans(v) for v in obj]
+    if isinstance(obj, float) and (math.isnan(obj) or math.isinf(obj)):
+        return None
+    return obj
 
 
 def _load_registry() -> list:
@@ -48,7 +60,7 @@ def list_profiles():
     # Return summaries only (no backstory for performance)
     summary_keys = ("profile_id", "age", "sex", "race", "education", "state",
                     "party_id", "archetype_id", "urban_rural")
-    summaries = [{k: p.get(k) for k in summary_keys} for p in profiles]
+    summaries = [_clean_nans({k: p.get(k) for k in summary_keys}) for p in profiles]
 
     return jsonify(summaries)
 
@@ -58,5 +70,5 @@ def get_profile(profile_id):
     profiles = _load_registry()
     for profile in profiles:
         if profile.get("profile_id") == profile_id:
-            return jsonify(profile)
+            return jsonify(_clean_nans(profile))
     return jsonify({"error": f"Profile '{profile_id}' not found"}), 404
