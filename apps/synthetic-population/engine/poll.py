@@ -28,7 +28,7 @@ class PollRunner:
 
         Returns: poll_id
         """
-        self.poll_id = f"POLL-{datetime.now().strftime('%Y%m%d%H%M%S')}"
+        self.poll_id = f"POLL-{datetime.now().strftime('%Y%m%d%H%M%S%f')}"
         self.question = question
         self.archetype_weights = archetype_weights
         self.responses = []

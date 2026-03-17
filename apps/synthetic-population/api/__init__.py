@@ -8,3 +8,5 @@ def register_blueprints(app):
     app.register_blueprint(snapshots_bp)
     from api.events_api import events_bp
     app.register_blueprint(events_bp)
+    from api.polls import polls_bp
+    app.register_blueprint(polls_bp)
