@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="NCAA March Madness 11-15 seed first round betting tracker — $100 per game">
+<title>NCAA 11-15 Seeds</title>
+
+<link rel="stylesheet" href="../../_shared/styles/base.css">
+
+<style>
+  .container { max-width: 1400px; margin: 0 auto; padding: 20px; }
+  .header {
+    background: var(--surface); border-bottom: 1px solid var(--border);
+    padding: 12px 24px; margin: -20px -20px 20px;
+    display: flex; align-items: center; gap: 16px;
+  }
+  .header h1 { font-size: 16px; font-weight: 700; }
+  .header h1 span { color: var(--accent); }
+  .header-clock { display: flex; flex-direction: column; gap: 1px; margin-left: auto; }
+  .clock { font-size: 13px; font-weight: 700; color: var(--text); font-variant-numeric: tabular-nums; }
+  .last-updated { font-size: 10px; color: var(--text2); }
+
+  /* Tabs */
+  .tabs { display: flex; gap: 0; margin-bottom: 20px; border-bottom: 1px solid var(--border); }
+  .tab {
+    padding: 8px 20px; cursor: pointer; border: none; background: none;
+    color: var(--text2); font-size: 13px; font-weight: 600;
+    border-bottom: 2px solid transparent; transition: all 0.15s;
+  }
+  .tab:hover { color: var(--text); }
+  .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  /* Cards */
+  .summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 24px; }
+  .card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+    padding: 16px; display: flex; flex-direction: column; gap: 4px;
+  }
+  .card-label { font-size: 11px; color: var(--text2); text-transform: uppercase; letter-spacing: 0.5px; }
+  .card-value { font-size: 24px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .card-sub { font-size: 11px; color: var(--text2); }
+  .card[title] { cursor: default; }
+  .positive { color: var(--green); }
+  .negative { color: var(--red); }
+
+  /* Tables */
+  table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  th { text-align: left; padding: 8px 12px; border-bottom: 2px solid var(--border); color: var(--text2); font-weight: 600; text-transform: uppercase; font-size: 10px; letter-spacing: 0.5px; position: sticky; top: 0; background: var(--bg); }
+  td { padding: 6px 12px; border-bottom: 1px solid var(--border); }
+  tr:hover td { background: var(--surface); }
+  .num { text-align: right; font-variant-numeric: tabular-nums; }
+  .win-tag { background: var(--green); color: #000; padding: 2px 6px; border-radius: 3px; font-size: 10px; font-weight: 700; }
+  .loss-tag { background: var(--red); color: #fff; padding: 2px 6px; border-radius: 3px; font-size: 10px; font-weight: 700; }
+
+  /* Section headers — collapsible */
+  .section-title {
+    font-size: 14px; font-weight: 700; margin: 24px 0 12px; color: var(--text);
+    cursor: pointer; user-select: none; display: flex; align-items: center; gap: 6px;
+  }
+  .section-title::before {
+    content: '▾'; font-size: 10px; color: var(--text2); transition: transform 0.15s;
+    display: inline-block; width: 12px;
+  }
+  .section-title.collapsed::before { transform: rotate(-90deg); }
+  .section-title.collapsed + .section-subtitle,
+  .section-title.collapsed + .section-subtitle + *,
+  .section-title.collapsed ~ .section-collapsible { display: none; }
+  .section-body { overflow: hidden; }
+  .section-body.collapsed { display: none; }
+  .section-subtitle { font-size: 11px; color: var(--text2); margin-bottom: 12px; }
+
+  /* Filters */
+  .filters { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; align-items: center; }
+  .filter-btn {
+    padding: 4px 12px; border: 1px solid var(--border); border-radius: 4px;
+    background: var(--surface); color: var(--text2); cursor: pointer;
+    font-size: 12px; transition: all 0.15s;
+  }
+  .filter-btn:hover { border-color: var(--accent); color: var(--text); }
+  .filter-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .filter-label { font-size: 11px; color: var(--text2); font-weight: 600; text-transform: uppercase; }
+
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  /* Rolling summary table */
+  .rolling-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 16px; }
+  .rolling-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 16px; }
+  .rolling-card h3 { font-size: 13px; font-weight: 700; margin: 0 0 12px; }
+
+  .seed-breakdown { margin-top: 24px; }
+  .seed-breakdown table th:first-child,
+  .seed-breakdown table td:first-child { width: 60px; }
+
+  /* Chart */
+  .chart-controls { display: flex; gap: 12px; align-items: center; margin-bottom: 12px; flex-wrap: wrap; }
+  .chart-controls label { font-size: 11px; color: var(--text2); font-weight: 600; text-transform: uppercase; }
+  .chart-controls select {
+    padding: 4px 8px; border: 1px solid var(--border); border-radius: 4px;
+    background: var(--surface); color: var(--text); font-size: 12px;
+  }
+  .chart-wrapper {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+    padding: 20px; position: relative;
+  }
+  canvas#pnlChart { width: 100% !important; height: 480px !important; }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div class="header">
+    <h1><span>NCAA 11-15 Seeds</span> &mdash; First Round Betting Tracker</h1>
+    <div class="header-clock">
+      <span class="clock" id="systemClock"></span>
+      <span class="last-updated" id="lastUpdated">$100/game &bull; Seeds 11-15</span>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" data-tab="summary">Summary</button>
+    <button class="tab" data-tab="results">All Results</button>
+  </div>
+
+  <div id="summary" class="tab-content active">
+    <div id="topCards" class="summary-grid"></div>
+
+    <div class="section-title" data-collapse="yearly" style="margin-top:32px;">Yearly Results</div>
+    <div class="section-body" id="yearlyBody">
+      <div id="yearlyTable"></div>
+    </div>
+
+    <div class="section-title" data-collapse="rolling" style="margin-top:32px;">Rolling Summaries</div>
+    <div class="section-body" id="rollingBody">
+      <div class="section-subtitle">Excludes 2020 (COVID — no tournament)</div>
+      <div id="rollingSection" class="rolling-grid"></div>
+    </div>
+
+    <div class="section-title" data-collapse="chart" style="margin-top:32px;">P&L Charts</div>
+    <div class="section-body" id="chartBody">
+      <div class="chart-controls" id="chartControls"></div>
+      <div class="chart-wrapper">
+        <canvas id="pnlChart"></canvas>
+      </div>
+    </div>
+
+    <div class="section-title seed-breakdown" data-collapse="seeds" style="margin-top:32px;">By Seed — All Time</div>
+    <div class="section-body" id="seedsBody">
+      <div id="seedBreakdown"></div>
+    </div>
+  </div>
+
+  <div id="results" class="tab-content">
+    <div class="filters" id="filterBar"></div>
+    <div id="resultsTable"></div>
+  </div>
+</div>
+
+<script>
+  // Clock
+  function tickClock() {
+    document.getElementById('systemClock').textContent = new Date().toLocaleTimeString([], {hour:'numeric', minute:'2-digit', second:'2-digit'});
+  }
+  tickClock(); setInterval(tickClock, 1000);
+</script>
+
+<script>
+const BET = 100;
+let DATA = [];
+let activeFilters = { seed: 'all', year: 'all', result: 'all' };
+
+function pnl(game) {
+  if (game.won === null) return 0; // Missing data — don't count
+  if (!game.won) return -BET;
+  if (game.odds === null) return 0;
+  // American odds: positive = underdog, negative = favorite
+  if (game.odds > 0) return BET * game.odds / 100;
+  return BET * 100 / Math.abs(game.odds);
+}
+
+function fmt$(v) {
+  const sign = v >= 0 ? '+' : '';
+  return sign + '$' + Math.abs(v).toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 0});
+}
+
+function pnlClass(v) { return v >= 0 ? 'positive' : 'negative'; }
+
+function pct(wins, total) {
+  if (total === 0) return '0%';
+  return (wins / total * 100).toFixed(1) + '%';
+}
+
+// ── Load data ──
+fetch('data/results.json')
+  .then(r => r.json())
+  .then(d => { DATA = d; render(); })
+  .catch(e => console.error('Failed to load data:', e));
+
+let chartStartYear = null;
+let chartMetric = 'pnl'; // 'pnl' or 'row'
+
+// ── Collapsible sections ──
+document.addEventListener('click', (e) => {
+  const title = e.target.closest('.section-title[data-collapse]');
+  if (!title) return;
+  const key = title.dataset.collapse;
+  const body = document.getElementById(key + 'Body');
+  if (body) {
+    title.classList.toggle('collapsed');
+    body.classList.toggle('collapsed');
+    // Re-render chart if expanding chart section
+    if (key === 'chart' && !body.classList.contains('collapsed') && DATA.length) {
+      setTimeout(renderChart, 50);
+    }
+  }
+});
+
+function render() {
+  const years = [...new Set(DATA.map(g => g.year))].sort();
+  if (!chartStartYear) chartStartYear = years[0];
+  renderTopCards();
+  renderYearlyTable();
+  renderRolling();
+  renderChartControls();
+  renderChart();
+  renderSeedBreakdown();
+  renderFilters();
+  renderResults();
+}
+
+// ── Top summary cards ──
+function renderTopCards() {
+  const years = [...new Set(DATA.map(g => g.year))];
+  const totalGames = DATA.length;
+  const totalWins = DATA.filter(g => g.won).length;
+  const totalPnl = DATA.reduce((s, g) => s + pnl(g), 0);
+  const avgPnlPerYear = totalPnl / years.length;
+
+  document.getElementById('topCards').innerHTML = `
+    <div class="card">
+      <span class="card-label">Years Tracked</span>
+      <span class="card-value">${years.length}</span>
+      <span class="card-sub">${years[0]}–${years[years.length-1]} (excl. 2020)</span>
+    </div>
+    <div class="card">
+      <span class="card-label">Total Games Bet</span>
+      <span class="card-value">${totalGames}</span>
+      <span class="card-sub">20 games/year &bull; $${(totalGames * BET).toLocaleString()} wagered</span>
+    </div>
+    <div class="card">
+      <span class="card-label">Win Rate</span>
+      <span class="card-value">${pct(totalWins, totalGames)}</span>
+      <span class="card-sub">${totalWins} wins / ${totalGames - totalWins} losses</span>
+    </div>
+    <div class="card">
+      <span class="card-label">Total P&L</span>
+      <span class="card-value ${pnlClass(totalPnl)}">${fmt$(totalPnl)}</span>
+      <span class="card-sub">${fmt$(avgPnlPerYear)}/year avg</span>
+    </div>
+  `;
+}
+
+// ── Yearly results table ──
+function renderYearlyTable() {
+  const years = [...new Set(DATA.map(g => g.year))].sort((a, b) => b - a);
+  let rows = '';
+  for (const y of years) {
+    const games = DATA.filter(g => g.year === y);
+    const wins = games.filter(g => g.won).length;
+    const yPnl = games.reduce((s, g) => s + pnl(g), 0);
+    const wagered = games.length * BET;
+    const roi = (yPnl / wagered * 100).toFixed(1);
+    const bestWin = games.filter(g => g.won).sort((a, b) => b.odds - a.odds)[0];
+
+    rows += `<tr>
+      <td>${y}</td>
+      <td class="num">${games.length}</td>
+      <td class="num">${wins}</td>
+      <td class="num">${pct(wins, games.length)}</td>
+      <td class="num">$${wagered.toLocaleString()}</td>
+      <td class="num ${pnlClass(yPnl)}">${fmt$(yPnl)}</td>
+      <td class="num ${pnlClass(parseFloat(roi))}">${roi}%</td>
+      <td>${bestWin ? `#${bestWin.seed} ${bestWin.underdog} (+${bestWin.odds})` : '—'}</td>
+    </tr>`;
+  }
+
+  document.getElementById('yearlyTable').innerHTML = `
+    <table>
+      <thead><tr><th>Year</th><th class="num">Games</th><th class="num">Wins</th><th class="num">Win%</th><th class="num">Wagered</th><th class="num">P&L</th><th class="num">ROI</th><th>Best Win</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+}
+
+// ── Rolling summaries ──
+function renderRolling() {
+  const years = [...new Set(DATA.map(g => g.year))].sort((a, b) => b - a);
+  const currentYear = years[0];
+  const periods = [
+    { label: 'Last 3 Years', n: 3 },
+    { label: 'Last 5 Years', n: 5 },
+    { label: 'Last 10 Years', n: 10 },
+  ];
+
+  let html = '';
+  for (const p of periods) {
+    const recentYears = years.slice(0, p.n);
+    const games = DATA.filter(g => recentYears.includes(g.year));
+    const wins = games.filter(g => g.won).length;
+    const totalP = games.reduce((s, g) => s + pnl(g), 0);
+    const wagered = games.length * BET;
+    const roi = (totalP / wagered * 100).toFixed(1);
+
+    // by seed
+    let seedRows = '';
+    for (const s of [11, 12, 13, 14, 15]) {
+      const sg = games.filter(g => g.seed === s);
+      const sw = sg.filter(g => g.won).length;
+      const sp = sg.reduce((acc, g) => acc + pnl(g), 0);
+      seedRows += `<tr><td>#${s}</td><td class="num">${sg.length}</td><td class="num">${sw}</td><td class="num">${pct(sw, sg.length)}</td><td class="num ${pnlClass(sp)}">${fmt$(sp)}</td></tr>`;
+    }
+
+    html += `
+      <div class="rolling-card">
+        <h3>${p.label} (${recentYears[recentYears.length-1]}–${recentYears[0]})</h3>
+        <div class="summary-grid" style="margin-bottom:12px;">
+          <div class="card"><span class="card-label">Record</span><span class="card-value">${wins}-${games.length - wins}</span></div>
+          <div class="card" title="Total P&L across ${recentYears.length} years\nYearly avg: ${fmt$(totalP / recentYears.length)}"><span class="card-label">P&L</span><span class="card-value ${pnlClass(totalP)}">${fmt$(totalP)}</span><span class="card-sub">${fmt$(totalP / recentYears.length)}/yr avg</span></div>
+          <div class="card" title="Yearly ROI = yearly P&L ÷ $2,000 (20 games × $100)\n${recentYears.length}-year avg: ${(totalP / recentYears.length / 2000 * 100).toFixed(1)}%/yr"><span class="card-label">ROI</span><span class="card-value ${pnlClass(parseFloat(roi))}">${roi}%</span><span class="card-sub">${(totalP / recentYears.length / 2000 * 100).toFixed(1)}%/yr avg (P&L ÷ $2k)</span></div>
+        </div>
+        <table>
+          <thead><tr><th>Seed</th><th class="num">Games</th><th class="num">Wins</th><th class="num">Win%</th><th class="num">P&L</th></tr></thead>
+          <tbody>${seedRows}</tbody>
+        </table>
+      </div>`;
+  }
+
+  document.getElementById('rollingSection').innerHTML = html;
+}
+
+// ── Chart controls ──
+function renderChartControls() {
+  const years = [...new Set(DATA.map(g => g.year))].sort();
+  let opts = years.map(y => `<option value="${y}" ${y == chartStartYear ? 'selected' : ''}>${y}</option>`).join('');
+  document.getElementById('chartControls').innerHTML = `
+    <label>Start Year:</label>
+    <select id="chartStartSelect">${opts}</select>
+    <label style="margin-left:16px;">Cumulative Metric:</label>
+    <button class="filter-btn ${chartMetric === 'pnl' ? 'active' : ''}" data-metric="pnl">P&L ($)</button>
+    <button class="filter-btn ${chartMetric === 'row' ? 'active' : ''}" data-metric="row">Return on Wagered %</button>
+  `;
+  document.getElementById('chartStartSelect').addEventListener('change', (e) => {
+    chartStartYear = parseInt(e.target.value);
+    renderChart();
+  });
+  document.querySelectorAll('[data-metric]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      chartMetric = btn.dataset.metric;
+      renderChartControls();
+      renderChart();
+    });
+  });
+}
+
+// ── Dual chart: cumulative line (top) + yearly bars (bottom) ──
+function renderChart() {
+  const canvas = document.getElementById('pnlChart');
+  const ctx = canvas.getContext('2d');
+  const dpr = window.devicePixelRatio || 1;
+
+  const rect = canvas.parentElement.getBoundingClientRect();
+  const totalH = 480;
+  canvas.width = (rect.width - 40) * dpr;
+  canvas.height = totalH * dpr;
+  canvas.style.width = (rect.width - 40) + 'px';
+  canvas.style.height = totalH + 'px';
+  ctx.scale(dpr, dpr);
+
+  const W = rect.width - 40;
+  const pad = { top: 20, right: 20, bottom: 30, left: 70 };
+  const gap = 36;
+  const cumH = 240;
+  const barH = 150;
+  const plotW = W - pad.left - pad.right;
+
+  const years = [...new Set(DATA.map(g => g.year))].sort().filter(y => y >= chartStartYear);
+  if (years.length === 0) return;
+
+  // Build data per year
+  let cumPnl = 0, cumWagered = 0;
+  const points = [];
+  for (const y of years) {
+    const games = DATA.filter(g => g.year === y);
+    const yPnl = games.reduce((s, g) => s + pnl(g), 0);
+    cumPnl += yPnl;
+    cumWagered += games.length * BET;
+    const row = cumWagered > 0 ? (cumPnl / cumWagered * 100) : 0;
+    points.push({ year: y, yearPnl: yPnl, cumPnl, cumRow: row });
+  }
+
+  // Which metric for top chart
+  const useRow = chartMetric === 'row';
+  const cumValues = points.map(p => useRow ? p.cumRow : p.cumPnl);
+  const cumLabel = useRow ? 'CUMULATIVE RETURN ON WAGERED' : 'CUMULATIVE P&L';
+  function fmtCum(v) {
+    return useRow ? (v >= 0 ? '+' : '') + v.toFixed(1) + '%' : fmt$(Math.round(v));
+  }
+
+  // Theme colors
+  const style = getComputedStyle(document.documentElement);
+  const borderColor = style.getPropertyValue('--border').trim();
+  const textColor = style.getPropertyValue('--text2').trim();
+  const greenColor = style.getPropertyValue('--green').trim();
+  const redColor = style.getPropertyValue('--red').trim();
+  const accentColor = style.getPropertyValue('--accent').trim();
+
+  ctx.clearRect(0, 0, W, totalH);
+
+  // ── TOP: Cumulative line ──
+  const cMin = Math.min(0, ...cumValues);
+  const cMax = Math.max(0, ...cumValues);
+  const cRange = cMax - cMin || 1;
+  const cBuf = cRange * 0.18;
+  const cyMin = cMin - cBuf;
+  const cyMax = cMax + cBuf;
+
+  const barWidth = Math.min(28, (plotW / points.length) * 0.55);
+  function xPos(i) { return pad.left + ((i + 0.5) / points.length) * plotW; }
+  function cyPos(v) { return pad.top + (cumH - ((v - cyMin) / (cyMax - cyMin)) * cumH); }
+
+  // Label
+  ctx.fillStyle = textColor; ctx.font = 'bold 10px -apple-system, sans-serif'; ctx.textAlign = 'left';
+  ctx.fillText(cumLabel, pad.left, pad.top - 6);
+
+  // Grid
+  ctx.strokeStyle = borderColor; ctx.lineWidth = 0.5;
+  for (let i = 0; i <= 4; i++) {
+    const v = cyMin + (cyMax - cyMin) * (i / 4);
+    const y = cyPos(v);
+    ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(W - pad.right, y); ctx.stroke();
+    ctx.fillStyle = textColor; ctx.font = '10px -apple-system, sans-serif'; ctx.textAlign = 'right';
+    ctx.fillText(fmtCum(v), pad.left - 6, y + 3);
+  }
+
+  // Zero line
+  if (cyMin < 0 && cyMax > 0) {
+    ctx.strokeStyle = textColor; ctx.lineWidth = 1; ctx.setLineDash([4, 4]);
+    ctx.beginPath(); ctx.moveTo(pad.left, cyPos(0)); ctx.lineTo(W - pad.right, cyPos(0)); ctx.stroke();
+    ctx.setLineDash([]);
+  }
+
+  // Fill
+  ctx.globalAlpha = 0.08; ctx.fillStyle = accentColor;
+  ctx.beginPath(); ctx.moveTo(xPos(0), cyPos(0));
+  cumValues.forEach((v, i) => ctx.lineTo(xPos(i), cyPos(v)));
+  ctx.lineTo(xPos(cumValues.length - 1), cyPos(0)); ctx.closePath(); ctx.fill();
+  ctx.globalAlpha = 1;
+
+  // Line
+  ctx.strokeStyle = accentColor; ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  cumValues.forEach((v, i) => { const x = xPos(i); i === 0 ? ctx.moveTo(x, cyPos(v)) : ctx.lineTo(x, cyPos(v)); });
+  ctx.stroke();
+
+  // Dots + labels
+  cumValues.forEach((v, i) => {
+    const x = xPos(i); const y = cyPos(v);
+    ctx.fillStyle = v >= 0 ? greenColor : redColor;
+    ctx.beginPath(); ctx.arc(x, y, 3.5, 0, Math.PI * 2); ctx.fill();
+    ctx.font = '8px -apple-system, sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText(fmtCum(v), x, y - 9);
+  });
+
+  // ── BOTTOM: Yearly P&L bars ──
+  const barTop = pad.top + cumH + gap;
+  const bMin = Math.min(0, ...points.map(p => p.yearPnl));
+  const bMax = Math.max(0, ...points.map(p => p.yearPnl));
+  const bRange = bMax - bMin || 1;
+  const bBuf = bRange * 0.2;
+  const byMin = bMin - bBuf;
+  const byMax = bMax + bBuf;
+
+  function byPos(v) { return barTop + (barH - ((v - byMin) / (byMax - byMin)) * barH); }
+
+  // Label
+  ctx.fillStyle = textColor; ctx.font = 'bold 10px -apple-system, sans-serif'; ctx.textAlign = 'left';
+  ctx.fillText('YEARLY P&L', pad.left, barTop - 6);
+
+  // Zero line
+  ctx.strokeStyle = textColor; ctx.lineWidth = 1; ctx.setLineDash([4, 4]);
+  ctx.beginPath(); ctx.moveTo(pad.left, byPos(0)); ctx.lineTo(W - pad.right, byPos(0)); ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Grid
+  ctx.strokeStyle = borderColor; ctx.lineWidth = 0.5;
+  for (let i = 0; i <= 3; i++) {
+    const v = byMin + (byMax - byMin) * (i / 3);
+    const y = byPos(v);
+    ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(W - pad.right, y); ctx.stroke();
+    ctx.fillStyle = textColor; ctx.font = '10px -apple-system, sans-serif'; ctx.textAlign = 'right';
+    ctx.fillText(fmt$(Math.round(v)), pad.left - 6, y + 3);
+  }
+
+  // Bars
+  points.forEach((p, i) => {
+    const x = xPos(i);
+    const zeroY = byPos(0);
+    const valY = byPos(p.yearPnl);
+    const bx = x - barWidth / 2;
+    const bh = Math.abs(valY - zeroY);
+    const by = p.yearPnl >= 0 ? valY : zeroY;
+
+    ctx.fillStyle = p.yearPnl >= 0 ? greenColor : redColor;
+    ctx.globalAlpha = 0.7;
+    ctx.fillRect(bx, by, barWidth, bh);
+    ctx.globalAlpha = 1;
+
+    // Value label
+    ctx.fillStyle = p.yearPnl >= 0 ? greenColor : redColor;
+    ctx.font = '8px -apple-system, sans-serif'; ctx.textAlign = 'center';
+    const labelY = p.yearPnl >= 0 ? valY - 4 : valY + bh + 10;
+    ctx.fillText(fmt$(Math.round(p.yearPnl)), x, labelY);
+  });
+
+  // X-axis year labels
+  ctx.fillStyle = textColor; ctx.font = '10px -apple-system, sans-serif'; ctx.textAlign = 'center';
+  points.forEach((p, i) => {
+    ctx.fillText(p.year, xPos(i), barTop + barH + 16);
+  });
+}
+
+// Redraw chart on resize
+window.addEventListener('resize', () => { if (DATA.length) renderChart(); });
+
+// ── Seed breakdown (all time) ──
+function renderSeedBreakdown() {
+  let rows = '';
+  for (const s of [11, 12, 13, 14, 15]) {
+    const games = DATA.filter(g => g.seed === s);
+    const wins = games.filter(g => g.won).length;
+    const p = games.reduce((acc, g) => acc + pnl(g), 0);
+    const wagered = games.length * BET;
+    const roi = (p / wagered * 100).toFixed(1);
+    const gamesWithOdds = games.filter(g => g.odds !== null);
+    const avgOdds = gamesWithOdds.length ? Math.round(gamesWithOdds.reduce((acc, g) => acc + g.odds, 0) / gamesWithOdds.length) : 0;
+
+    rows += `<tr>
+      <td><strong>#${s}</strong></td>
+      <td class="num">${games.length}</td>
+      <td class="num">${wins}</td>
+      <td class="num">${pct(wins, games.length)}</td>
+      <td class="num">${avgOdds > 0 ? '+' + avgOdds : avgOdds}</td>
+      <td class="num">$${wagered.toLocaleString()}</td>
+      <td class="num ${pnlClass(p)}">${fmt$(p)}</td>
+      <td class="num ${pnlClass(parseFloat(roi))}">${roi}%</td>
+    </tr>`;
+  }
+
+  document.getElementById('seedBreakdown').innerHTML = `
+    <table>
+      <thead><tr><th>Seed</th><th class="num">Games</th><th class="num">Wins</th><th class="num">Win%</th><th class="num">Avg Odds</th><th class="num">Wagered</th><th class="num">P&L</th><th class="num">ROI</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+}
+
+// ── Filters ──
+function renderFilters() {
+  const seeds = [11, 12, 13, 14, 15];
+  const years = [...new Set(DATA.map(g => g.year))].sort((a, b) => b - a);
+
+  let html = '<span class="filter-label">Seed:</span>';
+  html += `<button class="filter-btn ${activeFilters.seed === 'all' ? 'active' : ''}" data-filter="seed" data-val="all">All</button>`;
+  for (const s of seeds) {
+    html += `<button class="filter-btn ${activeFilters.seed == s ? 'active' : ''}" data-filter="seed" data-val="${s}">#${s}</button>`;
+  }
+
+  html += '<span class="filter-label" style="margin-left:12px;">Result:</span>';
+  html += `<button class="filter-btn ${activeFilters.result === 'all' ? 'active' : ''}" data-filter="result" data-val="all">All</button>`;
+  html += `<button class="filter-btn ${activeFilters.result === 'win' ? 'active' : ''}" data-filter="result" data-val="win">Wins</button>`;
+  html += `<button class="filter-btn ${activeFilters.result === 'loss' ? 'active' : ''}" data-filter="result" data-val="loss">Losses</button>`;
+
+  html += '<span class="filter-label" style="margin-left:12px;">Year:</span>';
+  html += `<button class="filter-btn ${activeFilters.year === 'all' ? 'active' : ''}" data-filter="year" data-val="all">All</button>`;
+  for (const y of years) {
+    html += `<button class="filter-btn ${activeFilters.year == y ? 'active' : ''}" data-filter="year" data-val="${y}">${y}</button>`;
+  }
+
+  document.getElementById('filterBar').innerHTML = html;
+
+  document.querySelectorAll('.filter-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      activeFilters[btn.dataset.filter] = btn.dataset.val;
+      renderFilters();
+      renderResults();
+    });
+  });
+}
+
+// ── Results table ──
+function renderResults() {
+  let filtered = [...DATA];
+
+  if (activeFilters.seed !== 'all') filtered = filtered.filter(g => g.seed == activeFilters.seed);
+  if (activeFilters.year !== 'all') filtered = filtered.filter(g => g.year == activeFilters.year);
+  if (activeFilters.result === 'win') filtered = filtered.filter(g => g.won);
+  if (activeFilters.result === 'loss') filtered = filtered.filter(g => !g.won);
+
+  // Sort: most recent first, then by seed
+  filtered.sort((a, b) => b.year - a.year || a.seed - b.seed);
+
+  const totalPnl = filtered.reduce((s, g) => s + pnl(g), 0);
+  const wins = filtered.filter(g => g.won).length;
+
+  let rows = '';
+  for (const g of filtered) {
+    const gPnl = pnl(g);
+    rows += `<tr>
+      <td>${g.year}</td>
+      <td>#${g.seed}</td>
+      <td>${g.underdog}</td>
+      <td>${g.favorite}</td>
+      <td class="num">${g.odds !== null ? (g.odds > 0 ? '+' + g.odds : g.odds) : 'N/A'}</td>
+      <td>${g.won === null ? '<span style="color:var(--orange);font-weight:700;font-size:10px;">MISSING</span>' : g.won ? '<span class="win-tag">W</span>' : '<span class="loss-tag">L</span>'}</td>
+      <td class="num ${pnlClass(gPnl)}">${fmt$(gPnl)}</td>
+    </tr>`;
+  }
+
+  document.getElementById('resultsTable').innerHTML = `
+    <div class="section-subtitle">${filtered.length} games &bull; ${wins} wins &bull; P&L: <span class="${pnlClass(totalPnl)}">${fmt$(totalPnl)}</span></div>
+    <table>
+      <thead><tr><th>Year</th><th>Seed</th><th>Underdog</th><th>Favorite</th><th class="num">Odds</th><th>Result</th><th class="num">P&L</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+}
+
+// ── Tabs ──
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById(tab.dataset.tab).classList.add('active');
+  });
+});
+</script>
+
+<script src="../../_shared/fetch-wrapper.js"></script>
+
+<script>
+  window.CHAT_WIDGET_CONFIG = {
+    appName: "NCAA 11-15 Seeds",
+    systemPrompt: `You are a helpful assistant for the NCAA March Madness 11-15 seed betting tracker. The strategy is to bet $100 on every first round game involving an 11, 12, 13, 14, or 15 seed (the underdog). That's 20 games per year. You have access to the data loaded on the page. Answer questions about win rates, P&L, best/worst years, seed performance, specific upsets, ROI, etc. 2020 had no tournament due to COVID. Odds are in American format (+odds means you win that amount on a $100 bet). The data covers 2008-2025.`
+  };
+</script>
+<script src="../../_skills/llm-chat-widget/dist/chat-widget.js"></script>
+
+</body>
+</html>

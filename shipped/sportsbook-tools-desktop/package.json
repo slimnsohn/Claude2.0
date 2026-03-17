@@ -1,0 +1,12 @@
+{
+  "name": "sportsbook-tools",
+  "version": "1.0.0",
+  "description": "Kalshi converter, Xbets calculator, Wager hedge calculator",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "devDependencies": {
+    "electron": "^28.0.0"
+  }
+}

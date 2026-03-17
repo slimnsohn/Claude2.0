@@ -1,9 +1,51 @@
 {
   "version": 1,
-  "projects": [],
+  "projects": [
+    {
+      "name": "ncaa_11_15_seeds",
+      "type": "BROWSER",
+      "location": "apps/ncaa_11_15_seeds",
+      "status": "active",
+      "description": "NCAA March Madness 11-15 seed first round betting tracker — $100/game P&L",
+      "createdDate": "2026-03-15"
+    },
+    {
+      "name": "sportsbook-tools",
+      "type": "IOS_APP",
+      "location": "shipped/sportsbook-tools",
+      "status": "shipped",
+      "description": "Kalshi odds, cross-book P&L, wager hedge calc, cashflow logger — iOS PWA via Google Apps Script",
+      "createdDate": "2026-03-14"
+    },
+    {
+      "name": "sportsbook-tools-desktop",
+      "type": "ELECTRON",
+      "location": "shipped/sportsbook-tools-desktop",
+      "status": "shipped",
+      "description": "Kalshi odds, cross-book P&L, wager hedge calc — Electron desktop app",
+      "createdDate": "2026-03-14"
+    },
+    {
+      "name": "claude-tracker",
+      "type": "ELECTRON",
+      "location": "shipped/claude-tracker",
+      "status": "shipped",
+      "description": "Claude Code session tracker",
+      "createdDate": "2026-03-14"
+    },
+    {
+      "name": "project-manager",
+      "type": "BROWSER",
+      "location": "shipped/project-manager",
+      "status": "shipped",
+      "description": "Project manager dashboard",
+      "createdDate": "2026-03-14"
+    }
+  ],
   "types": [
     "BROWSER",
     "ELECTRON",
+    "IOS_APP",
     "OTHER"
   ],
   "statuses": [

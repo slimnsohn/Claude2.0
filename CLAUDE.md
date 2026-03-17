@@ -7,9 +7,10 @@ _docs/       Guides, architecture notes, how-things-work references
 _shared/     Runtime code used across projects (utils, CSS, API clients)
 _skills/     Claude Code skills. Each has SKILL.md + implementation.
 apps/        Active projects under development
-data/        Flat data stores + collection pipelines
+data/        External source data only (raw → pipelines → processed)
 sandbox/     Experiments and throwaway exploration
 shipped/     Deployed and stable
+quick_starts/  Shortcut launchers for every project's start.bat/launch.vbs
 NEW PROJECT START HERE/   Default Claude Code entry point
 ```
 
@@ -28,14 +29,13 @@ NEW PROJECT START HERE/   Default Claude Code entry point
 
 - Every browser project gets a `start.bat` — single entry point, handles deps + open browser.
 - Every Electron project gets `start.bat` + `launch.vbs` — user double-clicks the .vbs, no terminal visible.
+- Every project gets a shortcut in `quick_starts/` — named `{project}_start.bat` (and `{project}_launch.vbs` for Electron).
 - Templates live in `_skills/scaffold/templates/`. Always use them.
 
 ## Communication Style
 
-- Be direct. Skip disclaimers.
-- Show tradeoffs honestly — don't advocate.
-- Data-driven reasoning over opinions.
-- When uncertain, say so.
+- Be direct. Skip disclaimers. Show tradeoffs honestly — don't advocate.
+- Data-driven reasoning over opinions. When uncertain, say so.
 
 ## Code Preferences
 

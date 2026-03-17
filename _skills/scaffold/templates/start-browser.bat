@@ -24,7 +24,7 @@ if exist "package.json" (
     timeout /t 3 /nobreak >nul
     
     :: Try to detect the port from package.json or default to 3000
-    start "" http://localhost:3000
+    start "" http://{PROJECT_SLUG}.localhost:3000
     exit /b 0
 )
 
@@ -41,16 +41,16 @@ if exist "requirements.txt" (
     echo Starting server...
     start "" python -m http.server 8080
     timeout /t 2 /nobreak >nul
-    start "" http://localhost:8080
+    start "" http://{PROJECT_SLUG}.localhost:8080
     exit /b 0
 )
 
 :: --- Static HTML (no package.json, no requirements.txt) ---
 if exist "index.html" (
     echo Starting local server for static files...
-    start "" cmd /c "python -m http.server 8080"
+    start "{PROJECT_NAME} Server" python -m http.server 8080
     timeout /t 2 /nobreak >nul
-    start "" http://localhost:8080
+    start "" http://{PROJECT_SLUG}.localhost:8080
     exit /b 0
 )
 

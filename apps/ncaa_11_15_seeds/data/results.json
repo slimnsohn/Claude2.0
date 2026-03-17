@@ -1,0 +1,3062 @@
+[
+  {
+    "year": 2008,
+    "seed": 11,
+    "underdog": "Baylor",
+    "favorite": "Purdue",
+    "odds": 125,
+    "won": false,
+    "game_date": "2008-03-20"
+  },
+  {
+    "year": 2008,
+    "seed": 11,
+    "underdog": "Kansas State",
+    "favorite": "USC",
+    "odds": 140,
+    "won": true,
+    "game_date": "2008-03-20"
+  },
+  {
+    "year": 2008,
+    "seed": 11,
+    "underdog": "Kentucky",
+    "favorite": "Marquette",
+    "odds": 235,
+    "won": false,
+    "game_date": "2008-03-20"
+  },
+  {
+    "year": 2008,
+    "seed": 11,
+    "underdog": "St. Joseph's",
+    "favorite": "Oklahoma",
+    "odds": 100,
+    "won": false,
+    "game_date": "2008-03-21"
+  },
+  {
+    "year": 2008,
+    "seed": 12,
+    "underdog": "George Mason",
+    "favorite": "Notre Dame",
+    "odds": 250,
+    "won": false,
+    "game_date": "2008-03-20"
+  },
+  {
+    "year": 2008,
+    "seed": 12,
+    "underdog": "Temple",
+    "favorite": "Michigan State",
+    "odds": 250,
+    "won": false,
+    "game_date": "2008-03-20"
+  },
+  {
+    "year": 2008,
+    "seed": 12,
+    "underdog": "Villanova",
+    "favorite": "Clemson",
+    "odds": 205,
+    "won": true,
+    "game_date": "2008-03-21"
+  },
+  {
+    "year": 2008,
+    "seed": 12,
+    "underdog": "Western Kentucky",
+    "favorite": "Drake",
+    "odds": 175,
+    "won": true,
+    "game_date": "2008-03-21"
+  },
+  {
+    "year": 2008,
+    "seed": 13,
+    "underdog": "Winthrop",
+    "favorite": "Washington State",
+    "odds": 425,
+    "won": false,
+    "game_date": "2008-03-20"
+  },
+  {
+    "year": 2008,
+    "seed": 13,
+    "underdog": "Oral Roberts",
+    "favorite": "Pittsburgh",
+    "odds": 345,
+    "won": false,
+    "game_date": "2008-03-20"
+  },
+  {
+    "year": 2008,
+    "seed": 13,
+    "underdog": "Siena",
+    "favorite": "Vanderbilt",
+    "odds": 245,
+    "won": true,
+    "game_date": "2008-03-21"
+  },
+  {
+    "year": 2008,
+    "seed": 13,
+    "underdog": "San Diego",
+    "favorite": "Connecticut",
+    "odds": 650,
+    "won": true,
+    "game_date": "2008-03-21"
+  },
+  {
+    "year": 2008,
+    "seed": 14,
+    "underdog": "Georgia",
+    "favorite": "Xavier",
+    "odds": 395,
+    "won": false,
+    "game_date": "2008-03-20"
+  },
+  {
+    "year": 2008,
+    "seed": 14,
+    "underdog": "Cal State Fullerton",
+    "favorite": "Wisconsin",
+    "odds": 650,
+    "won": false,
+    "game_date": "2008-03-20"
+  },
+  {
+    "year": 2008,
+    "seed": 14,
+    "underdog": "Cornell",
+    "favorite": "Stanford",
+    "odds": 1500,
+    "won": false,
+    "game_date": "2008-03-20"
+  },
+  {
+    "year": 2008,
+    "seed": 14,
+    "underdog": "Boise State",
+    "favorite": "Louisville",
+    "odds": 1000,
+    "won": false,
+    "game_date": "2008-03-21"
+  },
+  {
+    "year": 2008,
+    "seed": 15,
+    "underdog": "Belmont",
+    "favorite": "Duke",
+    "odds": 2250,
+    "won": false,
+    "game_date": "2008-03-20"
+  },
+  {
+    "year": 2008,
+    "seed": 15,
+    "underdog": "UMBC",
+    "favorite": "Georgetown",
+    "odds": 1500,
+    "won": false,
+    "game_date": "2008-03-21"
+  },
+  {
+    "year": 2008,
+    "seed": 15,
+    "underdog": "Austin Peay",
+    "favorite": "Texas",
+    "odds": 950,
+    "won": false,
+    "game_date": "2008-03-21"
+  },
+  {
+    "year": 2008,
+    "seed": 15,
+    "underdog": "American",
+    "favorite": "Tennessee",
+    "odds": 2000,
+    "won": false,
+    "game_date": "2008-03-21"
+  },
+  {
+    "year": 2009,
+    "seed": 11,
+    "underdog": "VCU",
+    "favorite": "UCLA",
+    "odds": 310,
+    "won": false,
+    "game_date": "2009-03-19"
+  },
+  {
+    "year": 2009,
+    "seed": 11,
+    "underdog": "Temple",
+    "favorite": "Arizona State",
+    "odds": 185,
+    "won": false,
+    "game_date": "2009-03-20"
+  },
+  {
+    "year": 2009,
+    "seed": 11,
+    "underdog": "Dayton",
+    "favorite": "West Virginia",
+    "odds": 470,
+    "won": true,
+    "game_date": "2009-03-20"
+  },
+  {
+    "year": 2009,
+    "seed": 11,
+    "underdog": "Utah State",
+    "favorite": "Marquette",
+    "odds": 225,
+    "won": false,
+    "game_date": "2009-03-20"
+  },
+  {
+    "year": 2009,
+    "seed": 12,
+    "underdog": "Northern Iowa",
+    "favorite": "Purdue",
+    "odds": 330,
+    "won": false,
+    "game_date": "2009-03-19"
+  },
+  {
+    "year": 2009,
+    "seed": 12,
+    "underdog": "Western Kentucky",
+    "favorite": "Illinois",
+    "odds": 175,
+    "won": true,
+    "game_date": "2009-03-19"
+  },
+  {
+    "year": 2009,
+    "seed": 12,
+    "underdog": "Arizona",
+    "favorite": "Utah",
+    "odds": 100,
+    "won": true,
+    "game_date": "2009-03-20"
+  },
+  {
+    "year": 2009,
+    "seed": 12,
+    "underdog": "Wisconsin",
+    "favorite": "Florida State",
+    "odds": 135,
+    "won": true,
+    "game_date": "2009-03-20"
+  },
+  {
+    "year": 2009,
+    "seed": 13,
+    "underdog": "Mississippi State",
+    "favorite": "Washington",
+    "odds": 210,
+    "won": false,
+    "game_date": "2009-03-19"
+  },
+  {
+    "year": 2009,
+    "seed": 13,
+    "underdog": "Akron",
+    "favorite": "Gonzaga",
+    "odds": 840,
+    "won": false,
+    "game_date": "2009-03-19"
+  },
+  {
+    "year": 2009,
+    "seed": 13,
+    "underdog": "Cleveland State",
+    "favorite": "Wake Forest",
+    "odds": 295,
+    "won": true,
+    "game_date": "2009-03-20"
+  },
+  {
+    "year": 2009,
+    "seed": 13,
+    "underdog": "Portland State",
+    "favorite": "Xavier",
+    "odds": 450,
+    "won": false,
+    "game_date": "2009-03-20"
+  },
+  {
+    "year": 2009,
+    "seed": 14,
+    "underdog": "American",
+    "favorite": "Villanova",
+    "odds": 1050,
+    "won": false,
+    "game_date": "2009-03-19"
+  },
+  {
+    "year": 2009,
+    "seed": 14,
+    "underdog": "Stephen F. Austin",
+    "favorite": "Syracuse",
+    "odds": 510,
+    "won": false,
+    "game_date": "2009-03-20"
+  },
+  {
+    "year": 2009,
+    "seed": 14,
+    "underdog": "North Dakota State",
+    "favorite": "Kansas",
+    "odds": 360,
+    "won": false,
+    "game_date": "2009-03-20"
+  },
+  {
+    "year": 2009,
+    "seed": 14,
+    "underdog": "Cornell",
+    "favorite": "Missouri",
+    "odds": 775,
+    "won": false,
+    "game_date": "2009-03-20"
+  },
+  {
+    "year": 2009,
+    "seed": 15,
+    "underdog": "Binghamton",
+    "favorite": "Duke",
+    "odds": 4100,
+    "won": false,
+    "game_date": "2009-03-19"
+  },
+  {
+    "year": 2009,
+    "seed": 15,
+    "underdog": "Cal State Northridge",
+    "favorite": "Memphis",
+    "odds": 3100,
+    "won": false,
+    "game_date": "2009-03-19"
+  },
+  {
+    "year": 2009,
+    "seed": 15,
+    "underdog": "Morgan State",
+    "favorite": "Oklahoma",
+    "odds": 1040,
+    "won": false,
+    "game_date": "2009-03-19"
+  },
+  {
+    "year": 2009,
+    "seed": 15,
+    "underdog": "Robert Morris",
+    "favorite": "Michigan State",
+    "odds": 1050,
+    "won": false,
+    "game_date": "2009-03-20"
+  },
+  {
+    "year": 2010,
+    "seed": 11,
+    "underdog": "San Diego State",
+    "favorite": "Tennessee",
+    "odds": 135,
+    "won": false,
+    "game_date": "2010-03-18"
+  },
+  {
+    "year": 2010,
+    "seed": 11,
+    "underdog": "Old Dominion",
+    "favorite": "Notre Dame",
+    "odds": 115,
+    "won": true,
+    "game_date": "2010-03-18"
+  },
+  {
+    "year": 2010,
+    "seed": 11,
+    "underdog": "Washington",
+    "favorite": "Marquette",
+    "odds": -102,
+    "won": true,
+    "game_date": "2010-03-18"
+  },
+  {
+    "year": 2010,
+    "seed": 11,
+    "underdog": "Minnesota",
+    "favorite": "Xavier",
+    "odds": 105,
+    "won": false,
+    "game_date": "2010-03-19"
+  },
+  {
+    "year": 2010,
+    "seed": 12,
+    "underdog": "UTEP",
+    "favorite": "Butler",
+    "odds": 130,
+    "won": false,
+    "game_date": "2010-03-18"
+  },
+  {
+    "year": 2010,
+    "seed": 12,
+    "underdog": "Cornell",
+    "favorite": "Temple",
+    "odds": 145,
+    "won": true,
+    "game_date": "2010-03-19"
+  },
+  {
+    "year": 2010,
+    "seed": 12,
+    "underdog": "New Mexico State",
+    "favorite": "Michigan State",
+    "odds": 700,
+    "won": false,
+    "game_date": "2010-03-19"
+  },
+  {
+    "year": 2010,
+    "seed": 12,
+    "underdog": "Utah State",
+    "favorite": "Texas A&M",
+    "odds": 138,
+    "won": false,
+    "game_date": "2010-03-19"
+  },
+  {
+    "year": 2010,
+    "seed": 13,
+    "underdog": "Murray State",
+    "favorite": "Vanderbilt",
+    "odds": 125,
+    "won": true,
+    "game_date": "2010-03-18"
+  },
+  {
+    "year": 2010,
+    "seed": 13,
+    "underdog": "Wofford",
+    "favorite": "Wisconsin",
+    "odds": 500,
+    "won": false,
+    "game_date": "2010-03-19"
+  },
+  {
+    "year": 2010,
+    "seed": 13,
+    "underdog": "Houston",
+    "favorite": "Maryland",
+    "odds": 415,
+    "won": false,
+    "game_date": "2010-03-19"
+  },
+  {
+    "year": 2010,
+    "seed": 13,
+    "underdog": "Siena",
+    "favorite": "Purdue",
+    "odds": 178,
+    "won": false,
+    "game_date": "2010-03-19"
+  },
+  {
+    "year": 2010,
+    "seed": 14,
+    "underdog": "Ohio",
+    "favorite": "Georgetown",
+    "odds": 925,
+    "won": true,
+    "game_date": "2010-03-18"
+  },
+  {
+    "year": 2010,
+    "seed": 14,
+    "underdog": "Sam Houston",
+    "favorite": "Baylor",
+    "odds": 425,
+    "won": false,
+    "game_date": "2010-03-18"
+  },
+  {
+    "year": 2010,
+    "seed": 14,
+    "underdog": "Montana",
+    "favorite": "New Mexico",
+    "odds": 350,
+    "won": false,
+    "game_date": "2010-03-18"
+  },
+  {
+    "year": 2010,
+    "seed": 14,
+    "underdog": "Oakland",
+    "favorite": "Pittsburgh",
+    "odds": 415,
+    "won": false,
+    "game_date": "2010-03-19"
+  },
+  {
+    "year": 2010,
+    "seed": 15,
+    "underdog": "Robert Morris",
+    "favorite": "Villanova",
+    "odds": 2000,
+    "won": false,
+    "game_date": "2010-03-18"
+  },
+  {
+    "year": 2010,
+    "seed": 15,
+    "underdog": "North Texas",
+    "favorite": "Kansas State",
+    "odds": 1450,
+    "won": false,
+    "game_date": "2010-03-18"
+  },
+  {
+    "year": 2010,
+    "seed": 15,
+    "underdog": "Morgan State",
+    "favorite": "West Virginia",
+    "odds": 1700,
+    "won": false,
+    "game_date": "2010-03-19"
+  },
+  {
+    "year": 2010,
+    "seed": 15,
+    "underdog": "UC Santa Barbara",
+    "favorite": "Ohio State",
+    "odds": 2250,
+    "won": false,
+    "game_date": "2010-03-19"
+  },
+  {
+    "year": 2011,
+    "seed": 11,
+    "underdog": "Missouri",
+    "favorite": "Cincinnati",
+    "odds": -107,
+    "won": false,
+    "game_date": "2011-03-17"
+  },
+  {
+    "year": 2011,
+    "seed": 11,
+    "underdog": "Gonzaga",
+    "favorite": "St. John's",
+    "odds": -114,
+    "won": true,
+    "game_date": "2011-03-17"
+  },
+  {
+    "year": 2011,
+    "seed": 11,
+    "underdog": "Marquette",
+    "favorite": "Xavier",
+    "odds": -105,
+    "won": true,
+    "game_date": "2011-03-18"
+  },
+  {
+    "year": 2011,
+    "seed": 11,
+    "underdog": "VCU",
+    "favorite": "Georgetown",
+    "odds": 220,
+    "won": true,
+    "game_date": "2011-03-18"
+  },
+  {
+    "year": 2011,
+    "seed": 12,
+    "underdog": "Clemson",
+    "favorite": "West Virginia",
+    "odds": 113,
+    "won": false,
+    "game_date": "2011-03-17"
+  },
+  {
+    "year": 2011,
+    "seed": 12,
+    "underdog": "Richmond",
+    "favorite": "Vanderbilt",
+    "odds": 138,
+    "won": true,
+    "game_date": "2011-03-17"
+  },
+  {
+    "year": 2011,
+    "seed": 12,
+    "underdog": "Utah State",
+    "favorite": "Kansas State",
+    "odds": 101,
+    "won": false,
+    "game_date": "2011-03-17"
+  },
+  {
+    "year": 2011,
+    "seed": 12,
+    "underdog": "Memphis",
+    "favorite": "Arizona",
+    "odds": 215,
+    "won": false,
+    "game_date": "2011-03-18"
+  },
+  {
+    "year": 2011,
+    "seed": 13,
+    "underdog": "Princeton",
+    "favorite": "Kentucky",
+    "odds": 791,
+    "won": false,
+    "game_date": "2011-03-17"
+  },
+  {
+    "year": 2011,
+    "seed": 13,
+    "underdog": "Morehead State",
+    "favorite": "Louisville",
+    "odds": 455,
+    "won": true,
+    "game_date": "2011-03-17"
+  },
+  {
+    "year": 2011,
+    "seed": 13,
+    "underdog": "Belmont",
+    "favorite": "Wisconsin",
+    "odds": 164,
+    "won": false,
+    "game_date": "2011-03-17"
+  },
+  {
+    "year": 2011,
+    "seed": 13,
+    "underdog": "Oakland",
+    "favorite": "Texas",
+    "odds": 500,
+    "won": false,
+    "game_date": "2011-03-18"
+  },
+  {
+    "year": 2011,
+    "seed": 14,
+    "underdog": "Bucknell",
+    "favorite": "Connecticut",
+    "odds": 472,
+    "won": false,
+    "game_date": "2011-03-17"
+  },
+  {
+    "year": 2011,
+    "seed": 14,
+    "underdog": "Wofford",
+    "favorite": "BYU",
+    "odds": 342,
+    "won": false,
+    "game_date": "2011-03-17"
+  },
+  {
+    "year": 2011,
+    "seed": 14,
+    "underdog": "Indiana State",
+    "favorite": "Syracuse",
+    "odds": 850,
+    "won": false,
+    "game_date": "2011-03-18"
+  },
+  {
+    "year": 2011,
+    "seed": 14,
+    "underdog": "Saint Peter's",
+    "favorite": "Purdue",
+    "odds": 1000,
+    "won": false,
+    "game_date": "2011-03-18"
+  },
+  {
+    "year": 2011,
+    "seed": 15,
+    "underdog": "UC Santa Barbara",
+    "favorite": "Florida",
+    "odds": 725,
+    "won": false,
+    "game_date": "2011-03-17"
+  },
+  {
+    "year": 2011,
+    "seed": 15,
+    "underdog": "Northern Colorado",
+    "favorite": "San Diego State",
+    "odds": 1132,
+    "won": false,
+    "game_date": "2011-03-17"
+  },
+  {
+    "year": 2011,
+    "seed": 15,
+    "underdog": "Long Island",
+    "favorite": "North Carolina",
+    "odds": 1650,
+    "won": false,
+    "game_date": "2011-03-18"
+  },
+  {
+    "year": 2011,
+    "seed": 15,
+    "underdog": "Akron",
+    "favorite": "Notre Dame",
+    "odds": 1100,
+    "won": false,
+    "game_date": "2011-03-18"
+  },
+  {
+    "year": 2012,
+    "seed": 11,
+    "underdog": "Colorado State",
+    "favorite": "Murray State",
+    "odds": 190,
+    "won": false,
+    "game_date": "2012-03-15"
+  },
+  {
+    "year": 2012,
+    "seed": 11,
+    "underdog": "Colorado",
+    "favorite": "UNLV",
+    "odds": 220,
+    "won": true,
+    "game_date": "2012-03-15"
+  },
+  {
+    "year": 2012,
+    "seed": 11,
+    "underdog": "NC State",
+    "favorite": "San Diego State",
+    "odds": -160,
+    "won": true,
+    "game_date": "2012-03-16"
+  },
+  {
+    "year": 2012,
+    "seed": 11,
+    "underdog": "Texas",
+    "favorite": "Cincinnati",
+    "odds": 135,
+    "won": false,
+    "game_date": "2012-03-16"
+  },
+  {
+    "year": 2012,
+    "seed": 12,
+    "underdog": "Harvard",
+    "favorite": "Vanderbilt",
+    "odds": 215,
+    "won": false,
+    "game_date": "2012-03-15"
+  },
+  {
+    "year": 2012,
+    "seed": 12,
+    "underdog": "VCU",
+    "favorite": "Wichita State",
+    "odds": 285,
+    "won": true,
+    "game_date": "2012-03-15"
+  },
+  {
+    "year": 2012,
+    "seed": 12,
+    "underdog": "Long Beach State",
+    "favorite": "New Mexico",
+    "odds": 170,
+    "won": false,
+    "game_date": "2012-03-15"
+  },
+  {
+    "year": 2012,
+    "seed": 12,
+    "underdog": "South Florida",
+    "favorite": "Temple",
+    "odds": 145,
+    "won": true,
+    "game_date": "2012-03-16"
+  },
+  {
+    "year": 2012,
+    "seed": 13,
+    "underdog": "Montana",
+    "favorite": "Wisconsin",
+    "odds": 350,
+    "won": false,
+    "game_date": "2012-03-15"
+  },
+  {
+    "year": 2012,
+    "seed": 13,
+    "underdog": "New Mexico State",
+    "favorite": "Indiana",
+    "odds": 225,
+    "won": false,
+    "game_date": "2012-03-15"
+  },
+  {
+    "year": 2012,
+    "seed": 13,
+    "underdog": "Davidson",
+    "favorite": "Louisville",
+    "odds": 215,
+    "won": false,
+    "game_date": "2012-03-15"
+  },
+  {
+    "year": 2012,
+    "seed": 13,
+    "underdog": "Ohio",
+    "favorite": "Michigan",
+    "odds": 200,
+    "won": true,
+    "game_date": "2012-03-16"
+  },
+  {
+    "year": 2012,
+    "seed": 14,
+    "underdog": "BYU",
+    "favorite": "Marquette",
+    "odds": 210,
+    "won": false,
+    "game_date": "2012-03-15"
+  },
+  {
+    "year": 2012,
+    "seed": 14,
+    "underdog": "South Dakota State",
+    "favorite": "Baylor",
+    "odds": 310,
+    "won": false,
+    "game_date": "2012-03-15"
+  },
+  {
+    "year": 2012,
+    "seed": 14,
+    "underdog": "Belmont",
+    "favorite": "Georgetown",
+    "odds": 150,
+    "won": false,
+    "game_date": "2012-03-16"
+  },
+  {
+    "year": 2012,
+    "seed": 14,
+    "underdog": "St. Bonaventure",
+    "favorite": "Florida State",
+    "odds": 255,
+    "won": false,
+    "game_date": "2012-03-16"
+  },
+  {
+    "year": 2012,
+    "seed": 15,
+    "underdog": "Loyola Maryland",
+    "favorite": "Ohio State",
+    "odds": 2005,
+    "won": false,
+    "game_date": "2012-03-15"
+  },
+  {
+    "year": 2012,
+    "seed": 15,
+    "underdog": "Norfolk State",
+    "favorite": "Missouri",
+    "odds": 3255,
+    "won": true,
+    "game_date": "2012-03-16"
+  },
+  {
+    "year": 2012,
+    "seed": 15,
+    "underdog": "Detroit Mercy",
+    "favorite": "Kansas",
+    "odds": 915,
+    "won": false,
+    "game_date": "2012-03-16"
+  },
+  {
+    "year": 2012,
+    "seed": 15,
+    "underdog": "Lehigh",
+    "favorite": "Duke",
+    "odds": 555,
+    "won": true,
+    "game_date": "2012-03-16"
+  },
+  {
+    "year": 2013,
+    "seed": 11,
+    "underdog": "Bucknell",
+    "favorite": "Butler",
+    "odds": 150,
+    "won": false,
+    "game_date": "2013-03-21"
+  },
+  {
+    "year": 2013,
+    "seed": 11,
+    "underdog": "Saint Mary's",
+    "favorite": "Memphis",
+    "odds": 110,
+    "won": false,
+    "game_date": "2013-03-21"
+  },
+  {
+    "year": 2013,
+    "seed": 11,
+    "underdog": "Belmont",
+    "favorite": "Arizona",
+    "odds": 175,
+    "won": false,
+    "game_date": "2013-03-21"
+  },
+  {
+    "year": 2013,
+    "seed": 11,
+    "underdog": "Minnesota",
+    "favorite": "UCLA",
+    "odds": -170,
+    "won": true,
+    "game_date": "2013-03-22"
+  },
+  {
+    "year": 2013,
+    "seed": 12,
+    "underdog": "Akron",
+    "favorite": "VCU",
+    "odds": 315,
+    "won": false,
+    "game_date": "2013-03-21"
+  },
+  {
+    "year": 2013,
+    "seed": 12,
+    "underdog": "Oregon",
+    "favorite": "Oklahoma State",
+    "odds": 115,
+    "won": true,
+    "game_date": "2013-03-21"
+  },
+  {
+    "year": 2013,
+    "seed": 12,
+    "underdog": "California",
+    "favorite": "UNLV",
+    "odds": 165,
+    "won": true,
+    "game_date": "2013-03-21"
+  },
+  {
+    "year": 2013,
+    "seed": 12,
+    "underdog": "Ole Miss",
+    "favorite": "Wisconsin",
+    "odds": 255,
+    "won": true,
+    "game_date": "2013-03-22"
+  },
+  {
+    "year": 2013,
+    "seed": 13,
+    "underdog": "South Dakota State",
+    "favorite": "Michigan",
+    "odds": 700,
+    "won": false,
+    "game_date": "2013-03-21"
+  },
+  {
+    "year": 2013,
+    "seed": 13,
+    "underdog": "New Mexico State",
+    "favorite": "Saint Louis",
+    "odds": 395,
+    "won": false,
+    "game_date": "2013-03-21"
+  },
+  {
+    "year": 2013,
+    "seed": 13,
+    "underdog": "Montana",
+    "favorite": "Syracuse",
+    "odds": 790,
+    "won": false,
+    "game_date": "2013-03-21"
+  },
+  {
+    "year": 2013,
+    "seed": 13,
+    "underdog": "La Salle",
+    "favorite": "Kansas State",
+    "odds": 220,
+    "won": true,
+    "game_date": "2013-03-22"
+  },
+  {
+    "year": 2013,
+    "seed": 14,
+    "underdog": "Davidson",
+    "favorite": "Marquette",
+    "odds": 160,
+    "won": false,
+    "game_date": "2013-03-21"
+  },
+  {
+    "year": 2013,
+    "seed": 14,
+    "underdog": "Valparaiso",
+    "favorite": "Michigan State",
+    "odds": 450,
+    "won": false,
+    "game_date": "2013-03-21"
+  },
+  {
+    "year": 2013,
+    "seed": 14,
+    "underdog": "Harvard",
+    "favorite": "New Mexico",
+    "odds": 545,
+    "won": true,
+    "game_date": "2013-03-21"
+  },
+  {
+    "year": 2013,
+    "seed": 14,
+    "underdog": "Northwestern State",
+    "favorite": "Florida",
+    "odds": 2985,
+    "won": false,
+    "game_date": "2013-03-22"
+  },
+  {
+    "year": 2013,
+    "seed": 15,
+    "underdog": "Albany",
+    "favorite": "Duke",
+    "odds": 3355,
+    "won": false,
+    "game_date": "2013-03-22"
+  },
+  {
+    "year": 2013,
+    "seed": 15,
+    "underdog": "Florida Gulf Coast",
+    "favorite": "Georgetown",
+    "odds": 750,
+    "won": true,
+    "game_date": "2013-03-22"
+  },
+  {
+    "year": 2013,
+    "seed": 15,
+    "underdog": "Iona",
+    "favorite": "Ohio State",
+    "odds": 1100,
+    "won": false,
+    "game_date": "2013-03-22"
+  },
+  {
+    "year": 2013,
+    "seed": 15,
+    "underdog": "Pacific",
+    "favorite": "Miami (FL)",
+    "odds": 895,
+    "won": false,
+    "game_date": "2013-03-22"
+  },
+  {
+    "year": 2014,
+    "seed": 11,
+    "underdog": "Dayton",
+    "favorite": "Ohio State",
+    "odds": 260,
+    "won": true,
+    "game_date": "2014-03-20"
+  },
+  {
+    "year": 2014,
+    "seed": 11,
+    "underdog": "Tennessee",
+    "favorite": "Massachusetts",
+    "odds": -275,
+    "won": true,
+    "game_date": "2014-03-21"
+  },
+  {
+    "year": 2014,
+    "seed": 11,
+    "underdog": "Nebraska",
+    "favorite": "Baylor",
+    "odds": 155,
+    "won": false,
+    "game_date": "2014-03-21"
+  },
+  {
+    "year": 2014,
+    "seed": 11,
+    "underdog": "Providence",
+    "favorite": "North Carolina",
+    "odds": 175,
+    "won": false,
+    "game_date": "2014-03-21"
+  },
+  {
+    "year": 2014,
+    "seed": 12,
+    "underdog": "NC State",
+    "favorite": "Saint Louis",
+    "odds": 145,
+    "won": false,
+    "game_date": "2014-03-20"
+  },
+  {
+    "year": 2014,
+    "seed": 12,
+    "underdog": "Harvard",
+    "favorite": "Cincinnati",
+    "odds": 135,
+    "won": true,
+    "game_date": "2014-03-20"
+  },
+  {
+    "year": 2014,
+    "seed": 12,
+    "underdog": "North Dakota State",
+    "favorite": "Oklahoma",
+    "odds": 150,
+    "won": true,
+    "game_date": "2014-03-20"
+  },
+  {
+    "year": 2014,
+    "seed": 12,
+    "underdog": "Stephen F. Austin",
+    "favorite": "VCU",
+    "odds": 215,
+    "won": true,
+    "game_date": "2014-03-21"
+  },
+  {
+    "year": 2014,
+    "seed": 13,
+    "underdog": "Manhattan",
+    "favorite": "Louisville",
+    "odds": 1195,
+    "won": false,
+    "game_date": "2014-03-20"
+  },
+  {
+    "year": 2014,
+    "seed": 13,
+    "underdog": "Delaware",
+    "favorite": "Michigan State",
+    "odds": 1000,
+    "won": false,
+    "game_date": "2014-03-20"
+  },
+  {
+    "year": 2014,
+    "seed": 13,
+    "underdog": "New Mexico State",
+    "favorite": "San Diego State",
+    "odds": 325,
+    "won": false,
+    "game_date": "2014-03-20"
+  },
+  {
+    "year": 2014,
+    "seed": 13,
+    "underdog": "Tulsa",
+    "favorite": "UCLA",
+    "odds": 340,
+    "won": false,
+    "game_date": "2014-03-21"
+  },
+  {
+    "year": 2014,
+    "seed": 14,
+    "underdog": "Western Michigan",
+    "favorite": "Syracuse",
+    "odds": 780,
+    "won": false,
+    "game_date": "2014-03-20"
+  },
+  {
+    "year": 2014,
+    "seed": 14,
+    "underdog": "Mercer",
+    "favorite": "Duke",
+    "odds": 850,
+    "won": true,
+    "game_date": "2014-03-21"
+  },
+  {
+    "year": 2014,
+    "seed": 14,
+    "underdog": "Louisiana",
+    "favorite": "Creighton",
+    "odds": 790,
+    "won": false,
+    "game_date": "2014-03-21"
+  },
+  {
+    "year": 2014,
+    "seed": 14,
+    "underdog": "North Carolina Central",
+    "favorite": "Iowa State",
+    "odds": 345,
+    "won": false,
+    "game_date": "2014-03-21"
+  },
+  {
+    "year": 2014,
+    "seed": 15,
+    "underdog": "UW-Milwaukee",
+    "favorite": "Villanova",
+    "odds": 1400,
+    "won": false,
+    "game_date": "2014-03-20"
+  },
+  {
+    "year": 2014,
+    "seed": 15,
+    "underdog": "American",
+    "favorite": "Wisconsin",
+    "odds": 915,
+    "won": false,
+    "game_date": "2014-03-20"
+  },
+  {
+    "year": 2014,
+    "seed": 15,
+    "underdog": "Wofford",
+    "favorite": "Michigan",
+    "odds": 1010,
+    "won": false,
+    "game_date": "2014-03-20"
+  },
+  {
+    "year": 2014,
+    "seed": 15,
+    "underdog": "Eastern Kentucky",
+    "favorite": "Kansas",
+    "odds": 840,
+    "won": false,
+    "game_date": "2014-03-21"
+  },
+  {
+    "year": 2015,
+    "seed": 11,
+    "underdog": "Ole Miss",
+    "favorite": "Xavier",
+    "odds": 120,
+    "won": false,
+    "game_date": "2015-03-19"
+  },
+  {
+    "year": 2015,
+    "seed": 11,
+    "underdog": "Texas",
+    "favorite": "Butler",
+    "odds": -150,
+    "won": false,
+    "game_date": "2015-03-19"
+  },
+  {
+    "year": 2015,
+    "seed": 11,
+    "underdog": "UCLA",
+    "favorite": "SMU",
+    "odds": 160,
+    "won": true,
+    "game_date": "2015-03-19"
+  },
+  {
+    "year": 2015,
+    "seed": 11,
+    "underdog": "Dayton",
+    "favorite": "Providence",
+    "odds": 140,
+    "won": true,
+    "game_date": "2015-03-20"
+  },
+  {
+    "year": 2015,
+    "seed": 12,
+    "underdog": "Wofford",
+    "favorite": "Arkansas",
+    "odds": 280,
+    "won": false,
+    "game_date": "2015-03-19"
+  },
+  {
+    "year": 2015,
+    "seed": 12,
+    "underdog": "Stephen F. Austin",
+    "favorite": "Utah",
+    "odds": 255,
+    "won": false,
+    "game_date": "2015-03-19"
+  },
+  {
+    "year": 2015,
+    "seed": 12,
+    "underdog": "Buffalo",
+    "favorite": "West Virginia",
+    "odds": 180,
+    "won": false,
+    "game_date": "2015-03-20"
+  },
+  {
+    "year": 2015,
+    "seed": 12,
+    "underdog": "Wyoming",
+    "favorite": "Northern Iowa",
+    "odds": 250,
+    "won": false,
+    "game_date": "2015-03-20"
+  },
+  {
+    "year": 2015,
+    "seed": 13,
+    "underdog": "Harvard",
+    "favorite": "North Carolina",
+    "odds": 445,
+    "won": false,
+    "game_date": "2015-03-19"
+  },
+  {
+    "year": 2015,
+    "seed": 13,
+    "underdog": "Eastern Washington",
+    "favorite": "Georgetown",
+    "odds": 300,
+    "won": false,
+    "game_date": "2015-03-19"
+  },
+  {
+    "year": 2015,
+    "seed": 13,
+    "underdog": "Valparaiso",
+    "favorite": "Maryland",
+    "odds": 195,
+    "won": false,
+    "game_date": "2015-03-20"
+  },
+  {
+    "year": 2015,
+    "seed": 13,
+    "underdog": "UC Irvine",
+    "favorite": "Louisville",
+    "odds": 365,
+    "won": false,
+    "game_date": "2015-03-20"
+  },
+  {
+    "year": 2015,
+    "seed": 14,
+    "underdog": "Georgia State",
+    "favorite": "Baylor",
+    "odds": 415,
+    "won": true,
+    "game_date": "2015-03-19"
+  },
+  {
+    "year": 2015,
+    "seed": 14,
+    "underdog": "Northeastern",
+    "favorite": "Notre Dame",
+    "odds": 605,
+    "won": false,
+    "game_date": "2015-03-19"
+  },
+  {
+    "year": 2015,
+    "seed": 14,
+    "underdog": "UAB",
+    "favorite": "Iowa State",
+    "odds": 1030,
+    "won": true,
+    "game_date": "2015-03-19"
+  },
+  {
+    "year": 2015,
+    "seed": 14,
+    "underdog": "Albany",
+    "favorite": "Oklahoma",
+    "odds": 780,
+    "won": false,
+    "game_date": "2015-03-20"
+  },
+  {
+    "year": 2015,
+    "seed": 15,
+    "underdog": "Texas Southern",
+    "favorite": "Arizona",
+    "odds": 2460,
+    "won": false,
+    "game_date": "2015-03-19"
+  },
+  {
+    "year": 2015,
+    "seed": 15,
+    "underdog": "Belmont",
+    "favorite": "Virginia",
+    "odds": 1455,
+    "won": false,
+    "game_date": "2015-03-20"
+  },
+  {
+    "year": 2015,
+    "seed": 15,
+    "underdog": "New Mexico State",
+    "favorite": "Kansas",
+    "odds": 455,
+    "won": false,
+    "game_date": "2015-03-20"
+  },
+  {
+    "year": 2015,
+    "seed": 15,
+    "underdog": "North Dakota State",
+    "favorite": "Gonzaga",
+    "odds": 1690,
+    "won": false,
+    "game_date": "2015-03-20"
+  },
+  {
+    "year": 2016,
+    "seed": 11,
+    "underdog": "Wichita State",
+    "favorite": "Arizona",
+    "odds": -110,
+    "won": true,
+    "game_date": "2016-03-17"
+  },
+  {
+    "year": 2016,
+    "seed": 11,
+    "underdog": "Gonzaga",
+    "favorite": "Seton Hall",
+    "odds": -135,
+    "won": true,
+    "game_date": "2016-03-17"
+  },
+  {
+    "year": 2016,
+    "seed": 11,
+    "underdog": "Michigan",
+    "favorite": "Notre Dame",
+    "odds": 135,
+    "won": false,
+    "game_date": "2016-03-18"
+  },
+  {
+    "year": 2016,
+    "seed": 11,
+    "underdog": "Northern Iowa",
+    "favorite": "Texas",
+    "odds": 140,
+    "won": true,
+    "game_date": "2016-03-18"
+  },
+  {
+    "year": 2016,
+    "seed": 12,
+    "underdog": "Yale",
+    "favorite": "Baylor",
+    "odds": 210,
+    "won": true,
+    "game_date": "2016-03-17"
+  },
+  {
+    "year": 2016,
+    "seed": 12,
+    "underdog": "Chattanooga",
+    "favorite": "Indiana",
+    "odds": 500,
+    "won": false,
+    "game_date": "2016-03-17"
+  },
+  {
+    "year": 2016,
+    "seed": 12,
+    "underdog": "Arkansas-Little Rock",
+    "favorite": "Purdue",
+    "odds": 330,
+    "won": true,
+    "game_date": "2016-03-17"
+  },
+  {
+    "year": 2016,
+    "seed": 12,
+    "underdog": "South Dakota State",
+    "favorite": "Maryland",
+    "odds": 380,
+    "won": false,
+    "game_date": "2016-03-18"
+  },
+  {
+    "year": 2016,
+    "seed": 13,
+    "underdog": "UNC Wilmington",
+    "favorite": "Duke",
+    "odds": 425,
+    "won": false,
+    "game_date": "2016-03-17"
+  },
+  {
+    "year": 2016,
+    "seed": 13,
+    "underdog": "Stony Brook",
+    "favorite": "Kentucky",
+    "odds": 800,
+    "won": false,
+    "game_date": "2016-03-17"
+  },
+  {
+    "year": 2016,
+    "seed": 13,
+    "underdog": "Iona",
+    "favorite": "Iowa State",
+    "odds": 250,
+    "won": false,
+    "game_date": "2016-03-17"
+  },
+  {
+    "year": 2016,
+    "seed": 13,
+    "underdog": "Hawaii",
+    "favorite": "California",
+    "odds": 210,
+    "won": true,
+    "game_date": "2016-03-18"
+  },
+  {
+    "year": 2016,
+    "seed": 14,
+    "underdog": "Buffalo",
+    "favorite": "Miami (FL)",
+    "odds": 800,
+    "won": false,
+    "game_date": "2016-03-17"
+  },
+  {
+    "year": 2016,
+    "seed": 14,
+    "underdog": "Fresno State",
+    "favorite": "Utah",
+    "odds": 360,
+    "won": false,
+    "game_date": "2016-03-17"
+  },
+  {
+    "year": 2016,
+    "seed": 14,
+    "underdog": "Stephen F. Austin",
+    "favorite": "West Virginia",
+    "odds": 245,
+    "won": true,
+    "game_date": "2016-03-18"
+  },
+  {
+    "year": 2016,
+    "seed": 14,
+    "underdog": "Wisconsin-Green Bay",
+    "favorite": "Texas A&M",
+    "odds": 726,
+    "won": false,
+    "game_date": "2016-03-18"
+  },
+  {
+    "year": 2016,
+    "seed": 15,
+    "underdog": "UNC Asheville",
+    "favorite": "Villanova",
+    "odds": 1769,
+    "won": false,
+    "game_date": "2016-03-18"
+  },
+  {
+    "year": 2016,
+    "seed": 15,
+    "underdog": "Cal State Bakersfield",
+    "favorite": "Oklahoma",
+    "odds": 900,
+    "won": false,
+    "game_date": "2016-03-18"
+  },
+  {
+    "year": 2016,
+    "seed": 15,
+    "underdog": "Weber State",
+    "favorite": "Xavier",
+    "odds": 800,
+    "won": false,
+    "game_date": "2016-03-18"
+  },
+  {
+    "year": 2016,
+    "seed": 15,
+    "underdog": "Middle Tennessee",
+    "favorite": "Michigan State",
+    "odds": 1529,
+    "won": true,
+    "game_date": "2016-03-18"
+  },
+  {
+    "year": 2017,
+    "seed": 11,
+    "underdog": "Xavier",
+    "favorite": "Maryland",
+    "odds": 110,
+    "won": true,
+    "game_date": "2017-03-16"
+  },
+  {
+    "year": 2017,
+    "seed": 11,
+    "underdog": "USC",
+    "favorite": "SMU",
+    "odds": 260,
+    "won": true,
+    "game_date": "2017-03-17"
+  },
+  {
+    "year": 2017,
+    "seed": 11,
+    "underdog": "Rhode Island",
+    "favorite": "Creighton",
+    "odds": -135,
+    "won": true,
+    "game_date": "2017-03-17"
+  },
+  {
+    "year": 2017,
+    "seed": 11,
+    "underdog": "Kansas State",
+    "favorite": "Cincinnati",
+    "odds": 140,
+    "won": false,
+    "game_date": "2017-03-17"
+  },
+  {
+    "year": 2017,
+    "seed": 12,
+    "underdog": "Princeton",
+    "favorite": "Notre Dame",
+    "odds": 235,
+    "won": false,
+    "game_date": "2017-03-16"
+  },
+  {
+    "year": 2017,
+    "seed": 12,
+    "underdog": "UNC Wilmington",
+    "favorite": "Virginia",
+    "odds": 290,
+    "won": false,
+    "game_date": "2017-03-16"
+  },
+  {
+    "year": 2017,
+    "seed": 12,
+    "underdog": "Nevada",
+    "favorite": "Iowa State",
+    "odds": 240,
+    "won": false,
+    "game_date": "2017-03-16"
+  },
+  {
+    "year": 2017,
+    "seed": 12,
+    "underdog": "Middle Tennessee",
+    "favorite": "Minnesota",
+    "odds": -125,
+    "won": true,
+    "game_date": "2017-03-16"
+  },
+  {
+    "year": 2017,
+    "seed": 13,
+    "underdog": "Bucknell",
+    "favorite": "West Virginia",
+    "odds": 700,
+    "won": false,
+    "game_date": "2017-03-16"
+  },
+  {
+    "year": 2017,
+    "seed": 13,
+    "underdog": "East Tennessee State",
+    "favorite": "Florida",
+    "odds": 400,
+    "won": false,
+    "game_date": "2017-03-16"
+  },
+  {
+    "year": 2017,
+    "seed": 13,
+    "underdog": "Vermont",
+    "favorite": "Purdue",
+    "odds": 340,
+    "won": false,
+    "game_date": "2017-03-16"
+  },
+  {
+    "year": 2017,
+    "seed": 13,
+    "underdog": "Winthrop",
+    "favorite": "Butler",
+    "odds": 500,
+    "won": false,
+    "game_date": "2017-03-16"
+  },
+  {
+    "year": 2017,
+    "seed": 14,
+    "underdog": "Florida Gulf Coast",
+    "favorite": "Florida State",
+    "odds": 550,
+    "won": false,
+    "game_date": "2017-03-16"
+  },
+  {
+    "year": 2017,
+    "seed": 14,
+    "underdog": "New Mexico State",
+    "favorite": "Baylor",
+    "odds": 600,
+    "won": false,
+    "game_date": "2017-03-17"
+  },
+  {
+    "year": 2017,
+    "seed": 14,
+    "underdog": "Iona",
+    "favorite": "Oregon",
+    "odds": 1000,
+    "won": false,
+    "game_date": "2017-03-17"
+  },
+  {
+    "year": 2017,
+    "seed": 14,
+    "underdog": "Kent State",
+    "favorite": "UCLA",
+    "odds": 1800,
+    "won": false,
+    "game_date": "2017-03-17"
+  },
+  {
+    "year": 2017,
+    "seed": 15,
+    "underdog": "North Dakota",
+    "favorite": "Arizona",
+    "odds": 1700,
+    "won": false,
+    "game_date": "2017-03-16"
+  },
+  {
+    "year": 2017,
+    "seed": 15,
+    "underdog": "Troy",
+    "favorite": "Duke",
+    "odds": 2400,
+    "won": false,
+    "game_date": "2017-03-17"
+  },
+  {
+    "year": 2017,
+    "seed": 15,
+    "underdog": "Jacksonville State",
+    "favorite": "Louisville",
+    "odds": 2500,
+    "won": false,
+    "game_date": "2017-03-17"
+  },
+  {
+    "year": 2017,
+    "seed": 15,
+    "underdog": "Northern Kentucky",
+    "favorite": "Kentucky",
+    "odds": 2500,
+    "won": false,
+    "game_date": "2017-03-17"
+  },
+  {
+    "year": 2018,
+    "seed": 11,
+    "underdog": "San Diego State",
+    "favorite": "Houston",
+    "odds": 172,
+    "won": false,
+    "game_date": "2018-03-15"
+  },
+  {
+    "year": 2018,
+    "seed": 11,
+    "underdog": "Loyola Chicago",
+    "favorite": "Miami (FL)",
+    "odds": 109,
+    "won": true,
+    "game_date": "2018-03-15"
+  },
+  {
+    "year": 2018,
+    "seed": 11,
+    "underdog": "St. Bonaventure",
+    "favorite": "Florida",
+    "odds": 237,
+    "won": false,
+    "game_date": "2018-03-15"
+  },
+  {
+    "year": 2018,
+    "seed": 11,
+    "underdog": "Syracuse",
+    "favorite": "TCU",
+    "odds": 170,
+    "won": true,
+    "game_date": "2018-03-16"
+  },
+  {
+    "year": 2018,
+    "seed": 12,
+    "underdog": "Davidson",
+    "favorite": "Kentucky",
+    "odds": 186,
+    "won": false,
+    "game_date": "2018-03-15"
+  },
+  {
+    "year": 2018,
+    "seed": 12,
+    "underdog": "South Dakota State",
+    "favorite": "Ohio State",
+    "odds": 310,
+    "won": false,
+    "game_date": "2018-03-15"
+  },
+  {
+    "year": 2018,
+    "seed": 12,
+    "underdog": "Murray State",
+    "favorite": "West Virginia",
+    "odds": 447,
+    "won": false,
+    "game_date": "2018-03-16"
+  },
+  {
+    "year": 2018,
+    "seed": 12,
+    "underdog": "New Mexico State",
+    "favorite": "Clemson",
+    "odds": 153,
+    "won": false,
+    "game_date": "2018-03-16"
+  },
+  {
+    "year": 2018,
+    "seed": 13,
+    "underdog": "Buffalo",
+    "favorite": "Arizona",
+    "odds": 441,
+    "won": true,
+    "game_date": "2018-03-15"
+  },
+  {
+    "year": 2018,
+    "seed": 13,
+    "underdog": "UNC Greensboro",
+    "favorite": "Gonzaga",
+    "odds": 664,
+    "won": false,
+    "game_date": "2018-03-15"
+  },
+  {
+    "year": 2018,
+    "seed": 13,
+    "underdog": "Marshall",
+    "favorite": "Wichita State",
+    "odds": 837,
+    "won": true,
+    "game_date": "2018-03-16"
+  },
+  {
+    "year": 2018,
+    "seed": 13,
+    "underdog": "College of Charleston",
+    "favorite": "Auburn",
+    "odds": 339,
+    "won": false,
+    "game_date": "2018-03-16"
+  },
+  {
+    "year": 2018,
+    "seed": 14,
+    "underdog": "Montana",
+    "favorite": "Michigan",
+    "odds": 454,
+    "won": false,
+    "game_date": "2018-03-15"
+  },
+  {
+    "year": 2018,
+    "seed": 14,
+    "underdog": "Wright State",
+    "favorite": "Tennessee",
+    "odds": 562,
+    "won": false,
+    "game_date": "2018-03-15"
+  },
+  {
+    "year": 2018,
+    "seed": 14,
+    "underdog": "Stephen F. Austin",
+    "favorite": "Texas Tech",
+    "odds": 575,
+    "won": false,
+    "game_date": "2018-03-15"
+  },
+  {
+    "year": 2018,
+    "seed": 14,
+    "underdog": "Bucknell",
+    "favorite": "Michigan State",
+    "odds": 912,
+    "won": false,
+    "game_date": "2018-03-16"
+  },
+  {
+    "year": 2018,
+    "seed": 15,
+    "underdog": "Iona",
+    "favorite": "Duke",
+    "odds": 499980,
+    "won": false,
+    "game_date": "2018-03-15"
+  },
+  {
+    "year": 2018,
+    "seed": 15,
+    "underdog": "Lipscomb",
+    "favorite": "North Carolina",
+    "odds": 2158,
+    "won": false,
+    "game_date": "2018-03-16"
+  },
+  {
+    "year": 2018,
+    "seed": 15,
+    "underdog": "Cal State Fullerton",
+    "favorite": "Purdue",
+    "odds": 2028,
+    "won": false,
+    "game_date": "2018-03-16"
+  },
+  {
+    "year": 2018,
+    "seed": 15,
+    "underdog": "Georgia State",
+    "favorite": "Cincinnati",
+    "odds": 947,
+    "won": false,
+    "game_date": "2018-03-16"
+  },
+  {
+    "year": 2019,
+    "seed": 11,
+    "underdog": "Saint Mary's",
+    "favorite": "Villanova",
+    "odds": 170,
+    "won": false,
+    "game_date": "2019-03-21"
+  },
+  {
+    "year": 2019,
+    "seed": 11,
+    "underdog": "Belmont",
+    "favorite": "Maryland",
+    "odds": 145,
+    "won": false,
+    "game_date": "2019-03-21"
+  },
+  {
+    "year": 2019,
+    "seed": 11,
+    "underdog": "Ohio State",
+    "favorite": "Iowa State",
+    "odds": 215,
+    "won": true,
+    "game_date": "2019-03-22"
+  },
+  {
+    "year": 2019,
+    "seed": 11,
+    "underdog": "Arizona State",
+    "favorite": "Buffalo",
+    "odds": 250,
+    "won": false,
+    "game_date": "2019-03-22"
+  },
+  {
+    "year": 2019,
+    "seed": 12,
+    "underdog": "Murray State",
+    "favorite": "Marquette",
+    "odds": 135,
+    "won": true,
+    "game_date": "2019-03-21"
+  },
+  {
+    "year": 2019,
+    "seed": 12,
+    "underdog": "New Mexico State",
+    "favorite": "Auburn",
+    "odds": 230,
+    "won": false,
+    "game_date": "2019-03-21"
+  },
+  {
+    "year": 2019,
+    "seed": 12,
+    "underdog": "Liberty",
+    "favorite": "Mississippi State",
+    "odds": 240,
+    "won": true,
+    "game_date": "2019-03-22"
+  },
+  {
+    "year": 2019,
+    "seed": 12,
+    "underdog": "Oregon",
+    "favorite": "Wisconsin",
+    "odds": 110,
+    "won": true,
+    "game_date": "2019-03-22"
+  },
+  {
+    "year": 2019,
+    "seed": 13,
+    "underdog": "Vermont",
+    "favorite": "Florida State",
+    "odds": 350,
+    "won": false,
+    "game_date": "2019-03-21"
+  },
+  {
+    "year": 2019,
+    "seed": 13,
+    "underdog": "Northeastern",
+    "favorite": "Kansas",
+    "odds": 240,
+    "won": false,
+    "game_date": "2019-03-21"
+  },
+  {
+    "year": 2019,
+    "seed": 13,
+    "underdog": "Saint Louis",
+    "favorite": "Virginia Tech",
+    "odds": 400,
+    "won": false,
+    "game_date": "2019-03-22"
+  },
+  {
+    "year": 2019,
+    "seed": 13,
+    "underdog": "UC Irvine",
+    "favorite": "Kansas State",
+    "odds": 145,
+    "won": true,
+    "game_date": "2019-03-22"
+  },
+  {
+    "year": 2019,
+    "seed": 14,
+    "underdog": "Old Dominion",
+    "favorite": "Purdue",
+    "odds": 650,
+    "won": false,
+    "game_date": "2019-03-21"
+  },
+  {
+    "year": 2019,
+    "seed": 14,
+    "underdog": "Yale",
+    "favorite": "LSU",
+    "odds": 240,
+    "won": false,
+    "game_date": "2019-03-21"
+  },
+  {
+    "year": 2019,
+    "seed": 14,
+    "underdog": "Georgia State",
+    "favorite": "Houston",
+    "odds": 650,
+    "won": false,
+    "game_date": "2019-03-22"
+  },
+  {
+    "year": 2019,
+    "seed": 14,
+    "underdog": "Northern Kentucky",
+    "favorite": "Texas Tech",
+    "odds": 750,
+    "won": false,
+    "game_date": "2019-03-22"
+  },
+  {
+    "year": 2019,
+    "seed": 15,
+    "underdog": "Abilene Christian",
+    "favorite": "Kentucky",
+    "odds": 1500,
+    "won": false,
+    "game_date": "2019-03-21"
+  },
+  {
+    "year": 2019,
+    "seed": 15,
+    "underdog": "Bradley",
+    "favorite": "Michigan State",
+    "odds": 1500,
+    "won": false,
+    "game_date": "2019-03-21"
+  },
+  {
+    "year": 2019,
+    "seed": 15,
+    "underdog": "Montana",
+    "favorite": "Michigan",
+    "odds": 1000,
+    "won": false,
+    "game_date": "2019-03-21"
+  },
+  {
+    "year": 2019,
+    "seed": 15,
+    "underdog": "Colgate",
+    "favorite": "Tennessee",
+    "odds": 1400,
+    "won": false,
+    "game_date": "2019-03-22"
+  },
+  {
+    "year": 2021,
+    "seed": 11,
+    "underdog": "Utah State",
+    "favorite": "Texas Tech",
+    "odds": 161,
+    "won": false,
+    "game_date": "2021-03-19"
+  },
+  {
+    "year": 2021,
+    "seed": 11,
+    "underdog": "Syracuse",
+    "favorite": "San Diego State",
+    "odds": 135,
+    "won": true,
+    "game_date": "2021-03-19"
+  },
+  {
+    "year": 2021,
+    "seed": 11,
+    "underdog": "Drake",
+    "favorite": "USC",
+    "odds": 250,
+    "won": false,
+    "game_date": "2021-03-20"
+  },
+  {
+    "year": 2021,
+    "seed": 11,
+    "underdog": "UCLA",
+    "favorite": "BYU",
+    "odds": 150,
+    "won": true,
+    "game_date": "2021-03-20"
+  },
+  {
+    "year": 2021,
+    "seed": 12,
+    "underdog": "Winthrop",
+    "favorite": "Villanova",
+    "odds": 210,
+    "won": false,
+    "game_date": "2021-03-19"
+  },
+  {
+    "year": 2021,
+    "seed": 12,
+    "underdog": "Oregon State",
+    "favorite": "Tennessee",
+    "odds": 355,
+    "won": true,
+    "game_date": "2021-03-19"
+  },
+  {
+    "year": 2021,
+    "seed": 12,
+    "underdog": "UC Santa Barbara",
+    "favorite": "Creighton",
+    "odds": 280,
+    "won": false,
+    "game_date": "2021-03-20"
+  },
+  {
+    "year": 2021,
+    "seed": 12,
+    "underdog": "Georgetown",
+    "favorite": "Colorado",
+    "odds": 206,
+    "won": false,
+    "game_date": "2021-03-20"
+  },
+  {
+    "year": 2021,
+    "seed": 13,
+    "underdog": "North Texas",
+    "favorite": "Purdue",
+    "odds": 243,
+    "won": true,
+    "game_date": "2021-03-19"
+  },
+  {
+    "year": 2021,
+    "seed": 13,
+    "underdog": "Liberty",
+    "favorite": "Oklahoma State",
+    "odds": 277,
+    "won": false,
+    "game_date": "2021-03-19"
+  },
+  {
+    "year": 2021,
+    "seed": 13,
+    "underdog": "Ohio",
+    "favorite": "Virginia",
+    "odds": 260,
+    "won": true,
+    "game_date": "2021-03-20"
+  },
+  {
+    "year": 2021,
+    "seed": 13,
+    "underdog": "UNC Greensboro",
+    "favorite": "Florida State",
+    "odds": 501,
+    "won": false,
+    "game_date": "2021-03-20"
+  },
+  {
+    "year": 2021,
+    "seed": 14,
+    "underdog": "Colgate",
+    "favorite": "Arkansas",
+    "odds": 331,
+    "won": false,
+    "game_date": "2021-03-19"
+  },
+  {
+    "year": 2021,
+    "seed": 14,
+    "underdog": "Morehead State",
+    "favorite": "West Virginia",
+    "odds": 650,
+    "won": false,
+    "game_date": "2021-03-19"
+  },
+  {
+    "year": 2021,
+    "seed": 14,
+    "underdog": "Eastern Washington",
+    "favorite": "Kansas",
+    "odds": 500,
+    "won": false,
+    "game_date": "2021-03-20"
+  },
+  {
+    "year": 2021,
+    "seed": 14,
+    "underdog": "Abilene Christian",
+    "favorite": "Texas",
+    "odds": 330,
+    "won": true,
+    "game_date": "2021-03-20"
+  },
+  {
+    "year": 2021,
+    "seed": 15,
+    "underdog": "Oral Roberts",
+    "favorite": "Ohio State",
+    "odds": 1033,
+    "won": true,
+    "game_date": "2021-03-19"
+  },
+  {
+    "year": 2021,
+    "seed": 15,
+    "underdog": "Cleveland State",
+    "favorite": "Houston",
+    "odds": 1548,
+    "won": false,
+    "game_date": "2021-03-19"
+  },
+  {
+    "year": 2021,
+    "seed": 15,
+    "underdog": "Grand Canyon",
+    "favorite": "Iowa",
+    "odds": 809,
+    "won": false,
+    "game_date": "2021-03-20"
+  },
+  {
+    "year": 2021,
+    "seed": 15,
+    "underdog": "Iona",
+    "favorite": "Alabama",
+    "odds": 985,
+    "won": false,
+    "game_date": "2021-03-20"
+  },
+  {
+    "year": 2022,
+    "seed": 11,
+    "underdog": "Michigan",
+    "favorite": "Colorado State",
+    "odds": -115,
+    "won": true,
+    "game_date": "2022-03-17"
+  },
+  {
+    "year": 2022,
+    "seed": 11,
+    "underdog": "Iowa State",
+    "favorite": "LSU",
+    "odds": 150,
+    "won": true,
+    "game_date": "2022-03-18"
+  },
+  {
+    "year": 2022,
+    "seed": 11,
+    "underdog": "Virginia Tech",
+    "favorite": "Texas",
+    "odds": -106,
+    "won": false,
+    "game_date": "2022-03-18"
+  },
+  {
+    "year": 2022,
+    "seed": 11,
+    "underdog": "Notre Dame",
+    "favorite": "Alabama",
+    "odds": 144,
+    "won": true,
+    "game_date": "2022-03-18"
+  },
+  {
+    "year": 2022,
+    "seed": 12,
+    "underdog": "New Mexico State",
+    "favorite": "Connecticut",
+    "odds": 232,
+    "won": true,
+    "game_date": "2022-03-17"
+  },
+  {
+    "year": 2022,
+    "seed": 12,
+    "underdog": "Richmond",
+    "favorite": "Iowa",
+    "odds": 398,
+    "won": true,
+    "game_date": "2022-03-17"
+  },
+  {
+    "year": 2022,
+    "seed": 12,
+    "underdog": "Indiana",
+    "favorite": "Saint Mary's",
+    "odds": 116,
+    "won": false,
+    "game_date": "2022-03-17"
+  },
+  {
+    "year": 2022,
+    "seed": 12,
+    "underdog": "UAB",
+    "favorite": "Houston",
+    "odds": 350,
+    "won": false,
+    "game_date": "2022-03-18"
+  },
+  {
+    "year": 2022,
+    "seed": 13,
+    "underdog": "Vermont",
+    "favorite": "Arkansas",
+    "odds": 190,
+    "won": false,
+    "game_date": "2022-03-17"
+  },
+  {
+    "year": 2022,
+    "seed": 13,
+    "underdog": "South Dakota State",
+    "favorite": "Providence",
+    "odds": 135,
+    "won": false,
+    "game_date": "2022-03-17"
+  },
+  {
+    "year": 2022,
+    "seed": 13,
+    "underdog": "Akron",
+    "favorite": "UCLA",
+    "odds": 800,
+    "won": false,
+    "game_date": "2022-03-17"
+  },
+  {
+    "year": 2022,
+    "seed": 13,
+    "underdog": "Chattanooga",
+    "favorite": "Illinois",
+    "odds": 279,
+    "won": false,
+    "game_date": "2022-03-18"
+  },
+  {
+    "year": 2022,
+    "seed": 14,
+    "underdog": "Longwood",
+    "favorite": "Tennessee",
+    "odds": 1295,
+    "won": false,
+    "game_date": "2022-03-17"
+  },
+  {
+    "year": 2022,
+    "seed": 14,
+    "underdog": "Colgate",
+    "favorite": "Wisconsin",
+    "odds": 280,
+    "won": false,
+    "game_date": "2022-03-18"
+  },
+  {
+    "year": 2022,
+    "seed": 14,
+    "underdog": "Yale",
+    "favorite": "Purdue",
+    "odds": 995,
+    "won": false,
+    "game_date": "2022-03-18"
+  },
+  {
+    "year": 2022,
+    "seed": 14,
+    "underdog": "Montana State",
+    "favorite": "Texas Tech",
+    "odds": 874,
+    "won": false,
+    "game_date": "2022-03-18"
+  },
+  {
+    "year": 2022,
+    "seed": 15,
+    "underdog": "Saint Peter's",
+    "favorite": "Kentucky",
+    "odds": 1370,
+    "won": true,
+    "game_date": "2022-03-17"
+  },
+  {
+    "year": 2022,
+    "seed": 15,
+    "underdog": "Cal State Fullerton",
+    "favorite": "Duke",
+    "odds": 1444,
+    "won": false,
+    "game_date": "2022-03-18"
+  },
+  {
+    "year": 2022,
+    "seed": 15,
+    "underdog": "Jacksonville State",
+    "favorite": "Auburn",
+    "odds": 1000,
+    "won": false,
+    "game_date": "2022-03-18"
+  },
+  {
+    "year": 2022,
+    "seed": 15,
+    "underdog": "Delaware",
+    "favorite": "Villanova",
+    "odds": 903,
+    "won": false,
+    "game_date": "2022-03-18"
+  },
+  {
+    "year": 2023,
+    "seed": 11,
+    "underdog": "Pittsburgh",
+    "favorite": "Iowa State",
+    "odds": 164,
+    "won": true,
+    "game_date": "2023-03-17"
+  },
+  {
+    "year": 2023,
+    "seed": 11,
+    "underdog": "NC State",
+    "favorite": "Creighton",
+    "odds": 185,
+    "won": false,
+    "game_date": "2023-03-17"
+  },
+  {
+    "year": 2023,
+    "seed": 11,
+    "underdog": "Providence",
+    "favorite": "Kentucky",
+    "odds": 173,
+    "won": false,
+    "game_date": "2023-03-17"
+  },
+  {
+    "year": 2023,
+    "seed": 11,
+    "underdog": "Arizona State",
+    "favorite": "TCU",
+    "odds": 181,
+    "won": false,
+    "game_date": "2023-03-18"
+  },
+  {
+    "year": 2023,
+    "seed": 12,
+    "underdog": "College of Charleston",
+    "favorite": "San Diego State",
+    "odds": 194,
+    "won": false,
+    "game_date": "2023-03-16"
+  },
+  {
+    "year": 2023,
+    "seed": 12,
+    "underdog": "Oral Roberts",
+    "favorite": "Duke",
+    "odds": 226,
+    "won": false,
+    "game_date": "2023-03-16"
+  },
+  {
+    "year": 2023,
+    "seed": 12,
+    "underdog": "VCU",
+    "favorite": "Saint Mary's",
+    "odds": 158,
+    "won": false,
+    "game_date": "2023-03-17"
+  },
+  {
+    "year": 2023,
+    "seed": 12,
+    "underdog": "Drake",
+    "favorite": "Miami (FL)",
+    "odds": 111,
+    "won": false,
+    "game_date": "2023-03-17"
+  },
+  {
+    "year": 2023,
+    "seed": 13,
+    "underdog": "Furman",
+    "favorite": "Virginia",
+    "odds": 228,
+    "won": true,
+    "game_date": "2023-03-16"
+  },
+  {
+    "year": 2023,
+    "seed": 13,
+    "underdog": "Louisiana",
+    "favorite": "Tennessee",
+    "odds": 470,
+    "won": false,
+    "game_date": "2023-03-17"
+  },
+  {
+    "year": 2023,
+    "seed": 13,
+    "underdog": "Iona",
+    "favorite": "Connecticut",
+    "odds": 374,
+    "won": false,
+    "game_date": "2023-03-17"
+  },
+  {
+    "year": 2023,
+    "seed": 13,
+    "underdog": "Kent State",
+    "favorite": "Indiana",
+    "odds": 166,
+    "won": false,
+    "game_date": "2023-03-18"
+  },
+  {
+    "year": 2023,
+    "seed": 14,
+    "underdog": "Kennesaw State",
+    "favorite": "Xavier",
+    "odds": 568,
+    "won": false,
+    "game_date": "2023-03-17"
+  },
+  {
+    "year": 2023,
+    "seed": 14,
+    "underdog": "UC Santa Barbara",
+    "favorite": "Baylor",
+    "odds": 459,
+    "won": false,
+    "game_date": "2023-03-17"
+  },
+  {
+    "year": 2023,
+    "seed": 14,
+    "underdog": "Grand Canyon",
+    "favorite": "Gonzaga",
+    "odds": 921,
+    "won": false,
+    "game_date": "2023-03-17"
+  },
+  {
+    "year": 2023,
+    "seed": 14,
+    "underdog": "Montana State",
+    "favorite": "Kansas State",
+    "odds": 281,
+    "won": false,
+    "game_date": "2023-03-18"
+  },
+  {
+    "year": 2023,
+    "seed": 15,
+    "underdog": "Princeton",
+    "favorite": "Arizona",
+    "odds": 805,
+    "won": true,
+    "game_date": "2023-03-16"
+  },
+  {
+    "year": 2023,
+    "seed": 15,
+    "underdog": "Colgate",
+    "favorite": "Texas",
+    "odds": 687,
+    "won": false,
+    "game_date": "2023-03-16"
+  },
+  {
+    "year": 2023,
+    "seed": 15,
+    "underdog": "UNC Asheville",
+    "favorite": "UCLA",
+    "odds": 1113,
+    "won": false,
+    "game_date": "2023-03-17"
+  },
+  {
+    "year": 2023,
+    "seed": 15,
+    "underdog": "Vermont",
+    "favorite": "Marquette",
+    "odds": 436,
+    "won": false,
+    "game_date": "2023-03-17"
+  },
+  {
+    "year": 2024,
+    "seed": 11,
+    "underdog": "Duquesne",
+    "favorite": "BYU",
+    "odds": 372,
+    "won": true,
+    "game_date": "2024-03-21"
+  },
+  {
+    "year": 2024,
+    "seed": 11,
+    "underdog": "Oregon",
+    "favorite": "South Carolina",
+    "odds": -121,
+    "won": true,
+    "game_date": "2024-03-21"
+  },
+  {
+    "year": 2024,
+    "seed": 11,
+    "underdog": "NC State",
+    "favorite": "Texas Tech",
+    "odds": 169,
+    "won": true,
+    "game_date": "2024-03-22"
+  },
+  {
+    "year": 2024,
+    "seed": 11,
+    "underdog": "New Mexico",
+    "favorite": "Clemson",
+    "odds": -132,
+    "won": false,
+    "game_date": "2024-03-22"
+  },
+  {
+    "year": 2024,
+    "seed": 12,
+    "underdog": "McNeese State",
+    "favorite": "Gonzaga",
+    "odds": 251,
+    "won": false,
+    "game_date": "2024-03-21"
+  },
+  {
+    "year": 2024,
+    "seed": 12,
+    "underdog": "UAB",
+    "favorite": "San Diego State",
+    "odds": 220,
+    "won": false,
+    "game_date": "2024-03-22"
+  },
+  {
+    "year": 2024,
+    "seed": 12,
+    "underdog": "James Madison",
+    "favorite": "Wisconsin",
+    "odds": 192,
+    "won": true,
+    "game_date": "2024-03-23"
+  },
+  {
+    "year": 2024,
+    "seed": 12,
+    "underdog": "Grand Canyon",
+    "favorite": "Saint Mary's",
+    "odds": 206,
+    "won": true,
+    "game_date": "2024-03-23"
+  },
+  {
+    "year": 2024,
+    "seed": 13,
+    "underdog": "Samford",
+    "favorite": "Kansas",
+    "odds": 251,
+    "won": false,
+    "game_date": "2024-03-22"
+  },
+  {
+    "year": 2024,
+    "seed": 13,
+    "underdog": "Yale",
+    "favorite": "Auburn",
+    "odds": 650,
+    "won": true,
+    "game_date": "2024-03-22"
+  },
+  {
+    "year": 2024,
+    "seed": 13,
+    "underdog": "Vermont",
+    "favorite": "Duke",
+    "odds": 569,
+    "won": false,
+    "game_date": "2024-03-22"
+  },
+  {
+    "year": 2024,
+    "seed": 13,
+    "underdog": "College of Charleston",
+    "favorite": "Alabama",
+    "odds": 344,
+    "won": false,
+    "game_date": "2024-03-22"
+  },
+  {
+    "year": 2024,
+    "seed": 14,
+    "underdog": "Akron",
+    "favorite": "Creighton",
+    "odds": 554,
+    "won": false,
+    "game_date": "2024-03-21"
+  },
+  {
+    "year": 2024,
+    "seed": 14,
+    "underdog": "Morehead State",
+    "favorite": "Illinois",
+    "odds": 502,
+    "won": false,
+    "game_date": "2024-03-21"
+  },
+  {
+    "year": 2024,
+    "seed": 14,
+    "underdog": "Oakland",
+    "favorite": "Kentucky",
+    "odds": 624,
+    "won": true,
+    "game_date": "2024-03-21"
+  },
+  {
+    "year": 2024,
+    "seed": 14,
+    "underdog": "Colgate",
+    "favorite": "Baylor",
+    "odds": 747,
+    "won": false,
+    "game_date": "2024-03-22"
+  },
+  {
+    "year": 2024,
+    "seed": 15,
+    "underdog": "Long Beach State",
+    "favorite": "Arizona",
+    "odds": 1255,
+    "won": false,
+    "game_date": "2024-03-21"
+  },
+  {
+    "year": 2024,
+    "seed": 15,
+    "underdog": "South Dakota State",
+    "favorite": "Iowa State",
+    "odds": 943,
+    "won": false,
+    "game_date": "2024-03-21"
+  },
+  {
+    "year": 2024,
+    "seed": 15,
+    "underdog": "Saint Peter's",
+    "favorite": "Tennessee",
+    "odds": 1440,
+    "won": false,
+    "game_date": "2024-03-22"
+  },
+  {
+    "year": 2024,
+    "seed": 15,
+    "underdog": "Western Kentucky",
+    "favorite": "Marquette",
+    "odds": 784,
+    "won": false,
+    "game_date": "2024-03-22"
+  },
+  {
+    "year": 2025,
+    "seed": 11,
+    "underdog": "VCU",
+    "favorite": "BYU",
+    "odds": 113,
+    "won": false,
+    "game_date": "2025-03-20"
+  },
+  {
+    "year": 2025,
+    "seed": 11,
+    "underdog": "Drake",
+    "favorite": "Missouri",
+    "odds": 212,
+    "won": true,
+    "game_date": "2025-03-20"
+  },
+  {
+    "year": 2025,
+    "seed": 11,
+    "underdog": "North Carolina",
+    "favorite": "Ole Miss",
+    "odds": -123,
+    "won": false,
+    "game_date": "2025-03-21"
+  },
+  {
+    "year": 2025,
+    "seed": 11,
+    "underdog": "Xavier",
+    "favorite": "Illinois",
+    "odds": 165,
+    "won": false,
+    "game_date": "2025-03-22"
+  },
+  {
+    "year": 2025,
+    "seed": 12,
+    "underdog": "McNeese State",
+    "favorite": "Clemson",
+    "odds": 290,
+    "won": true,
+    "game_date": "2025-03-20"
+  },
+  {
+    "year": 2025,
+    "seed": 12,
+    "underdog": "UC San Diego",
+    "favorite": "Michigan",
+    "odds": 121,
+    "won": false,
+    "game_date": "2025-03-21"
+  },
+  {
+    "year": 2025,
+    "seed": 12,
+    "underdog": "Colorado State",
+    "favorite": "Memphis",
+    "odds": -120,
+    "won": true,
+    "game_date": "2025-03-21"
+  },
+  {
+    "year": 2025,
+    "seed": 12,
+    "underdog": "Liberty",
+    "favorite": "Oregon",
+    "odds": 257,
+    "won": false,
+    "game_date": "2025-03-22"
+  },
+  {
+    "year": 2025,
+    "seed": 13,
+    "underdog": "High Point",
+    "favorite": "Purdue",
+    "odds": 298,
+    "won": false,
+    "game_date": "2025-03-20"
+  },
+  {
+    "year": 2025,
+    "seed": 13,
+    "underdog": "Yale",
+    "favorite": "Texas A&M",
+    "odds": 285,
+    "won": false,
+    "game_date": "2025-03-20"
+  },
+  {
+    "year": 2025,
+    "seed": 13,
+    "underdog": "Grand Canyon",
+    "favorite": "Maryland",
+    "odds": 438,
+    "won": false,
+    "game_date": "2025-03-21"
+  },
+  {
+    "year": 2025,
+    "seed": 13,
+    "underdog": "Akron",
+    "favorite": "Arizona",
+    "odds": 739,
+    "won": false,
+    "game_date": "2025-03-21"
+  },
+  {
+    "year": 2025,
+    "seed": 14,
+    "underdog": "Montana",
+    "favorite": "Wisconsin",
+    "odds": 957,
+    "won": false,
+    "game_date": "2025-03-20"
+  },
+  {
+    "year": 2025,
+    "seed": 14,
+    "underdog": "UNC Wilmington",
+    "favorite": "Texas Tech",
+    "odds": 980,
+    "won": false,
+    "game_date": "2025-03-21"
+  },
+  {
+    "year": 2025,
+    "seed": 14,
+    "underdog": "Lipscomb",
+    "favorite": "Iowa State",
+    "odds": 844,
+    "won": false,
+    "game_date": "2025-03-21"
+  },
+  {
+    "year": 2025,
+    "seed": 14,
+    "underdog": "Troy",
+    "favorite": "Kentucky",
+    "odds": 514,
+    "won": false,
+    "game_date": "2025-03-21"
+  },
+  {
+    "year": 2025,
+    "seed": 15,
+    "underdog": "Wofford",
+    "favorite": "Tennessee",
+    "odds": 1382,
+    "won": false,
+    "game_date": "2025-03-20"
+  },
+  {
+    "year": 2025,
+    "seed": 15,
+    "underdog": "Nebraska-Omaha",
+    "favorite": "St. John's",
+    "odds": 1358,
+    "won": false,
+    "game_date": "2025-03-21"
+  },
+  {
+    "year": 2025,
+    "seed": 15,
+    "underdog": "Robert Morris",
+    "favorite": "Alabama",
+    "odds": 2343,
+    "won": false,
+    "game_date": "2025-03-21"
+  },
+  {
+    "year": 2025,
+    "seed": 15,
+    "underdog": "Bryant",
+    "favorite": "Michigan State",
+    "odds": 1142,
+    "won": false,
+    "game_date": "2025-03-22"
+  }
+]

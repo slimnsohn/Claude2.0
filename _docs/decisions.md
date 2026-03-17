@@ -24,11 +24,11 @@
 **Why:** Enables room-level overrides, keeps files small (<50 lines each), and makes each project self-contained and portable.
 **Alternatives considered:** Single workspace config (too big, no project-specific overrides), .env-style config (not readable by Claude Code natively)
 
-### Why data/ Separated from apps/
+### Why data/ Is External-Only
 **Date:** 2026-03-14
-**Choice:** Dedicated top-level data/ directory independent of apps/
-**Why:** Multiple apps can consume the same data without duplicating collection logic, and pipelines remain independent of presentation.
-**Alternatives considered:** Data inside each app (duplicates pipelines), shared database (over-engineering for flat files)
+**Choice:** data/ stores only externally sourced data. Projects keep their own generated/scraped/downloaded data locally.
+**Why:** Projects stay independent and self-contained. Shared data creates coupling between projects. Only centralize what's expensive or impossible to recreate — external datasets, curated reference data, things you can't just re-download from a free API.
+**Alternatives considered:** All data centralized (creates coupling, projects can't move independently), data inside each app only (loses expensive-to-collect external datasets when projects get deleted)
 
 ### Why _skills/ Uses SKILL.md Convention
 **Date:** 2026-03-14

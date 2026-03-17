@@ -21,9 +21,14 @@
   .header {
     background: var(--surface); border-bottom: 1px solid var(--border);
     padding: 12px 24px; margin: -20px -20px 20px;
+    display: flex; align-items: center; gap: 16px;
   }
   .header h1 { font-size: 16px; font-weight: 700; }
   .header h1 span { color: var(--accent); }
+  .header-clock { display: flex; flex-direction: column; gap: 1px; margin-left: auto; }
+  .clock { font-size: 13px; font-weight: 700; color: var(--text); font-variant-numeric: tabular-nums; }
+  .last-updated { font-size: 10px; color: var(--text2); }
+  .last-updated.stale { color: var(--orange); }
 </style>
 </head>
 <body>
@@ -31,12 +36,42 @@
 <div class="container">
   <div class="header">
     <h1><span>{PROJECT_NAME}</span></h1>
+    <div class="header-clock">
+      <span class="clock" id="systemClock"></span>
+      <span class="last-updated" id="lastUpdated">Not yet updated</span>
+    </div>
   </div>
 
   <main id="app">
     <!-- Your content here -->
   </main>
 </div>
+
+<!-- Clock & last-updated -->
+<script>
+  let _lastUpdateTime = null;
+
+  function tickClock() {
+    const now = new Date();
+    document.getElementById('systemClock').textContent = now.toLocaleTimeString([], {hour:'numeric', minute:'2-digit', second:'2-digit'});
+    if (_lastUpdateTime) {
+      const ago = Math.floor((now - _lastUpdateTime) / 60000);
+      const el = document.getElementById('lastUpdated');
+      if (ago >= 5) el.classList.add('stale');
+      else el.classList.remove('stale');
+    }
+  }
+
+  function setLastUpdated() {
+    _lastUpdateTime = new Date();
+    const el = document.getElementById('lastUpdated');
+    el.textContent = 'Updated ' + _lastUpdateTime.toLocaleTimeString([], {hour:'numeric', minute:'2-digit', second:'2-digit'});
+    el.classList.remove('stale');
+  }
+
+  tickClock();
+  setInterval(tickClock, 1000);
+</script>
 
 <!-- Shared fetch wrapper (retry, rate limiting, timeouts) -->
 <script src="../../_shared/fetch-wrapper.js"></script>
