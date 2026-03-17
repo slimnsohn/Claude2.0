@@ -8,6 +8,7 @@ from pipeline.fit_model import ModelTrainer
 from generator.dedup import DedupChecker
 from generator.gap_analysis import GapAnalyzer
 from generator.backstory import generate_backstory
+from generator.plausibility import fix_profile
 from generator.archetypes import ArchetypeBuilder
 
 # Default target marginals (approximate US census)
@@ -85,7 +86,10 @@ class ProfileGenerator:
             profile["updated_at"] = datetime.now().isoformat()
             profile["drift_log"] = []
 
-            # Generate backstory
+            # Plausibility check — fix implausible combinations
+            fix_profile(profile)
+
+            # Generate backstory (after plausibility fix so it reflects corrected data)
             profile["backstory"] = generate_backstory(profile)
 
             new_profiles.append(profile)
