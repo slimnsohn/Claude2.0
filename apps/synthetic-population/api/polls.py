@@ -126,6 +126,7 @@ def create_poll():
         "created_at": created_at,
         "archetype_count": len(weights),
         "events_applied_through": events_applied_through,
+        "responses_recorded": 0,
     }
     (poll_dir / "metadata.json").write_text(json.dumps(metadata, indent=2))
 
@@ -202,6 +203,50 @@ def get_poll(poll_id):
         meta["n_missing"] = results.get("n_missing")
 
     return jsonify(meta)
+
+
+# ---------------------------------------------------------------------------
+# POST /api/polls/<poll_id>/send-to-claude — mark poll for Claude processing
+# ---------------------------------------------------------------------------
+
+@polls_bp.route("/api/polls/<poll_id>/send-to-claude", methods=["POST"])
+def send_to_claude(poll_id):
+    polls_dir = _polls_dir()
+    meta_path = polls_dir / poll_id / "metadata.json"
+
+    if not meta_path.exists():
+        return jsonify({"error": f"Poll '{poll_id}' not found"}), 404
+
+    meta = json.loads(meta_path.read_text())
+    meta["status"] = "awaiting_claude"
+    meta_path.write_text(json.dumps(meta, indent=2))
+
+    return jsonify({"status": "awaiting_claude", "poll_id": poll_id})
+
+
+# ---------------------------------------------------------------------------
+# GET /api/polls/queue — return polls awaiting Claude processing
+# ---------------------------------------------------------------------------
+
+@polls_bp.route("/api/polls/queue", methods=["GET"])
+def get_poll_queue():
+    polls_dir = _polls_dir()
+    queue = []
+    for entry in sorted(polls_dir.iterdir()):
+        if not entry.is_dir():
+            continue
+        meta_path = entry / "metadata.json"
+        if not meta_path.exists():
+            continue
+        meta = json.loads(meta_path.read_text())
+        if meta.get("status") == "awaiting_claude":
+            queue.append({
+                "poll_id": meta["poll_id"],
+                "question": meta.get("question"),
+                "archetype_count": meta.get("archetype_count"),
+                "created_at": meta.get("created_at"),
+            })
+    return jsonify(queue)
 
 
 # ---------------------------------------------------------------------------

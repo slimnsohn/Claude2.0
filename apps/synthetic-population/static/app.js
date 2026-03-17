@@ -209,8 +209,8 @@ async function loadPollResults() {
     try {
         const poll = await api(`/api/polls/${selectedPollId}`);
 
-        // If pending — show prompts and response recording UI
-        if (poll.status === "pending") {
+        // If pending or awaiting claude — show guided flow
+        if (poll.status === "pending" || poll.status === "awaiting_claude") {
             await renderPendingPoll(container, poll);
             return;
         }
@@ -368,65 +368,116 @@ async function renderPendingPoll(container, poll) {
         prompts = await api(`/api/polls/${poll.poll_id}/prompts`);
     } catch (e) { /* no prompts */ }
 
-    // Count existing responses
-    let existingResponses = 0;
+    // Get latest state
+    let detail = poll;
     try {
-        const detail = await api(`/api/polls/${poll.poll_id}`);
-        existingResponses = detail.responses_recorded || 0;
+        detail = await api(`/api/polls/${poll.poll_id}`);
     } catch (e) {}
 
-    const total = prompts.length;
-    const pctDone = total > 0 ? Math.round(existingResponses / total * 100) : 0;
+    const total = detail.archetype_count || prompts.length;
+    const recorded = detail.responses_recorded || 0;
+    const pctDone = total > 0 ? Math.round(recorded / total * 100) : 0;
+    const status = detail.status || "pending";
+    const isAwaiting = status === "awaiting_claude";
+    const allDone = recorded >= total && total > 0;
+
+    // Step indicator
+    const step1Done = true; // poll created
+    const step2Done = isAwaiting || allDone;
+    const step3Done = allDone;
 
     let html = `
         <div class="card">
             <div style="display:flex;justify-content:space-between;align-items:flex-start">
-                <h3 style="margin:0 0 8px">${esc(poll.question || "")}</h3>
+                <h3 style="margin:0 0 8px">${esc(detail.question || "")}</h3>
                 <button class="btn btn-sm" id="delete-pending-poll-btn" title="Delete poll" style="color:var(--red);border-color:var(--red);flex-shrink:0">&#x2715;</button>
             </div>
-            <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px">
-                <span style="color:var(--text2);font-size:13px">${esc(poll.created_at || "")}</span>
-                ${snapshotBadge(poll.snapshot_id)}
-                <span class="badge badge-pending">Pending</span>
+            <div style="display:flex;gap:8px;align-items:center;margin-bottom:16px">
+                <span style="color:var(--text2);font-size:13px">${esc(detail.created_at || "")}</span>
+                ${snapshotBadge(detail.snapshot_id)}
             </div>
 
-            <div class="section-title">Progress</div>
-            <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px">
-                <div style="flex:1;height:10px;background:var(--surface2);border-radius:5px;overflow:hidden">
-                    <div style="height:100%;width:${pctDone}%;background:${pctDone === 100 ? 'var(--green)' : 'var(--accent)'};border-radius:5px;transition:width 0.3s"></div>
+            <!-- 3-step guided flow -->
+            <div style="display:flex;gap:0;margin-bottom:20px">
+                <div style="flex:1;text-align:center;padding:12px 8px;border-radius:8px 0 0 8px;background:${step1Done ? 'var(--green)' : 'var(--surface2)'};color:${step1Done ? '#000' : 'var(--text2)'}">
+                    <div style="font-size:18px;font-weight:700">1</div>
+                    <div style="font-size:11px;font-weight:600">Poll Created</div>
+                    <div style="font-size:10px">${total} archetypes</div>
                 </div>
-                <span style="font-size:13px;font-weight:600;color:var(--text);min-width:80px">${existingResponses} / ${total}</span>
-            </div>
-            <div style="font-size:12px;color:var(--text2);margin-bottom:16px">
-                ${existingResponses === 0 ? 'Awaiting responses — use Claude-in-Chrome automation or bulk record below.' :
-                  existingResponses < total ? `${total - existingResponses} archetypes remaining.` :
-                  'All responses recorded — ready to aggregate.'}
+                <div style="flex:1;text-align:center;padding:12px 8px;background:${step2Done ? 'var(--green)' : isAwaiting ? 'var(--accent)' : 'var(--surface2)'};color:${step2Done || isAwaiting ? '#000' : 'var(--text2)'}">
+                    <div style="font-size:18px;font-weight:700">2</div>
+                    <div style="font-size:11px;font-weight:600">${isAwaiting && !allDone ? 'Claude Working...' : allDone ? 'Responses In' : 'Send to Claude'}</div>
+                    <div style="font-size:10px">${recorded}/${total} responses</div>
+                </div>
+                <div style="flex:1;text-align:center;padding:12px 8px;border-radius:0 8px 8px 0;background:${step3Done ? 'var(--green)' : 'var(--surface2)'};color:${step3Done ? '#000' : 'var(--text2)'}">
+                    <div style="font-size:18px;font-weight:700">3</div>
+                    <div style="font-size:11px;font-weight:600">View Results</div>
+                    <div style="font-size:10px">${allDone ? 'Ready!' : 'Waiting...'}</div>
+                </div>
             </div>
 
-            ${existingResponses >= total && total > 0 ? `
-                <button id="agg-btn" class="btn btn-primary">Aggregate &amp; View Results</button>
-                <div id="agg-status" class="progress-text" style="display:none"></div>
+            <!-- Progress bar -->
+            ${isAwaiting || recorded > 0 ? `
+                <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+                    <div style="flex:1;height:10px;background:var(--surface2);border-radius:5px;overflow:hidden">
+                        <div id="progress-fill" style="height:100%;width:${pctDone}%;background:${allDone ? 'var(--green)' : 'var(--accent)'};border-radius:5px;transition:width 0.3s"></div>
+                    </div>
+                    <span id="progress-label" style="font-size:13px;font-weight:600;color:var(--text);min-width:80px">${recorded} / ${total}</span>
+                </div>
             ` : ''}
         </div>
     `;
 
-    // Bulk record section
-    html += `
-        <div class="card">
-            <div class="section-title">Bulk Record Responses</div>
-            <p style="font-size:12px;color:var(--text2);margin-bottom:12px">
-                Paste a JSON array of responses. Each entry needs: <code>archetype_id</code>, <code>opinion</code> (yes/no/unsure), <code>confidence</code> (1-10), and optionally <code>response_text</code>.
-            </p>
-            <textarea id="bulk-json" class="textarea" style="min-height:120px;font-family:monospace;font-size:11px" placeholder='[
-  {"archetype_id": "A-001", "opinion": "yes", "confidence": 7, "response_text": "..."},
-  {"archetype_id": "A-002", "opinion": "no", "confidence": 8, "response_text": "..."}
-]'></textarea>
-            <div style="display:flex;gap:8px;margin-top:8px;align-items:center">
-                <button id="bulk-submit" class="btn btn-primary">Record All &amp; Aggregate</button>
-                <span id="bulk-status" style="font-size:12px;color:var(--text2)"></span>
+    // Step 2: Send to Claude (if not yet sent)
+    if (!isAwaiting && !allDone) {
+        html += `
+            <div class="card" style="border-color:var(--accent)">
+                <div style="font-size:13px;color:var(--accent);font-weight:600;margin-bottom:8px">&#x2192; Next: Send to Claude</div>
+                <p style="font-size:12px;color:var(--text2);margin-bottom:12px">
+                    This will queue the poll for processing. Claude Code must be running to execute it.
+                </p>
+                <button id="send-to-claude-btn" class="btn btn-primary" style="width:100%">Send to Claude Queue</button>
             </div>
-        </div>
-    `;
+        `;
+    }
+
+    // Awaiting Claude: show instructions
+    if (isAwaiting && !allDone) {
+        html += `
+            <div class="card" style="border-color:var(--orange)">
+                <div style="font-size:13px;color:var(--orange);font-weight:600;margin-bottom:8px">&#x23F3; Waiting for Claude Code</div>
+                <p style="font-size:12px;color:var(--text);margin-bottom:12px">
+                    This poll is queued. Claude Code needs to process it.
+                </p>
+                <div style="background:var(--surface2);border-radius:6px;padding:16px;margin-bottom:12px">
+                    <div style="font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Instructions</div>
+                    <div style="font-size:13px;color:var(--text);margin-bottom:8px"><strong>1.</strong> Open a terminal in:</div>
+                    <code style="display:block;background:var(--bg);padding:8px 12px;border-radius:4px;font-size:12px;color:var(--accent);margin-bottom:12px;word-break:break-all">C:\\Users\\slims\\Desktop\\Claude 2.0\\apps\\synthetic-population</code>
+                    <div style="font-size:13px;color:var(--text);margin-bottom:8px"><strong>2.</strong> Launch Claude Code:</div>
+                    <code style="display:block;background:var(--bg);padding:8px 12px;border-radius:4px;font-size:12px;color:var(--accent);margin-bottom:12px">claude</code>
+                    <div style="font-size:13px;color:var(--text);margin-bottom:8px"><strong>3.</strong> Tell Claude:</div>
+                    <code style="display:block;background:var(--bg);padding:8px 12px;border-radius:4px;font-size:12px;color:var(--accent)">run polls</code>
+                </div>
+                <p style="font-size:11px;color:var(--text2)">
+                    The progress bar above will update automatically as Claude processes each archetype.
+                </p>
+            </div>
+        `;
+    }
+
+    // Step 3: View Results (if all done)
+    if (allDone) {
+        html += `
+            <div class="card" style="border-color:var(--green)">
+                <div style="font-size:13px;color:var(--green);font-weight:600;margin-bottom:8px">&#x2192; Next: View Results</div>
+                <p style="font-size:12px;color:var(--text2);margin-bottom:12px">
+                    All ${total} archetype responses recorded. Click below to aggregate and see the breakdown.
+                </p>
+                <button id="view-results-btn" class="btn btn-primary" style="width:100%">Aggregate &amp; View Results</button>
+                <div id="agg-status" class="progress-text" style="display:none"></div>
+            </div>
+        `;
+    }
 
     // Prompts list (collapsible)
     if (prompts.length > 0) {
@@ -449,64 +500,30 @@ async function renderPendingPoll(container, poll) {
 
     container.innerHTML = html;
 
-    // Wire bulk submit
-    document.getElementById("bulk-submit")?.addEventListener("click", async () => {
-        const statusEl = document.getElementById("bulk-status");
-        const raw = document.getElementById("bulk-json").value.trim();
-        if (!raw) { statusEl.textContent = "Paste JSON first."; return; }
-
-        let entries;
+    // Wire: Send to Claude
+    document.getElementById("send-to-claude-btn")?.addEventListener("click", async () => {
         try {
-            entries = JSON.parse(raw);
-            if (!Array.isArray(entries)) throw new Error("Must be a JSON array");
+            await api(`/api/polls/${poll.poll_id}/send-to-claude`, { method: "POST" });
+            renderPendingPoll(container, poll); // re-render with new state
         } catch (e) {
-            statusEl.textContent = `Invalid JSON: ${e.message}`;
-            statusEl.style.color = "var(--red)";
-            return;
-        }
-
-        statusEl.textContent = `Recording ${entries.length} responses...`;
-        statusEl.style.color = "var(--text2)";
-        let recorded = 0;
-        let errors = 0;
-
-        for (const entry of entries) {
-            try {
-                await api(`/api/polls/${poll.poll_id}/responses`, {
-                    method: "POST",
-                    body: {
-                        archetype_id: entry.archetype_id,
-                        opinion: entry.opinion || "unsure",
-                        confidence: entry.confidence || 5,
-                        response_text: entry.response_text || "",
-                    }
-                });
-                recorded++;
-                statusEl.textContent = `Recorded ${recorded}/${entries.length}...`;
-            } catch (e) {
-                errors++;
-            }
-        }
-
-        if (errors > 0) {
-            statusEl.textContent = `Recorded ${recorded}, ${errors} errors.`;
-            statusEl.style.color = "var(--orange)";
-        } else {
-            statusEl.textContent = `All ${recorded} recorded. Aggregating...`;
-            statusEl.style.color = "var(--green)";
-        }
-
-        // Auto-aggregate
-        try {
-            await api(`/api/polls/${poll.poll_id}/aggregate`, { method: "POST" });
-            loadStats();
-            setTimeout(() => navigate("results", { pollId: poll.poll_id }), 500);
-        } catch (e) {
-            statusEl.textContent += ` Aggregation error: ${e.message}`;
+            alert(`Error: ${e.message}`);
         }
     });
 
-    // Wire delete
+    // Wire: View Results (aggregate first)
+    document.getElementById("view-results-btn")?.addEventListener("click", async () => {
+        const status = document.getElementById("agg-status");
+        if (status) { status.style.display = "block"; status.textContent = "Aggregating..."; }
+        try {
+            await api(`/api/polls/${poll.poll_id}/aggregate`, { method: "POST" });
+            loadStats();
+            navigate("results", { pollId: poll.poll_id });
+        } catch (e) {
+            if (status) { status.textContent = `Error: ${e.message}`; status.style.color = "var(--red)"; }
+        }
+    });
+
+    // Wire: Delete
     document.getElementById("delete-pending-poll-btn")?.addEventListener("click", async () => {
         if (!confirm("Delete this poll?")) return;
         try {
@@ -519,20 +536,28 @@ async function renderPendingPoll(container, poll) {
         }
     });
 
-    // Wire aggregate (only shows when all responses recorded)
-    document.getElementById("agg-btn")?.addEventListener("click", async () => {
-        const status = document.getElementById("agg-status");
-        status.style.display = "block";
-        status.textContent = "Aggregating...";
-        try {
-            await api(`/api/polls/${poll.poll_id}/aggregate`, { method: "POST" });
-            loadStats();
-            navigate("results", { pollId: poll.poll_id });
-        } catch (e) {
-            status.textContent = `Error: ${e.message}`;
-            status.style.color = "var(--red)";
-        }
-    });
+    // Auto-refresh progress if awaiting Claude
+    if (isAwaiting && !allDone) {
+        const refreshTimer = setInterval(async () => {
+            try {
+                const updated = await api(`/api/polls/${poll.poll_id}`);
+                const newRecorded = updated.responses_recorded || 0;
+                const newPct = total > 0 ? Math.round(newRecorded / total * 100) : 0;
+                const fill = document.getElementById("progress-fill");
+                const label = document.getElementById("progress-label");
+                if (fill) fill.style.width = newPct + "%";
+                if (label) label.textContent = `${newRecorded} / ${total}`;
+
+                // If complete, re-render the whole thing
+                if (newRecorded >= total || updated.status === "complete") {
+                    clearInterval(refreshTimer);
+                    renderPendingPoll(container, updated);
+                }
+            } catch (e) {
+                clearInterval(refreshTimer);
+            }
+        }, 2000);
+    }
 }
 
 // --- View 3: Population ---
