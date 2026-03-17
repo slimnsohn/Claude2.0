@@ -201,6 +201,23 @@ def get_poll(poll_id):
 
 
 # ---------------------------------------------------------------------------
+# DELETE /api/polls/<poll_id> — delete a poll
+# ---------------------------------------------------------------------------
+
+@polls_bp.route("/api/polls/<poll_id>", methods=["DELETE"])
+def delete_poll(poll_id):
+    import shutil
+    polls_dir = _polls_dir()
+    poll_dir = polls_dir / poll_id
+
+    if not poll_dir.exists():
+        return jsonify({"error": f"Poll '{poll_id}' not found"}), 404
+
+    shutil.rmtree(poll_dir)
+    return jsonify({"deleted": True})
+
+
+# ---------------------------------------------------------------------------
 # GET /api/polls/<poll_id>/prompts — get prompt batch
 # ---------------------------------------------------------------------------
 

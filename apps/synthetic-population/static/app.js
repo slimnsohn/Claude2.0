@@ -225,7 +225,10 @@ async function loadPollResults() {
 
         let html = `
             <div class="card">
-                <h3 style="margin:0 0 8px">${esc(poll.question || "")}</h3>
+                <div style="display:flex;justify-content:space-between;align-items:flex-start">
+                    <h3 style="margin:0 0 8px">${esc(poll.question || "")}</h3>
+                    <button class="btn btn-sm" id="delete-poll-btn" title="Delete poll" style="color:var(--red);border-color:var(--red);flex-shrink:0">&#x2715;</button>
+                </div>
                 <div style="display:flex;gap:8px;align-items:center;margin-bottom:16px">
                     <span style="color:var(--text2);font-size:13px">${esc(poll.date || "")}</span>
                     ${snapshotBadge(poll.snapshot_id)}
@@ -341,6 +344,19 @@ async function loadPollResults() {
                 navigate("results", { pollId: row.dataset.tsPoll });
             });
         });
+
+        // Wire delete button
+        document.getElementById("delete-poll-btn")?.addEventListener("click", async () => {
+            if (!confirm("Delete this poll?")) return;
+            try {
+                await api(`/api/polls/${selectedPollId}`, { method: "DELETE" });
+                selectedPollId = null;
+                loadStats();
+                navigate("poll");
+            } catch (e) {
+                alert(`Error: ${e.message}`);
+            }
+        });
     } catch (e) {
         container.innerHTML = `<p style="color:var(--text2)">Failed to load results: ${esc(e.message)}</p>`;
     }
@@ -358,7 +374,10 @@ async function renderPendingPoll(container, poll) {
 
     let html = `
         <div class="card">
-            <h3 style="margin:0 0 8px">${esc(poll.question || "")}</h3>
+            <div style="display:flex;justify-content:space-between;align-items:flex-start">
+                <h3 style="margin:0 0 8px">${esc(poll.question || "")}</h3>
+                <button class="btn btn-sm" id="delete-pending-poll-btn" title="Delete poll" style="color:var(--red);border-color:var(--red);flex-shrink:0">&#x2715;</button>
+            </div>
             <div style="display:flex;gap:8px;align-items:center;margin-bottom:16px">
                 <span style="color:var(--text2);font-size:13px">${esc(poll.created_at || "")}</span>
                 ${snapshotBadge(poll.snapshot_id)}
@@ -457,6 +476,19 @@ async function renderPendingPoll(container, poll) {
         } catch (e) {
             status.textContent = `Error: ${e.message}`;
             status.style.color = "var(--red)";
+        }
+    });
+
+    // Wire delete on pending poll
+    document.getElementById("delete-pending-poll-btn")?.addEventListener("click", async () => {
+        if (!confirm("Delete this poll?")) return;
+        try {
+            await api(`/api/polls/${poll.poll_id}`, { method: "DELETE" });
+            selectedPollId = null;
+            loadStats();
+            navigate("poll");
+        } catch (e) {
+            alert(`Error: ${e.message}`);
         }
     });
 
