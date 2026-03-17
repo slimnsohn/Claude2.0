@@ -53,7 +53,9 @@ class ProfileGenerator:
         # Gap analysis informs but we use SDV's model for actual sampling
 
         # 3. Sample from model (oversample to account for dedup rejections)
-        raw_samples = self.trainer.generate(count * 2)
+        # Higher multiplier needed as registry grows and dedup rejects more
+        oversample = max(count * 5, 500)
+        raw_samples = self.trainer.generate(oversample)
 
         # 4. Dedup each candidate
         # Pass a copy so appending to dedup.existing doesn't mutate self.existing_profiles
