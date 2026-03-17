@@ -186,6 +186,10 @@ def get_poll(poll_id):
 
     meta = json.loads(meta_path.read_text())
 
+    # Count recorded responses
+    responses_dir = poll_dir / "responses"
+    meta["responses_recorded"] = len(list(responses_dir.glob("*.json"))) if responses_dir.exists() else 0
+
     # If complete, attach results
     results_path = poll_dir / "results.json"
     if meta.get("status") == "complete" and results_path.exists():

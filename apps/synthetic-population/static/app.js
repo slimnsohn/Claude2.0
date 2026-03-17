@@ -368,9 +368,15 @@ async function renderPendingPoll(container, poll) {
         prompts = await api(`/api/polls/${poll.poll_id}/prompts`);
     } catch (e) { /* no prompts */ }
 
-    // Check how many responses already recorded
-    let responseCount = 0;
-    const responsesDir = prompts.length; // total expected
+    // Count existing responses
+    let existingResponses = 0;
+    try {
+        const detail = await api(`/api/polls/${poll.poll_id}`);
+        existingResponses = detail.responses_recorded || 0;
+    } catch (e) {}
+
+    const total = prompts.length;
+    const pctDone = total > 0 ? Math.round(existingResponses / total * 100) : 0;
 
     let html = `
         <div class="card">
@@ -378,67 +384,47 @@ async function renderPendingPoll(container, poll) {
                 <h3 style="margin:0 0 8px">${esc(poll.question || "")}</h3>
                 <button class="btn btn-sm" id="delete-pending-poll-btn" title="Delete poll" style="color:var(--red);border-color:var(--red);flex-shrink:0">&#x2715;</button>
             </div>
-            <div style="display:flex;gap:8px;align-items:center;margin-bottom:16px">
+            <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px">
                 <span style="color:var(--text2);font-size:13px">${esc(poll.created_at || "")}</span>
                 ${snapshotBadge(poll.snapshot_id)}
                 <span class="badge badge-pending">Pending</span>
             </div>
-            <p style="font-size:13px;color:var(--text2)">
-                This poll has <strong>${prompts.length}</strong> archetype prompts ready.
-                Responses can be recorded via Claude-in-Chrome automation or manually below.
-            </p>
-        </div>
-    `;
 
-    // Manual response recording
-    html += `
-        <div class="card">
-            <div class="section-title">Record Response</div>
-            <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;margin-bottom:12px">
-                <div>
-                    <label style="font-size:11px;color:var(--text2);display:block;margin-bottom:4px">Archetype</label>
-                    <select id="resp-archetype" class="select" style="max-width:150px">
-                        ${prompts.map(p => `<option value="${esc(p.archetype_id)}">${esc(p.archetype_id)} (${(p.weight * 100).toFixed(1)}%)</option>`).join("")}
-                    </select>
+            <div class="section-title">Progress</div>
+            <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px">
+                <div style="flex:1;height:10px;background:var(--surface2);border-radius:5px;overflow:hidden">
+                    <div style="height:100%;width:${pctDone}%;background:${pctDone === 100 ? 'var(--green)' : 'var(--accent)'};border-radius:5px;transition:width 0.3s"></div>
                 </div>
-                <div>
-                    <label style="font-size:11px;color:var(--text2);display:block;margin-bottom:4px">Opinion</label>
-                    <select id="resp-opinion" class="select" style="max-width:120px">
-                        <option value="yes">Yes</option>
-                        <option value="no">No</option>
-                        <option value="unsure">Unsure</option>
-                    </select>
-                </div>
-                <div>
-                    <label style="font-size:11px;color:var(--text2);display:block;margin-bottom:4px">Confidence (1-10)</label>
-                    <input id="resp-confidence" type="number" class="input" style="max-width:80px" min="1" max="10" value="5">
-                </div>
-                <button id="resp-submit" class="btn btn-sm btn-primary">Record</button>
+                <span style="font-size:13px;font-weight:600;color:var(--text);min-width:80px">${existingResponses} / ${total}</span>
             </div>
-            <div>
-                <label style="font-size:11px;color:var(--text2);display:block;margin-bottom:4px">Response Text (optional)</label>
-                <textarea id="resp-text" class="textarea" style="min-height:40px" placeholder="The archetype's reasoning..."></textarea>
+            <div style="font-size:12px;color:var(--text2);margin-bottom:16px">
+                ${existingResponses === 0 ? 'Awaiting responses — use Claude-in-Chrome automation or bulk record below.' :
+                  existingResponses < total ? `${total - existingResponses} archetypes remaining.` :
+                  'All responses recorded — ready to aggregate.'}
             </div>
-            <div id="resp-status" class="progress-text" style="display:none"></div>
-        </div>
-    `;
 
-    // Auto-complete + aggregate buttons
-    html += `
-        <div class="card">
-            <div class="section-title">Run Poll</div>
-            <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px">
-                <div style="flex:1">
-                    <button id="auto-complete-btn" class="btn btn-primary" style="width:100%">Auto-Complete (Heuristic Responses)</button>
-                    <div style="font-size:11px;color:var(--text2);margin-top:4px">Generates demographically-informed opinions based on each archetype's party, education, age, and religion. Not Claude — rule-based baseline.</div>
-                </div>
-            </div>
-            <div id="auto-status" class="progress-text" style="display:none"></div>
-            <details style="margin-top:12px">
-                <summary style="cursor:pointer;font-size:12px;color:var(--text2)">Or aggregate manually recorded responses</summary>
-                <button id="agg-btn" class="btn btn-sm" style="margin-top:8px">Aggregate &amp; Complete</button>
+            ${existingResponses >= total && total > 0 ? `
+                <button id="agg-btn" class="btn btn-primary">Aggregate &amp; View Results</button>
                 <div id="agg-status" class="progress-text" style="display:none"></div>
-            </details>
+            ` : ''}
+        </div>
+    `;
+
+    // Bulk record section
+    html += `
+        <div class="card">
+            <div class="section-title">Bulk Record Responses</div>
+            <p style="font-size:12px;color:var(--text2);margin-bottom:12px">
+                Paste a JSON array of responses. Each entry needs: <code>archetype_id</code>, <code>opinion</code> (yes/no/unsure), <code>confidence</code> (1-10), and optionally <code>response_text</code>.
+            </p>
+            <textarea id="bulk-json" class="textarea" style="min-height:120px;font-family:monospace;font-size:11px" placeholder='[
+  {"archetype_id": "A-001", "opinion": "yes", "confidence": 7, "response_text": "..."},
+  {"archetype_id": "A-002", "opinion": "no", "confidence": 8, "response_text": "..."}
+]'></textarea>
+            <div style="display:flex;gap:8px;margin-top:8px;align-items:center">
+                <button id="bulk-submit" class="btn btn-primary">Record All &amp; Aggregate</button>
+                <span id="bulk-status" style="font-size:12px;color:var(--text2)"></span>
+            </div>
         </div>
     `;
 
@@ -463,50 +449,64 @@ async function renderPendingPoll(container, poll) {
 
     container.innerHTML = html;
 
-    // Wire record response
-    document.getElementById("resp-submit")?.addEventListener("click", async () => {
-        const status = document.getElementById("resp-status");
-        const archetype_id = document.getElementById("resp-archetype").value;
-        const opinion = document.getElementById("resp-opinion").value;
-        const confidence = parseInt(document.getElementById("resp-confidence").value) || 5;
-        const response_text = document.getElementById("resp-text").value;
+    // Wire bulk submit
+    document.getElementById("bulk-submit")?.addEventListener("click", async () => {
+        const statusEl = document.getElementById("bulk-status");
+        const raw = document.getElementById("bulk-json").value.trim();
+        if (!raw) { statusEl.textContent = "Paste JSON first."; return; }
 
-        status.style.display = "block";
-        status.textContent = "Recording...";
+        let entries;
         try {
-            await api(`/api/polls/${poll.poll_id}/responses`, {
-                method: "POST",
-                body: { archetype_id, opinion, confidence, response_text }
-            });
-            status.textContent = `Recorded response for ${archetype_id}.`;
-            status.style.color = "var(--green)";
+            entries = JSON.parse(raw);
+            if (!Array.isArray(entries)) throw new Error("Must be a JSON array");
         } catch (e) {
-            status.textContent = `Error: ${e.message}`;
-            status.style.color = "var(--red)";
+            statusEl.textContent = `Invalid JSON: ${e.message}`;
+            statusEl.style.color = "var(--red)";
+            return;
         }
-    });
 
-    // Wire auto-complete
-    document.getElementById("auto-complete-btn")?.addEventListener("click", async () => {
-        const status = document.getElementById("auto-status");
-        const btn = document.getElementById("auto-complete-btn");
-        btn.disabled = true;
-        status.style.display = "block";
-        status.textContent = "Generating heuristic responses for all archetypes...";
+        statusEl.textContent = `Recording ${entries.length} responses...`;
+        statusEl.style.color = "var(--text2)";
+        let recorded = 0;
+        let errors = 0;
+
+        for (const entry of entries) {
+            try {
+                await api(`/api/polls/${poll.poll_id}/responses`, {
+                    method: "POST",
+                    body: {
+                        archetype_id: entry.archetype_id,
+                        opinion: entry.opinion || "unsure",
+                        confidence: entry.confidence || 5,
+                        response_text: entry.response_text || "",
+                    }
+                });
+                recorded++;
+                statusEl.textContent = `Recorded ${recorded}/${entries.length}...`;
+            } catch (e) {
+                errors++;
+            }
+        }
+
+        if (errors > 0) {
+            statusEl.textContent = `Recorded ${recorded}, ${errors} errors.`;
+            statusEl.style.color = "var(--orange)";
+        } else {
+            statusEl.textContent = `All ${recorded} recorded. Aggregating...`;
+            statusEl.style.color = "var(--green)";
+        }
+
+        // Auto-aggregate
         try {
-            const result = await api(`/api/polls/${poll.poll_id}/auto-complete`, { method: "POST" });
-            status.innerHTML = `Done — ${result.recorded} responses recorded. <strong>Yes: ${pct(result.distribution?.yes)}, No: ${pct(result.distribution?.no)}</strong>`;
-            status.style.color = "var(--green)";
+            await api(`/api/polls/${poll.poll_id}/aggregate`, { method: "POST" });
             loadStats();
-            setTimeout(() => navigate("results", { pollId: poll.poll_id }), 1000);
+            setTimeout(() => navigate("results", { pollId: poll.poll_id }), 500);
         } catch (e) {
-            status.textContent = `Error: ${e.message}`;
-            status.style.color = "var(--red)";
-            btn.disabled = false;
+            statusEl.textContent += ` Aggregation error: ${e.message}`;
         }
     });
 
-    // Wire delete on pending poll
+    // Wire delete
     document.getElementById("delete-pending-poll-btn")?.addEventListener("click", async () => {
         if (!confirm("Delete this poll?")) return;
         try {
@@ -519,16 +519,15 @@ async function renderPendingPoll(container, poll) {
         }
     });
 
-    // Wire aggregate
+    // Wire aggregate (only shows when all responses recorded)
     document.getElementById("agg-btn")?.addEventListener("click", async () => {
         const status = document.getElementById("agg-status");
         status.style.display = "block";
         status.textContent = "Aggregating...";
         try {
             await api(`/api/polls/${poll.poll_id}/aggregate`, { method: "POST" });
-            status.textContent = "Complete! Loading results...";
             loadStats();
-            setTimeout(() => navigate("results", { pollId: poll.poll_id }), 500);
+            navigate("results", { pollId: poll.poll_id });
         } catch (e) {
             status.textContent = `Error: ${e.message}`;
             status.style.color = "var(--red)";
