@@ -40,6 +40,7 @@ function render() {
         case "population": renderPopulationView(app); break;
         case "backtest": renderBacktestView(app); break;
         case "events": renderEventsView(app); break;
+        case "sources": renderSourcesView(app); break;
     }
 }
 
@@ -988,6 +989,117 @@ function formatSegments(segments) {
         return segments.map(s => `${s.variable || ""}=${s.value || ""}`).join(", ");
     }
     return JSON.stringify(segments);
+}
+
+// --- View 6: Data Sources ---
+
+function renderSourcesView(el) {
+    el.innerHTML = '<h2>Data Sources</h2><div id="sources-content"><p style="color:var(--text2)">Loading...</p></div>';
+    loadSourcesData();
+}
+
+async function loadSourcesData() {
+    const container = document.getElementById("sources-content");
+    if (!container) return;
+
+    try {
+        const data = await api("/api/sources");
+        const summary = data.summary;
+        const sources = data.sources;
+
+        const statusIcon = (s) => {
+            if (s === "loaded") return '<span style="color:var(--green);font-weight:700">LOADED</span>';
+            if (s === "partial") return '<span style="color:var(--orange);font-weight:700">PARTIAL</span>';
+            return '<span style="color:var(--red);font-weight:700">MISSING</span>';
+        };
+
+        const accessIcon = (a) => {
+            if (a === "public_api") return '<span class="badge badge-complete">Public API</span>';
+            if (a === "public_download") return '<span class="badge badge-complete">Public Download</span>';
+            if (a === "free_registration") return '<span class="badge badge-live">Free Registration</span>';
+            return '<span class="badge badge-pending">Request Required</span>';
+        };
+
+        let html = `
+            <div class="card">
+                <div class="section-title">Coverage Summary</div>
+                <div style="display:flex;gap:24px;flex-wrap:wrap;margin-bottom:16px">
+                    <div style="text-align:center">
+                        <div style="font-size:28px;font-weight:700;color:var(--green)">${summary.loaded}</div>
+                        <div style="font-size:11px;color:var(--text2)">Loaded</div>
+                    </div>
+                    <div style="text-align:center">
+                        <div style="font-size:28px;font-weight:700;color:var(--orange)">${summary.partial}</div>
+                        <div style="font-size:11px;color:var(--text2)">Partial</div>
+                    </div>
+                    <div style="text-align:center">
+                        <div style="font-size:28px;font-weight:700;color:var(--red)">${summary.missing}</div>
+                        <div style="font-size:11px;color:var(--text2)">Missing</div>
+                    </div>
+                    <div style="text-align:center">
+                        <div style="font-size:28px;font-weight:700;color:var(--text)">${summary.loaded_variables}/${summary.total_variables}</div>
+                        <div style="font-size:11px;color:var(--text2)">Variables Loaded</div>
+                    </div>
+                    <div style="text-align:center">
+                        <div style="font-size:28px;font-weight:700;color:var(--text)">${summary.profile_count}</div>
+                        <div style="font-size:11px;color:var(--text2)">Profiles</div>
+                    </div>
+                </div>
+                <div style="height:8px;background:var(--surface2);border-radius:4px;overflow:hidden">
+                    <div style="height:100%;width:${Math.round(summary.loaded_variables / summary.total_variables * 100)}%;background:var(--accent);border-radius:4px"></div>
+                </div>
+                <div style="font-size:11px;color:var(--text2);margin-top:4px">${Math.round(summary.loaded_variables / summary.total_variables * 100)}% variable coverage</div>
+            </div>
+        `;
+
+        // Source cards
+        for (const src of sources) {
+            const varBar = src.variables_total > 0
+                ? `<div style="height:6px;background:var(--surface2);border-radius:3px;overflow:hidden;margin:8px 0">
+                     <div style="height:100%;width:${Math.round(src.variables_loaded / src.variables_total * 100)}%;background:${src.status === 'loaded' ? 'var(--green)' : src.status === 'partial' ? 'var(--orange)' : 'var(--red)'};border-radius:3px"></div>
+                   </div>`
+                : "";
+
+            html += `
+                <div class="card">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+                        <div>
+                            <h3 style="margin:0;font-size:15px">${esc(src.name)} <span style="font-weight:400;color:var(--text2);font-size:12px">— ${esc(src.full_name)}</span></h3>
+                            <div style="font-size:12px;color:var(--text2);margin-top:2px">${esc(src.layer)}</div>
+                        </div>
+                        <div style="text-align:right">
+                            ${statusIcon(src.status)}
+                            <div style="font-size:11px;color:var(--text2);margin-top:2px">${src.variables_loaded}/${src.variables_total} vars</div>
+                        </div>
+                    </div>
+                    ${varBar}
+                    <div style="display:flex;gap:16px;flex-wrap:wrap;font-size:12px;margin-bottom:8px">
+                        <div><span style="color:var(--text2)">Provider:</span> ${esc(src.provider)}</div>
+                        <div><span style="color:var(--text2)">Format:</span> ${esc(src.format)}</div>
+                        <div><span style="color:var(--text2)">Update:</span> ${esc(src.update_cycle)}</div>
+                        <div><span style="color:var(--text2)">Records:</span> ${esc(src.records)}</div>
+                    </div>
+                    <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
+                        ${accessIcon(src.access_level)}
+                        <a href="${esc(src.url)}" target="_blank" style="font-size:12px;color:var(--accent);text-decoration:none">${esc(src.url)}</a>
+                    </div>
+                    <div style="font-size:11px;color:var(--text2);margin-bottom:4px">${esc(src.access)}</div>
+
+                    <details style="margin-top:8px">
+                        <summary style="cursor:pointer;font-size:12px;color:var(--text2)">Variables (${src.variables_total})</summary>
+                        <div style="padding:8px 0;display:flex;flex-wrap:wrap;gap:4px">
+                            ${src.variables_present.map(v => `<span class="badge badge-complete">${esc(v)}</span>`).join("")}
+                            ${src.variables_missing.map(v => `<span class="badge badge-pending" style="text-decoration:line-through;opacity:0.6">${esc(v)}</span>`).join("")}
+                        </div>
+                    </details>
+                </div>
+            `;
+        }
+
+        container.innerHTML = html;
+    } catch (e) {
+        container.innerHTML = `<p style="color:var(--text2)">Failed to load sources: ${esc(e.message)}</p>`;
+    }
 }
 
 // Load sidebar stats

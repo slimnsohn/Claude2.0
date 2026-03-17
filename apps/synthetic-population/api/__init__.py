@@ -10,3 +10,5 @@ def register_blueprints(app):
     app.register_blueprint(events_bp)
     from api.polls import polls_bp
     app.register_blueprint(polls_bp)
+    from api.sources import sources_bp
+    app.register_blueprint(sources_bp)
