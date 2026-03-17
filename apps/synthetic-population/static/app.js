@@ -423,15 +423,22 @@ async function renderPendingPoll(container, poll) {
         </div>
     `;
 
-    // Aggregate button
+    // Auto-complete + aggregate buttons
     html += `
         <div class="card">
-            <div class="section-title">Finalize</div>
-            <p style="font-size:13px;color:var(--text2);margin-bottom:12px">
-                Once all responses are recorded, aggregate to compute weighted results.
-            </p>
-            <button id="agg-btn" class="btn btn-primary">Aggregate &amp; Complete Poll</button>
-            <div id="agg-status" class="progress-text" style="display:none"></div>
+            <div class="section-title">Run Poll</div>
+            <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px">
+                <div style="flex:1">
+                    <button id="auto-complete-btn" class="btn btn-primary" style="width:100%">Auto-Complete (Heuristic Responses)</button>
+                    <div style="font-size:11px;color:var(--text2);margin-top:4px">Generates demographically-informed opinions based on each archetype's party, education, age, and religion. Not Claude — rule-based baseline.</div>
+                </div>
+            </div>
+            <div id="auto-status" class="progress-text" style="display:none"></div>
+            <details style="margin-top:12px">
+                <summary style="cursor:pointer;font-size:12px;color:var(--text2)">Or aggregate manually recorded responses</summary>
+                <button id="agg-btn" class="btn btn-sm" style="margin-top:8px">Aggregate &amp; Complete</button>
+                <div id="agg-status" class="progress-text" style="display:none"></div>
+            </details>
         </div>
     `;
 
@@ -476,6 +483,26 @@ async function renderPendingPoll(container, poll) {
         } catch (e) {
             status.textContent = `Error: ${e.message}`;
             status.style.color = "var(--red)";
+        }
+    });
+
+    // Wire auto-complete
+    document.getElementById("auto-complete-btn")?.addEventListener("click", async () => {
+        const status = document.getElementById("auto-status");
+        const btn = document.getElementById("auto-complete-btn");
+        btn.disabled = true;
+        status.style.display = "block";
+        status.textContent = "Generating heuristic responses for all archetypes...";
+        try {
+            const result = await api(`/api/polls/${poll.poll_id}/auto-complete`, { method: "POST" });
+            status.innerHTML = `Done — ${result.recorded} responses recorded. <strong>Yes: ${pct(result.distribution?.yes)}, No: ${pct(result.distribution?.no)}</strong>`;
+            status.style.color = "var(--green)";
+            loadStats();
+            setTimeout(() => navigate("results", { pollId: poll.poll_id }), 1000);
+        } catch (e) {
+            status.textContent = `Error: ${e.message}`;
+            status.style.color = "var(--red)";
+            btn.disabled = false;
         }
     });
 

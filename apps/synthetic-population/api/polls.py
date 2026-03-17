@@ -201,6 +201,212 @@ def get_poll(poll_id):
 
 
 # ---------------------------------------------------------------------------
+# POST /api/polls/<poll_id>/auto-complete — heuristic responses + aggregate
+# ---------------------------------------------------------------------------
+
+@polls_bp.route("/api/polls/<poll_id>/auto-complete", methods=["POST"])
+def auto_complete_poll(poll_id):
+    """Generate heuristic responses for all archetypes and aggregate.
+
+    NOT Claude responses — these are rule-based opinions derived from each
+    archetype's demographics (party, education, age, religion). Use as a
+    baseline or for testing until Claude-in-Chrome automation is wired up.
+    """
+    polls_dir = _polls_dir()
+    poll_dir = polls_dir / poll_id
+    meta_path = poll_dir / "metadata.json"
+    prompts_path = poll_dir / "prompts.json"
+
+    if not meta_path.exists():
+        return jsonify({"error": f"Poll '{poll_id}' not found"}), 404
+
+    meta = json.loads(meta_path.read_text())
+    if meta.get("status") == "complete":
+        return jsonify({"error": "Poll already complete"}), 400
+
+    if not prompts_path.exists():
+        return jsonify({"error": "No prompts found for this poll"}), 400
+
+    prompts = json.loads(prompts_path.read_text())
+    question = meta.get("question", "").lower()
+    snapshot_id = meta.get("snapshot_id", "live")
+
+    # Load profiles to get demographics per archetype
+    try:
+        profiles, _ = _load_profiles_for_snapshot(snapshot_id)
+    except Exception:
+        profiles = _load_registry()
+
+    # Index profiles by archetype_id
+    profiles_by_arch = {}
+    for p in profiles:
+        aid = p.get("archetype_id")
+        if aid and aid not in profiles_by_arch:
+            profiles_by_arch[aid] = p
+
+    # Generate heuristic responses
+    responses_dir = poll_dir / "responses"
+    responses_dir.mkdir(exist_ok=True)
+    recorded = 0
+
+    for prompt_entry in prompts:
+        aid = prompt_entry["archetype_id"]
+        profile = profiles_by_arch.get(aid, {})
+
+        opinion, confidence, reasoning = _heuristic_opinion(question, profile)
+
+        result = {
+            "archetype_id": aid,
+            "response": opinion,
+            "confidence": confidence,
+            "response_text": reasoning,
+            "hedge_score": 0.1,  # heuristic responses don't hedge
+            "flags": [],
+            "demographics": {
+                k: profile.get(k)
+                for k in ["party_id", "race", "education", "urban_rural", "age_bracket"]
+                if profile.get(k)
+            },
+            "source": "heuristic",  # clearly marked as non-Claude
+        }
+
+        (responses_dir / f"{aid}.json").write_text(json.dumps(result, indent=2))
+        recorded += 1
+
+    # Auto-aggregate
+    responses = []
+    for resp_file in responses_dir.glob("*.json"):
+        try:
+            responses.append(json.loads(resp_file.read_text()))
+        except Exception:
+            continue
+
+    weights = {e["archetype_id"]: e["weight"] for e in prompts}
+
+    from engine.aggregate import PollAggregator
+    agg = PollAggregator(weights)
+    agg_result = agg.aggregate(responses)
+    agg_result["poll_id"] = poll_id
+    agg_result["question"] = meta.get("question")
+    agg_result["response_source"] = "heuristic"
+
+    (poll_dir / "results.json").write_text(json.dumps(agg_result, indent=2, default=str))
+
+    meta["status"] = "complete"
+    meta["response_source"] = "heuristic"
+    meta_path.write_text(json.dumps(meta, indent=2))
+
+    return jsonify({
+        "recorded": recorded,
+        "status": "complete",
+        "distribution": agg_result.get("distribution"),
+    })
+
+
+def _heuristic_opinion(question: str, profile: dict) -> tuple:
+    """Generate a demographically-informed opinion for a question.
+
+    Returns (opinion, confidence, reasoning).
+    """
+    import random
+    party = profile.get("party_id", "independent")
+    edu = profile.get("education", "")
+    age_bracket = profile.get("age_bracket", "35-44")
+    race = profile.get("race", "")
+    religion = profile.get("religion_affiliation", "")
+    urban = profile.get("urban_rural", "")
+
+    # Detect question topic signals
+    q = question.lower()
+    is_progressive_topic = any(w in q for w in [
+        "climate", "environment", "gun control", "universal health", "minimum wage",
+        "student loan", "abortion rights", "marijuana", "immigration reform",
+        "social security expand", "renewable", "tax the rich", "wealth tax",
+    ])
+    is_conservative_topic = any(w in q for w in [
+        "border wall", "tax cut", "deregulat", "military spend", "gun rights",
+        "school choice", "tough on crime", "death penalty", "abortion ban",
+        "oil", "drill", "tariff", "trade war",
+    ])
+    is_economic = any(w in q for w in [
+        "inflation", "economy", "recession", "interest rate", "fed ", "gdp",
+        "unemployment", "jobs", "wages", "stock market", "housing",
+    ])
+    is_social = any(w in q for w in [
+        "marriage", "transgender", "religion", "prayer", "church",
+        "family values", "traditional",
+    ])
+
+    # Base lean from party
+    dem_lean = party in ("strong_dem", "dem", "lean_dem")
+    rep_lean = party in ("strong_rep", "rep", "lean_rep")
+    strong = party.startswith("strong_")
+
+    # Compute opinion probability
+    if is_progressive_topic:
+        yes_prob = 0.75 if dem_lean else (0.20 if rep_lean else 0.45)
+    elif is_conservative_topic:
+        yes_prob = 0.20 if dem_lean else (0.75 if rep_lean else 0.45)
+    elif is_economic:
+        # Economic questions — more nuanced, education matters
+        if edu in ("graduate", "bachelors"):
+            yes_prob = 0.55  # educated lean optimistic
+        else:
+            yes_prob = 0.40  # less educated more pessimistic
+        # Party tilt
+        if rep_lean:
+            yes_prob -= 0.10  # conservatives more skeptical of gov econ
+        elif dem_lean:
+            yes_prob += 0.05
+    elif is_social:
+        if religion in ("evangelical",) and rep_lean:
+            yes_prob = 0.25  # conservative on social issues
+        elif religion == "none" and dem_lean:
+            yes_prob = 0.75
+        else:
+            yes_prob = 0.45
+    else:
+        # Generic question — slight party lean
+        yes_prob = 0.55 if dem_lean else (0.40 if rep_lean else 0.48)
+
+    # Age modifier: older people slightly more conservative
+    if age_bracket in ("65+", "55-64"):
+        yes_prob -= 0.05
+    elif age_bracket in ("18-24", "25-34"):
+        yes_prob += 0.05
+
+    # Urban modifier
+    if urban == "rural":
+        yes_prob -= 0.05
+    elif urban == "urban":
+        yes_prob += 0.03
+
+    # Clamp
+    yes_prob = max(0.05, min(0.95, yes_prob))
+
+    # Decide
+    roll = random.random()
+    if roll < yes_prob:
+        opinion = "yes"
+    elif roll < yes_prob + (1 - yes_prob) * 0.7:
+        opinion = "no"
+    else:
+        opinion = "unsure"
+
+    # Confidence: strong partisans are more confident
+    base_conf = 7 if strong else (5 if party != "independent" else 4)
+    confidence = max(1, min(10, base_conf + random.randint(-2, 2)))
+
+    # Brief reasoning
+    party_label = {"strong_dem": "strong Democrat", "dem": "Democrat", "lean_dem": "lean Democrat",
+                   "independent": "independent", "lean_rep": "lean Republican",
+                   "rep": "Republican", "strong_rep": "strong Republican"}.get(party, party)
+    reasoning = f"As a {party_label} from a {urban or 'mixed'} area with {edu or 'some'} education, this person {opinion}s. [heuristic response]"
+
+    return opinion, confidence, reasoning
+
+
+# ---------------------------------------------------------------------------
 # DELETE /api/polls/<poll_id> — delete a poll
 # ---------------------------------------------------------------------------
 
