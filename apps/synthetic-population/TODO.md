@@ -4,21 +4,21 @@
 
 ## Now
 
-- [ ] Download real ACS PUMS data and run first batch generation
 - [ ] Test with real CES data (Harvard Dataverse access)
+- [ ] Wire up Claude-in-Chrome polling automation
+- [ ] Run first real poll through the UI
 
 ## Next
 
-- [ ] Build web UI for population browsing and polling
-- [ ] Automate Claude Max querying via browser automation
 - [ ] News API integration for automated event ingestion
+- [ ] Polymarket API integration for automated signal generation
 
 ## Backlog
 
-- [ ] Polymarket API integration for automated signal generation
 - [ ] International population expansion (non-US markets)
 - [ ] Multi-model ensembling if API access becomes available
 - [ ] Migrate from pickle to SDV save_to_json for model persistence
+- [ ] Export poll results to CSV/PDF
 
 ## Done
 
@@ -44,3 +44,8 @@
 - [x] Event ingestion and storage
 - [x] Bounded drift engine with immutable variable protection
 - [x] Full pipeline integration smoke test (270 tests passing)
+- [x] Downloaded real ACS PUMS data, generated 362 profiles across 56 archetypes
+- [x] Web UI: Flask backend with REST API (stats, profiles, polls, snapshots, events)
+- [x] Web UI: Sidebar dashboard with 5 views (poll, results, population, backtest, events)
+- [x] Snapshot system for backtesting with strict temporal isolation (382 tests passing)
+- [x] Chat widget integration
