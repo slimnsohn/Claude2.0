@@ -2,6 +2,14 @@
   "version": 1,
   "projects": [
     {
+      "name": "synthetic-population",
+      "type": "PYTHON_CLI",
+      "location": "apps/synthetic-population",
+      "status": "active",
+      "description": "Synthetic population engine for AI opinion simulation",
+      "created": "2026-03-16"
+    },
+    {
       "name": "ncaa_11_15_seeds",
       "type": "BROWSER",
       "location": "apps/ncaa_11_15_seeds",
@@ -46,6 +54,7 @@
     "BROWSER",
     "ELECTRON",
     "IOS_APP",
+    "PYTHON_CLI",
     "OTHER"
   ],
   "statuses": [

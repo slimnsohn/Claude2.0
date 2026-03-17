@@ -1,0 +1,7 @@
+data/models/
+data/profiles/
+data/events/
+data/polls/
+__pycache__/
+*.pyc
+.pytest_cache/
