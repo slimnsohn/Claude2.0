@@ -87,6 +87,21 @@ VOTE_LABELS = {
     "did_not_vote": "did not vote",
 }
 
+OCCUPATION_DISPLAY = {
+    "professional": "professional",
+    "service": "service worker",
+    "sales": "salesperson",
+    "construction": "construction worker",
+    "production": "production worker",
+    "management": "manager",
+    "other": "worker",
+    "management_business_science_arts": "professional",
+    "natural_resources_construction_maintenance": "tradesperson",
+    "production_transportation_material_moving": "production worker",
+    "sales_office": "office worker",
+    "service_occupations": "service worker",
+}
+
 OCCUPATION_ARTICLES = {
     "a": [
         "accountant", "architect", "attorney", "auditor", "baker",
@@ -127,7 +142,10 @@ def _pronouns(sex: str):
     return "He", "him", "his"
 
 
-def _format_income(income: int) -> str:
+def _format_income(income) -> str:
+    if income is None or (isinstance(income, float) and (income != income)):  # NaN check
+        return "an undisclosed amount"
+    income = max(0, int(income))  # clamp negatives to 0
     return f"${income:,}"
 
 
@@ -192,7 +210,8 @@ def _slot_opening(p: dict) -> str:
 
 def _slot_education_work(p: dict, subj: str, poss: str) -> str:
     edu = p.get("education", "")
-    occ = p.get("occupation", "").replace("_", " ")
+    raw_occ = p.get("occupation") or ""
+    occ = OCCUPATION_DISPLAY.get(raw_occ, raw_occ.replace("_", " "))
     edu_phrase = _edu_phrase(edu)
     art = _article(occ)
 
@@ -235,7 +254,7 @@ def _slot_education_work(p: dict, subj: str, poss: str) -> str:
         return edu_part + " is currently not employed."
 
 
-def _slot_family(p: dict, subj: str) -> str:
+def _slot_family(p: dict, subj: str, poss: str) -> str:
     marital = p.get("marital_status", "")
     kids = p.get("children_count", 0)
 
@@ -252,7 +271,7 @@ def _slot_family(p: dict, subj: str) -> str:
     elif marital == "widowed":
         marital_phrases = [
             f"{subj} is widowed",
-            f"{subj} lost {subj.lower()}'s spouse",
+            f"{subj} lost {poss} spouse",
         ]
     elif marital == "single":
         marital_phrases = [
@@ -292,7 +311,7 @@ def _slot_family(p: dict, subj: str) -> str:
     return random.choice(child_templates)
 
 
-def _slot_religion(p: dict, subj: str) -> str:
+def _slot_religion(p: dict, subj: str, poss: str) -> str:
     affil = p.get("religion_affiliation", "none")
     attend = p.get("religion_attendance", "never")
 
@@ -301,7 +320,7 @@ def _slot_religion(p: dict, subj: str) -> str:
             f"{subj} does not identify with any religion.",
             f"{subj} is not religious.",
             f"{subj} considers {subj.lower()}self non-religious.",
-            f"Religion plays no role in {subj.lower()}'s life.",
+            f"Religion plays no role in {poss} life.",
         ]
     elif attend == "never":
         templates = [
@@ -312,7 +331,7 @@ def _slot_religion(p: dict, subj: str) -> str:
     elif attend == "weekly":
         templates = [
             f"{subj} is an active {affil.replace('_', ' ')} and attends services weekly.",
-            f"Faith is central to {subj.lower()}'s life; {subj.lower()} attends {affil.replace('_', ' ')} services every week.",
+            f"Faith is central to {poss} life; {subj.lower()} attends {affil.replace('_', ' ')} services every week.",
             f"{subj} is a committed {affil.replace('_', ' ')} who worships weekly.",
         ]
     elif attend in ("monthly", "occasionally"):
@@ -324,7 +343,7 @@ def _slot_religion(p: dict, subj: str) -> str:
     else:
         templates = [
             f"{subj} identifies as {affil.replace('_', ' ')}.",
-            f"Religion plays some role in {subj.lower()}'s life; {subj.lower()} is {affil.replace('_', ' ')}.",
+            f"Religion plays some role in {poss} life; {subj.lower()} is {affil.replace('_', ' ')}.",
         ]
 
     return random.choice(templates)
@@ -333,12 +352,10 @@ def _slot_religion(p: dict, subj: str) -> str:
 def _slot_politics_media(p: dict, subj: str) -> str:
     party = p.get("party_id", "independent")
     vote = p.get("vote_2024", "")
-    news_key = p.get("primary_news_source", "")
-    social_key = p.get("social_media_primary", "")
+    news_key = p.get("primary_news_source") or ""
+    social_key = p.get("social_media_primary") or ""
 
     party_label = PARTY_LABELS.get(party, party.replace("_", " "))
-    news_label = NEWS_LABELS.get(news_key, news_key.replace("_", " "))
-    social_label = SOCIAL_LABELS.get(social_key, social_key.replace("_", " "))
     vote_label = VOTE_LABELS.get(vote, "")
 
     vote_part = ""
@@ -347,13 +364,26 @@ def _slot_politics_media(p: dict, subj: str) -> str:
     elif vote_label == "did not vote":
         vote_part = " and sat out the 2024 election"
 
-    news_templates = [
-        f"{subj} is {party_label}{vote_part}. {subj} primarily gets news from {news_label} and is most active on {social_label}.",
-        f"Politically, {subj.lower()} is {party_label}{vote_part}, turning to {news_label} for news and {social_label} for social media.",
-        f"{subj} identifies as {party_label}{vote_part}; {subj.lower()} relies on {news_label} for current events and spends time on {social_label}.",
+    # Build media sentence only if we have data
+    news_label = NEWS_LABELS.get(news_key, news_key.replace("_", " ")) if news_key else ""
+    social_label = SOCIAL_LABELS.get(social_key, social_key.replace("_", " ")) if social_key else ""
+
+    if news_label and social_label:
+        media_part = f" {subj} primarily gets news from {news_label} and is most active on {social_label}."
+    elif news_label:
+        media_part = f" {subj} primarily gets news from {news_label}."
+    elif social_label:
+        media_part = f" {subj} is most active on {social_label}."
+    else:
+        media_part = ""
+
+    templates = [
+        f"{subj} is {party_label}{vote_part}.{media_part}",
+        f"Politically, {subj.lower()} is {party_label}{vote_part}.{media_part}",
+        f"{subj} identifies as {party_label}{vote_part}.{media_part}",
     ]
 
-    return random.choice(news_templates)
+    return random.choice(templates)
 
 
 def _slot_financial(p: dict, subj: str, poss: str) -> str:
@@ -388,12 +418,12 @@ def _slot_financial(p: dict, subj: str, poss: str) -> str:
     elif income_source == "investments":
         templates = [
             f"{subj} draws most of {poss} income from investments, totaling around {income_str} per year, and {tax_desc}.",
-            f"Investment income of about {income_str} per year sustains {subj.lower()}'s lifestyle; {subj.lower()} {tax_desc}.",
+            f"Investment income of about {income_str} per year sustains {poss} lifestyle; {subj.lower()} {tax_desc}.",
         ]
     elif income_source == "benefits":
         templates = [
             f"{subj} relies primarily on government benefits as {poss} income source and {tax_desc}.",
-            f"Benefits make up the bulk of {subj.lower()}'s income; {subj.lower()} {tax_desc}.",
+            f"Benefits make up the bulk of {poss} income; {subj.lower()} {tax_desc}.",
         ]
     else:  # wages / salary
         templates = [
@@ -405,7 +435,7 @@ def _slot_financial(p: dict, subj: str, poss: str) -> str:
     return random.choice(templates)
 
 
-def _slot_economic_perspective(p: dict, subj: str) -> str:
+def _slot_economic_perspective(p: dict, subj: str, poss: str) -> str:
     income = p.get("income", 0)
     edu = p.get("education", "")
     party = p.get("party_id", "independent")
@@ -425,7 +455,7 @@ def _slot_economic_perspective(p: dict, subj: str) -> str:
     elif income < 100000:
         econ_templates = [
             f"{subj} has worked hard to reach a comfortable middle-class life.",
-            f"Financially, {subj.lower()} feels solidly middle class and wants to protect what {subj.lower()}'s built.",
+            f"Financially, {subj.lower()} feels solidly middle class and wants to protect what {poss} built.",
             f"{subj} is in a good place economically and thinks about long-term security.",
         ]
     else:
@@ -454,11 +484,11 @@ def generate_backstory(profile: dict) -> str:
     sentences = [
         _slot_opening(profile),
         _slot_education_work(profile, subj, poss),
-        _slot_family(profile, subj),
-        _slot_religion(profile, subj),
+        _slot_family(profile, subj, poss),
+        _slot_religion(profile, subj, poss),
         _slot_politics_media(profile, subj),
         _slot_financial(profile, subj, poss),
-        _slot_economic_perspective(profile, subj),
+        _slot_economic_perspective(profile, subj, poss),
     ]
 
     return " ".join(sentences)
