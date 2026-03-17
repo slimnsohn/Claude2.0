@@ -360,8 +360,8 @@ function renderPopulationView(el) {
             <input id="pop-search" class="input" placeholder="Search..." value="${esc(populationFilters.search)}">
             <select id="pop-sex" class="select"><option value="">All Sex</option><option value="M">Male</option><option value="F">Female</option></select>
             <select id="pop-race" class="select"><option value="">All Race</option><option value="white">White</option><option value="black">Black</option><option value="hispanic">Hispanic</option><option value="asian">Asian</option><option value="other">Other</option></select>
-            <select id="pop-education" class="select"><option value="">All Education</option><option value="high_school">High School</option><option value="some_college">Some College</option><option value="bachelors">Bachelors</option><option value="graduate">Graduate</option></select>
-            <select id="pop-party" class="select"><option value="">All Party</option><option value="democrat">Democrat</option><option value="republican">Republican</option><option value="independent">Independent</option></select>
+            <select id="pop-education" class="select"><option value="">All Education</option><option value="less_than_hs">Less than HS</option><option value="hs_diploma">HS Diploma</option><option value="some_college">Some College</option><option value="bachelors">Bachelors</option><option value="graduate">Graduate</option></select>
+            <select id="pop-party" class="select"><option value="">All Party</option><option value="strong_dem">Strong Dem</option><option value="dem">Democrat</option><option value="lean_dem">Lean Dem</option><option value="independent">Independent</option><option value="lean_rep">Lean Rep</option><option value="rep">Republican</option><option value="strong_rep">Strong Rep</option></select>
             <select id="pop-state" class="select"><option value="">All States</option></select>
         </div>
         <div class="quick-filters">
@@ -396,10 +396,10 @@ function renderPopulationView(el) {
         btn.addEventListener("click", () => {
             const qf = btn.dataset.qf;
             // Reset filters first
-            populationFilters = { search: "", sex: "", race: "", education: "", party_id: "", state: "" };
+            populationFilters = { search: "", sex: "", race: "", education: "", party_id: "", state: "", _quickFilter: qf };
             switch (qf) {
-                case "democrats": populationFilters.party_id = "democrat"; break;
-                case "republicans": populationFilters.party_id = "republican"; break;
+                case "democrats": populationFilters.party_id = "dem"; break;  // catches strong_dem, dem, lean_dem via startsWith
+                case "republicans": populationFilters.party_id = "rep"; break;  // catches strong_rep, rep, lean_rep via startsWith
                 case "college": populationFilters.education = "bachelors"; break;
                 case "rural": populationFilters.search = "rural"; break;
                 case "seniors": populationFilters.search = "65"; break;
@@ -430,17 +430,35 @@ async function fetchPopulation() {
     const container = document.getElementById("pop-table");
     if (!container) return;
 
+    // For quick filters (democrats/republicans/college), use client-side filtering
+    // since they need multi-value matching (e.g., strong_dem + dem + lean_dem)
+    const qf = populationFilters._quickFilter;
     const params = new URLSearchParams();
-    if (populationFilters.search) params.set("search", populationFilters.search);
-    if (populationFilters.sex) params.set("sex", populationFilters.sex);
-    if (populationFilters.race) params.set("race", populationFilters.race);
-    if (populationFilters.education) params.set("education", populationFilters.education);
-    if (populationFilters.party_id) params.set("party_id", populationFilters.party_id);
-    if (populationFilters.state) params.set("state", populationFilters.state);
+
+    if (!qf || qf === "rural" || qf === "seniors") {
+        // Use server-side filtering for exact matches and search
+        if (populationFilters.search) params.set("search", populationFilters.search);
+        if (populationFilters.sex) params.set("sex", populationFilters.sex);
+        if (populationFilters.race) params.set("race", populationFilters.race);
+        if (populationFilters.education && !qf) params.set("education", populationFilters.education);
+        if (populationFilters.party_id && !qf) params.set("party_id", populationFilters.party_id);
+        if (populationFilters.state) params.set("state", populationFilters.state);
+    }
 
     try {
-        const profiles = await api(`/api/profiles?${params.toString()}`);
-        populationData = profiles || [];
+        let profiles = await api(`/api/profiles?${params.toString()}`);
+        profiles = profiles || [];
+
+        // Client-side quick filter for multi-value matches
+        if (qf === "democrats") {
+            profiles = profiles.filter(p => ["strong_dem", "dem", "lean_dem"].includes(p.party_id));
+        } else if (qf === "republicans") {
+            profiles = profiles.filter(p => ["strong_rep", "rep", "lean_rep"].includes(p.party_id));
+        } else if (qf === "college") {
+            profiles = profiles.filter(p => ["bachelors", "graduate"].includes(p.education));
+        }
+
+        populationData = profiles;
         renderPopulationTable();
     } catch (e) {
         container.innerHTML = `<p style="color:var(--text2)">Failed to load profiles: ${esc(e.message)}</p>`;
@@ -555,17 +573,54 @@ async function loadProfileDetail(profileId) {
             `;
         }
 
-        html += `<div class="section-title">Demographics</div><div class="card">`;
-        const demoFields = ["profile_id", "age", "sex", "race", "education", "state", "party_id", "archetype_id", "income_bracket", "urban_rural", "religion", "age_bracket"];
-        for (const key of demoFields) {
-            if (p[key] != null) {
-                html += `<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:13px;border-bottom:1px solid var(--border)">
-                    <span style="color:var(--text2)">${esc(key)}</span>
-                    <span style="color:var(--text);font-weight:500">${esc(String(p[key]))}</span>
+        // Group ALL fields by category
+        const fieldCategories = {
+            "Identity": ["profile_id", "archetype_id", "batch_id"],
+            "Demographics": ["age", "age_bracket", "sex", "race", "education", "marital_status", "children_count", "citizenship", "veteran_status", "disability", "language", "household_size", "generation"],
+            "Geography": ["state", "urban_rural", "region", "census_division", "metro_area", "county_type", "population_density", "cost_of_living_area", "time_zone", "climate_zone"],
+            "Economics": ["income", "income_bracket", "employment_status", "occupation", "industry", "income_source", "hours_worked", "employer_size", "union_membership", "homeownership", "health_insurance", "commute_mode"],
+            "Financial": ["risk_tolerance", "debt_level", "savings_months", "credit_score_bracket", "financial_literacy_score", "financial_sophistication", "tax_approach", "retirement_strategy", "uses_financial_advisor", "insurance_coverage"],
+            "Political": ["party_id", "ideology", "vote_2020", "vote_2024", "registration_status", "political_interest", "partisan_strength", "swing_voter"],
+            "Policy Positions": ["abortion", "gun_control", "immigration", "climate_policy", "healthcare_system", "government_spending", "trade_policy", "criminal_justice", "education_policy", "social_security", "marijuana", "minimum_wage", "foreign_policy", "tax_policy", "tech_regulation"],
+            "Psychology": ["racial_resentment", "authoritarianism", "social_trust", "openness", "conscientiousness", "extraversion", "agreeableness", "neuroticism", "institutional_confidence", "meritocracy_belief"],
+            "Religion": ["religion_affiliation", "religion_denomination", "religion_attendance", "religion_biblical_literalism", "religion_importance"],
+            "Media": ["primary_news_source", "secondary_news_source", "social_media_primary", "social_media_news", "podcast_listener", "media_trust", "info_ecosystem", "news_frequency"],
+            "Science/Health": ["vaccine_attitude", "climate_change_belief", "climate_policy_support", "evolution_belief", "trust_medical_establishment", "trust_scientific_establishment"],
+        };
+
+        const skip = new Set(["backstory", "drift_log", "created_at", "updated_at"]);
+        const shown = new Set();
+
+        for (const [category, fields] of Object.entries(fieldCategories)) {
+            const present = fields.filter(f => p[f] != null && !skip.has(f));
+            if (present.length === 0) continue;
+            html += `<details ${category === "Demographics" || category === "Identity" ? "open" : ""}><summary style="cursor:pointer;font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--text2);padding:8px 0;font-weight:600">${esc(category)} (${present.length})</summary><div class="card" style="margin-bottom:8px">`;
+            for (const key of present) {
+                const val = p[key];
+                const display = typeof val === "number" ? (Number.isInteger(val) ? String(val) : val.toFixed(3)) : String(val);
+                html += `<div style="display:flex;justify-content:space-between;padding:3px 0;font-size:12px;border-bottom:1px solid var(--border)">
+                    <span style="color:var(--text2)">${esc(key.replace(/_/g, " "))}</span>
+                    <span style="color:var(--text);font-weight:500;text-align:right;max-width:60%">${esc(display)}</span>
+                </div>`;
+                shown.add(key);
+            }
+            html += `</div></details>`;
+        }
+
+        // Show any remaining fields not in categories (custom/namespaced)
+        const remaining = Object.keys(p).filter(k => !shown.has(k) && !skip.has(k) && p[k] != null && !k.startsWith("_"));
+        if (remaining.length > 0) {
+            html += `<details><summary style="cursor:pointer;font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--text2);padding:8px 0;font-weight:600">Other (${remaining.length})</summary><div class="card" style="margin-bottom:8px">`;
+            for (const key of remaining) {
+                const val = p[key];
+                const display = typeof val === "number" ? (Number.isInteger(val) ? String(val) : val.toFixed(3)) : String(val);
+                html += `<div style="display:flex;justify-content:space-between;padding:3px 0;font-size:12px;border-bottom:1px solid var(--border)">
+                    <span style="color:var(--text2)">${esc(key.replace(/_/g, " "))}</span>
+                    <span style="color:var(--text);font-weight:500;text-align:right;max-width:60%">${esc(display)}</span>
                 </div>`;
             }
+            html += `</div></details>`;
         }
-        html += `</div>`;
 
         // Drift log
         if (p.drift_log && p.drift_log.length > 0) {
