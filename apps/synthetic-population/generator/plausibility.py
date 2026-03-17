@@ -12,8 +12,14 @@ import random
 import math
 
 
+PHYSICAL_JOBS = {"construction", "production", "production worker", "construction worker",
+                  "landscaper", "welder", "machinist", "carpenter", "plumber", "electrician",
+                  "forklift operator", "warehouse worker", "mechanic", "diesel mechanic"}
+
+
 def fix_profile(profile: dict) -> dict:
     """Apply all plausibility fixes to a profile. Modifies in place and returns it."""
+    _fix_age_bracket(profile)
     _fix_income(profile)
     _fix_age_education(profile)
     _fix_age_family(profile)
@@ -22,6 +28,15 @@ def fix_profile(profile: dict) -> dict:
     _fix_widowed_age(profile)
     _fix_retirement_age(profile)
     _fix_children_household(profile)
+    _fix_religion_consistency(profile)
+    _fix_nilf_wages(profile)
+    _fix_employed_retirement_source(profile)
+    _fix_elderly_employment(profile)
+    _fix_elderly_insurance(profile)
+    _fix_disabled_insurance(profile)
+    _fix_employed_low_income(profile)
+    _fix_high_income_low_education(profile)
+    _fix_education_occupation_mismatch(profile)
     return profile
 
 
@@ -234,6 +249,138 @@ def _fix_children_household(p: dict):
         min_hh = 1 + kids + (1 if marital == "married" else 0)
         if hh < min_hh:
             p["household_size"] = min_hh
+
+
+def _fix_age_bracket(p: dict):
+    """Recalculate age_bracket from actual age — fixes 281 mismatches."""
+    age = _age(p)
+    if age is None:
+        return
+    if age < 25:
+        p["age_bracket"] = "18-24"
+    elif age < 35:
+        p["age_bracket"] = "25-34"
+    elif age < 45:
+        p["age_bracket"] = "35-44"
+    elif age < 55:
+        p["age_bracket"] = "45-54"
+    elif age < 65:
+        p["age_bracket"] = "55-64"
+    else:
+        p["age_bracket"] = "65+"
+
+
+def _fix_religion_consistency(p: dict):
+    """Religion 'none' can't have weekly/monthly attendance."""
+    affil = p.get("religion_affiliation", "")
+    attend = p.get("religion_attendance", "")
+
+    if affil == "none" and attend in ("weekly", "monthly", "more_than_weekly"):
+        p["religion_attendance"] = "never"
+    if affil not in ("none", "", None) and affil != "other" and attend == "never":
+        # Has a religion but never attends — plausible (cultural affiliation), leave it
+        pass
+
+
+def _fix_nilf_wages(p: dict):
+    """Not in labor force + income_source wages is contradictory."""
+    emp = p.get("employment_status", "")
+    source = p.get("income_source", "")
+    age = _age(p)
+
+    if emp == "not_in_labor_force" and source == "wages":
+        income = _float_or(p.get("income"), 0)
+        if age and age >= 62:
+            p["income_source"] = "retirement"
+        elif income > 50000:
+            p["income_source"] = "investments"
+        else:
+            p["income_source"] = "benefits"
+
+
+def _fix_employed_retirement_source(p: dict):
+    """If you're employed, your income source is wages, not retirement."""
+    emp = p.get("employment_status", "")
+    source = p.get("income_source", "")
+
+    if emp == "employed" and source == "retirement":
+        p["income_source"] = "wages"
+
+
+def _fix_elderly_employment(p: dict):
+    """80+ should not be employed, especially in physical jobs. 75+ not in physical jobs."""
+    age = _age(p)
+    if age is None:
+        return
+
+    occ = (p.get("occupation") or "").lower()
+    emp = p.get("employment_status", "")
+
+    if age >= 80 and emp == "employed":
+        p["employment_status"] = "not_in_labor_force"
+        p["income_source"] = "retirement"
+        p["occupation"] = "retired"
+
+    if age >= 75 and occ in PHYSICAL_JOBS:
+        p["occupation"] = "retired"
+        if emp == "employed":
+            p["employment_status"] = "not_in_labor_force"
+            p["income_source"] = "retirement"
+
+
+def _fix_elderly_insurance(p: dict):
+    """65+ should have health insurance (Medicare eligible)."""
+    age = _age(p)
+    if age is None:
+        return
+    if age >= 65:
+        p["health_insurance"] = True
+
+
+def _fix_disabled_insurance(p: dict):
+    """Disabled individuals with low income should have health insurance (Medicaid/SSDI)."""
+    disabled = p.get("disability")
+    if disabled is True or disabled == "True":
+        income = _float_or(p.get("income"), 0)
+        if income < 50000:
+            p["health_insurance"] = True
+
+
+def _fix_employed_low_income(p: dict):
+    """Employed people should make at least part-time minimum wage (~$8k/yr)."""
+    emp = p.get("employment_status", "")
+    income = _float_or(p.get("income"), None)
+
+    if emp == "employed" and income is not None and income < 8000:
+        p["income"] = random.randint(12000, 28000)
+        _recalc_income_bracket(p)
+
+
+def _fix_education_occupation_mismatch(p: dict):
+    """Graduate degree holders shouldn't be in manual labor jobs."""
+    edu = p.get("education", "")
+    occ = (p.get("occupation") or "").lower()
+
+    if edu == "graduate" and occ in PHYSICAL_JOBS:
+        p["occupation"] = random.choice(["professional", "management"])
+    if edu == "graduate" and occ in ("service", "sales", "other", "general laborer"):
+        p["occupation"] = "professional"
+    if edu == "less_than_hs" and occ in ("management", "manager", "professional"):
+        p["occupation"] = random.choice(["service", "construction", "production"])
+
+
+def _fix_high_income_low_education(p: dict):
+    """Less than HS education making $200k+ is extremely rare."""
+    edu = p.get("education", "")
+    income = _float_or(p.get("income"), 0)
+    age = _age(p)
+
+    if edu == "less_than_hs" and income > 150000:
+        p["income"] = random.randint(25000, 65000)
+        _recalc_income_bracket(p)
+    elif edu == "hs_diploma" and income > 200000 and age and age < 40:
+        p["income"] = random.randint(30000, 80000)
+        _recalc_income_bracket(p)
 
 
 # ---------------------------------------------------------------------------

@@ -72,9 +72,11 @@ SOCIAL_LABELS = {
 
 PARTY_LABELS = {
     "strong_rep": "a staunch Republican",
+    "rep": "a Republican",
     "lean_rep": "a Republican-leaning voter",
     "independent": "a political independent",
     "lean_dem": "a Democrat-leaning voter",
+    "dem": "a Democrat",
     "strong_dem": "a committed Democrat",
     "libertarian": "a libertarian",
     "apolitical": "largely apolitical",
@@ -88,14 +90,15 @@ VOTE_LABELS = {
 }
 
 OCCUPATION_DISPLAY = {
-    "professional": "professional",
+    "professional": "white-collar professional",
     "service": "service worker",
     "sales": "salesperson",
     "construction": "construction worker",
     "production": "production worker",
     "management": "manager",
-    "other": "worker",
-    "management_business_science_arts": "professional",
+    "other": "general laborer",
+    "retired": "retiree",
+    "management_business_science_arts": "white-collar professional",
     "natural_resources_construction_maintenance": "tradesperson",
     "production_transportation_material_moving": "production worker",
     "sales_office": "office worker",
@@ -128,6 +131,19 @@ OCCUPATION_ARTICLES = {
 }
 
 
+def _int_or_zero(val):
+    """Safely convert to int, defaulting to 0."""
+    if val is None:
+        return 0
+    try:
+        import math
+        if isinstance(val, float) and math.isnan(val):
+            return 0
+        return int(val)
+    except (ValueError, TypeError):
+        return 0
+
+
 def _article(occupation: str) -> str:
     """Return 'an' if occupation starts with a vowel sound, else 'a'."""
     if not occupation:
@@ -136,10 +152,10 @@ def _article(occupation: str) -> str:
 
 
 def _pronouns(sex: str):
-    """Return (subject, object, possessive) pronouns."""
+    """Return (subject, object, possessive, reflexive) pronouns."""
     if sex.lower() in ("f", "female", "woman"):
-        return "She", "her", "her"
-    return "He", "him", "his"
+        return "She", "her", "her", "herself"
+    return "He", "him", "his", "himself"
 
 
 def _format_income(income) -> str:
@@ -199,7 +215,7 @@ def _slot_opening(p: dict) -> str:
         "Alex", "Casey", "Jordan", "Morgan", "Taylor", "Sam",
         "Chris", "Dana", "Jamie", "Pat",
     ])
-    sub, _, _ = _pronouns(sex)
+    sub, _, _, _ = _pronouns(sex)
     name_templates = [
         f"{first_name} is a {chosen}.",
         f"Meet {first_name}, a {chosen}.",
@@ -242,7 +258,9 @@ def _slot_education_work(p: dict, subj: str, poss: str) -> str:
 
     edu_part = random.choice(edu_templates)
 
-    if occ:
+    if occ == "retiree" or occ == "retired":
+        return edu_part + " is now retired."
+    elif occ:
         work_templates = [
             f" works as {art} {occ}.",
             f" has built a career as {art} {occ}.",
@@ -256,7 +274,8 @@ def _slot_education_work(p: dict, subj: str, poss: str) -> str:
 
 def _slot_family(p: dict, subj: str, poss: str) -> str:
     marital = p.get("marital_status", "")
-    kids = p.get("children_count", 0)
+    kids = _int_or_zero(p.get("children_count", 0))
+    age = p.get("age", 40)
 
     if marital == "married":
         marital_phrases = [
@@ -296,54 +315,83 @@ def _slot_family(p: dict, subj: str, poss: str) -> str:
             f"{marital_part} and does not have children.",
         ]
     elif kids == 1:
-        child_templates = [
-            f"{marital_part} with one child.",
-            f"{marital_part} and has a child.",
-            f"{marital_part} and is raising one child.",
-        ]
+        if age >= 65:
+            child_templates = [
+                f"{marital_part} with one adult child.",
+                f"{marital_part} and has a grown child.",
+                f"{marital_part} and raised one child.",
+            ]
+        else:
+            child_templates = [
+                f"{marital_part} with one child.",
+                f"{marital_part} and has a child.",
+                f"{marital_part} and is raising one child.",
+            ]
     else:
-        child_templates = [
-            f"{marital_part} with {kids} children.",
-            f"{marital_part} and has {kids} kids.",
-            f"{marital_part} and is raising {kids} children.",
-        ]
+        if age >= 65:
+            child_templates = [
+                f"{marital_part} with {kids} adult children.",
+                f"{marital_part} and raised {kids} children.",
+                f"{marital_part} and has {kids} grown children.",
+            ]
+        else:
+            child_templates = [
+                f"{marital_part} with {kids} children.",
+                f"{marital_part} and has {kids} kids.",
+                f"{marital_part} and is raising {kids} children.",
+            ]
 
     return random.choice(child_templates)
 
 
-def _slot_religion(p: dict, subj: str, poss: str) -> str:
+RELIGION_DISPLAY = {
+    "evangelical": "evangelical Christian",
+    "mainline": "mainline Protestant",
+    "catholic": "Catholic",
+    "none": None,
+    "other": "non-mainstream faith tradition",
+    "jewish": "Jewish",
+    "muslim": "Muslim",
+    "hindu": "Hindu",
+    "buddhist": "Buddhist",
+    "mormon": "Mormon",
+}
+
+
+def _slot_religion(p: dict, subj: str, poss: str, reflex: str = "themselves") -> str:
     affil = p.get("religion_affiliation", "none")
     attend = p.get("religion_attendance", "never")
+    affil_display = RELIGION_DISPLAY.get(affil, affil.replace("_", " "))
 
     if affil == "none":
         templates = [
             f"{subj} does not identify with any religion.",
             f"{subj} is not religious.",
-            f"{subj} considers {subj.lower()}self non-religious.",
+            f"{subj} considers {reflex} non-religious.",
             f"Religion plays no role in {poss} life.",
         ]
     elif attend == "never":
         templates = [
-            f"{subj} identifies as {affil.replace('_', ' ')} but rarely if ever attends services.",
-            f"Though nominally {affil.replace('_', ' ')}, {subj.lower()} does not attend services.",
-            f"{subj} has a cultural connection to {affil.replace('_', ' ')} but is not observant.",
+            f"{subj} identifies as {affil_display} but rarely if ever attends services.",
+            f"Though nominally {affil_display}, {subj.lower()} does not attend services.",
+            f"{subj} has a cultural connection to {affil_display} but is not observant.",
         ]
     elif attend == "weekly":
         templates = [
-            f"{subj} is an active {affil.replace('_', ' ')} and attends services weekly.",
-            f"Faith is central to {poss} life; {subj.lower()} attends {affil.replace('_', ' ')} services every week.",
-            f"{subj} is a committed {affil.replace('_', ' ')} who worships weekly.",
+            f"{subj} is an active {affil_display} and attends services weekly.",
+            f"Faith is central to {poss} life; {subj.lower()} attends {affil_display} services every week.",
+            f"{subj} is a committed {affil_display} who worships weekly.",
         ]
     elif attend in ("monthly", "occasionally"):
         templates = [
-            f"{subj} identifies as {affil.replace('_', ' ')} and attends services occasionally.",
-            f"{subj} is a {attend} churchgoer who identifies as {affil.replace('_', ' ')}.",
-            f"Though {affil.replace('_', ' ')}, {subj.lower()} attends services only sometimes.",
+            f"{subj} identifies as {affil_display} and attends services occasionally.",
+            f"{subj} is a {attend} churchgoer who identifies as {affil_display}.",
+            f"Though {affil_display}, {subj.lower()} attends services only sometimes.",
         ]
     else:
         templates = [
-            f"{subj} identifies as {affil.replace('_', ' ')}.",
-            f"Religion plays some role in {poss} life; {subj.lower()} is {affil.replace('_', ' ')}.",
+            f"{subj} identifies as {affil_display}.",
+            f"Religion plays some role in {poss} life; {subj.lower()} is {affil_display}.",
         ]
 
     return random.choice(templates)
@@ -435,7 +483,7 @@ def _slot_financial(p: dict, subj: str, poss: str) -> str:
     return random.choice(templates)
 
 
-def _slot_economic_perspective(p: dict, subj: str, poss: str) -> str:
+def _slot_economic_perspective(p: dict, subj: str, poss: str, reflex: str = "themselves") -> str:
     income = p.get("income", 0)
     edu = p.get("education", "")
     party = p.get("party_id", "independent")
@@ -450,7 +498,7 @@ def _slot_economic_perspective(p: dict, subj: str, poss: str) -> str:
         econ_templates = [
             f"{subj} gets by comfortably but watches spending closely.",
             f"Financially, {subj.lower()} feels stable but not flush.",
-            f"{subj} considers {subj.lower()}self working class and believes in earning what you get.",
+            f"{subj} considers {reflex} working class and believes in earning what you get.",
         ]
     elif income < 100000:
         econ_templates = [
@@ -479,16 +527,16 @@ def generate_backstory(profile: dict) -> str:
     Returns a multi-sentence paragraph string.
     """
     sex = profile.get("sex", "M")
-    subj, obj, poss = _pronouns(sex)
+    subj, obj, poss, reflex = _pronouns(sex)
 
     sentences = [
         _slot_opening(profile),
         _slot_education_work(profile, subj, poss),
         _slot_family(profile, subj, poss),
-        _slot_religion(profile, subj, poss),
+        _slot_religion(profile, subj, poss, reflex),
         _slot_politics_media(profile, subj),
         _slot_financial(profile, subj, poss),
-        _slot_economic_perspective(profile, subj, poss),
+        _slot_economic_perspective(profile, subj, poss, reflex),
     ]
 
     return " ".join(sentences)
