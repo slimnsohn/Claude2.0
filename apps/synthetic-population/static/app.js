@@ -127,29 +127,19 @@ function renderPollView(el) {
         progress.textContent = "Creating poll...";
 
         try {
-            const body = { question };
-            if (snapshotId) body.snapshot_id = snapshotId;
+            const body = { question, snapshot_id: snapshotId || "live" };
             const result = await api("/api/polls", { method: "POST", body });
             const pollId = result.poll_id;
-            progress.textContent = "Poll created. Awaiting responses...";
-
-            // Poll for completion
-            const timer = setInterval(async () => {
-                try {
-                    const poll = await api(`/api/polls/${pollId}`);
-                    if (poll.status === "complete") {
-                        clearInterval(timer);
-                        navigate("results", { pollId });
-                    } else {
-                        progress.textContent = `Status: ${poll.status || "processing"}...`;
-                    }
-                } catch (e) {
-                    clearInterval(timer);
-                    progress.textContent = `Error checking status: ${e.message}`;
-                    btn.disabled = false;
-                }
-            }, 3000);
-            pollTimers[pollId] = timer;
+            progress.innerHTML = `
+                Poll created: <strong>${esc(pollId)}</strong> — ${result.archetype_count || "?"} archetypes.<br>
+                <span style="color:var(--text2)">Status: pending — prompts ready for Claude-in-Chrome automation.</span><br>
+                <button class="btn btn-sm" style="margin-top:8px" id="view-poll-btn">View Poll</button>
+            `;
+            btn.disabled = false;
+            document.getElementById("view-poll-btn")?.addEventListener("click", () => {
+                navigate("results", { pollId });
+            });
+            loadRecentPolls();
         } catch (e) {
             progress.textContent = `Error: ${e.message}`;
             btn.disabled = false;
@@ -218,6 +208,13 @@ async function loadPollResults() {
 
     try {
         const poll = await api(`/api/polls/${selectedPollId}`);
+
+        // If pending — show prompts and response recording UI
+        if (poll.status === "pending") {
+            await renderPendingPoll(container, poll);
+            return;
+        }
+
         const dist = poll.distribution || {};
         const yesVal = dist.yes || 0;
         const noVal = dist.no || 0;
@@ -347,6 +344,137 @@ async function loadPollResults() {
     } catch (e) {
         container.innerHTML = `<p style="color:var(--text2)">Failed to load results: ${esc(e.message)}</p>`;
     }
+}
+
+async function renderPendingPoll(container, poll) {
+    let prompts = [];
+    try {
+        prompts = await api(`/api/polls/${poll.poll_id}/prompts`);
+    } catch (e) { /* no prompts */ }
+
+    // Check how many responses already recorded
+    let responseCount = 0;
+    const responsesDir = prompts.length; // total expected
+
+    let html = `
+        <div class="card">
+            <h3 style="margin:0 0 8px">${esc(poll.question || "")}</h3>
+            <div style="display:flex;gap:8px;align-items:center;margin-bottom:16px">
+                <span style="color:var(--text2);font-size:13px">${esc(poll.created_at || "")}</span>
+                ${snapshotBadge(poll.snapshot_id)}
+                <span class="badge badge-pending">Pending</span>
+            </div>
+            <p style="font-size:13px;color:var(--text2)">
+                This poll has <strong>${prompts.length}</strong> archetype prompts ready.
+                Responses can be recorded via Claude-in-Chrome automation or manually below.
+            </p>
+        </div>
+    `;
+
+    // Manual response recording
+    html += `
+        <div class="card">
+            <div class="section-title">Record Response</div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;margin-bottom:12px">
+                <div>
+                    <label style="font-size:11px;color:var(--text2);display:block;margin-bottom:4px">Archetype</label>
+                    <select id="resp-archetype" class="select" style="max-width:150px">
+                        ${prompts.map(p => `<option value="${esc(p.archetype_id)}">${esc(p.archetype_id)} (${(p.weight * 100).toFixed(1)}%)</option>`).join("")}
+                    </select>
+                </div>
+                <div>
+                    <label style="font-size:11px;color:var(--text2);display:block;margin-bottom:4px">Opinion</label>
+                    <select id="resp-opinion" class="select" style="max-width:120px">
+                        <option value="yes">Yes</option>
+                        <option value="no">No</option>
+                        <option value="unsure">Unsure</option>
+                    </select>
+                </div>
+                <div>
+                    <label style="font-size:11px;color:var(--text2);display:block;margin-bottom:4px">Confidence (1-10)</label>
+                    <input id="resp-confidence" type="number" class="input" style="max-width:80px" min="1" max="10" value="5">
+                </div>
+                <button id="resp-submit" class="btn btn-sm btn-primary">Record</button>
+            </div>
+            <div>
+                <label style="font-size:11px;color:var(--text2);display:block;margin-bottom:4px">Response Text (optional)</label>
+                <textarea id="resp-text" class="textarea" style="min-height:40px" placeholder="The archetype's reasoning..."></textarea>
+            </div>
+            <div id="resp-status" class="progress-text" style="display:none"></div>
+        </div>
+    `;
+
+    // Aggregate button
+    html += `
+        <div class="card">
+            <div class="section-title">Finalize</div>
+            <p style="font-size:13px;color:var(--text2);margin-bottom:12px">
+                Once all responses are recorded, aggregate to compute weighted results.
+            </p>
+            <button id="agg-btn" class="btn btn-primary">Aggregate &amp; Complete Poll</button>
+            <div id="agg-status" class="progress-text" style="display:none"></div>
+        </div>
+    `;
+
+    // Prompts list (collapsible)
+    if (prompts.length > 0) {
+        html += `
+            <div class="card">
+                <details>
+                    <summary style="cursor:pointer;font-weight:600;font-size:13px">View Prompts (${prompts.length})</summary>
+                    <div style="margin-top:12px">
+                        ${prompts.map(p => `
+                            <details style="margin-bottom:8px">
+                                <summary style="cursor:pointer;font-size:12px;color:var(--text2)">${esc(p.archetype_id)} (weight: ${(p.weight * 100).toFixed(1)}%)</summary>
+                                <pre style="font-size:11px;color:var(--text);white-space:pre-wrap;padding:12px;background:var(--surface2);border-radius:6px;margin-top:4px;max-height:300px;overflow-y:auto">${esc(p.prompt_text)}</pre>
+                            </details>
+                        `).join("")}
+                    </div>
+                </details>
+            </div>
+        `;
+    }
+
+    container.innerHTML = html;
+
+    // Wire record response
+    document.getElementById("resp-submit")?.addEventListener("click", async () => {
+        const status = document.getElementById("resp-status");
+        const archetype_id = document.getElementById("resp-archetype").value;
+        const opinion = document.getElementById("resp-opinion").value;
+        const confidence = parseInt(document.getElementById("resp-confidence").value) || 5;
+        const response_text = document.getElementById("resp-text").value;
+
+        status.style.display = "block";
+        status.textContent = "Recording...";
+        try {
+            await api(`/api/polls/${poll.poll_id}/responses`, {
+                method: "POST",
+                body: { archetype_id, opinion, confidence, response_text }
+            });
+            status.textContent = `Recorded response for ${archetype_id}.`;
+            status.style.color = "var(--green)";
+        } catch (e) {
+            status.textContent = `Error: ${e.message}`;
+            status.style.color = "var(--red)";
+        }
+    });
+
+    // Wire aggregate
+    document.getElementById("agg-btn")?.addEventListener("click", async () => {
+        const status = document.getElementById("agg-status");
+        status.style.display = "block";
+        status.textContent = "Aggregating...";
+        try {
+            await api(`/api/polls/${poll.poll_id}/aggregate`, { method: "POST" });
+            status.textContent = "Complete! Loading results...";
+            loadStats();
+            setTimeout(() => navigate("results", { pollId: poll.poll_id }), 500);
+        } catch (e) {
+            status.textContent = `Error: ${e.message}`;
+            status.style.color = "var(--red)";
+        }
+    });
 }
 
 // --- View 3: Population ---
