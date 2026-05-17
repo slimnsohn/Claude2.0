@@ -54,7 +54,7 @@ function buildDashboardData_() {
 /** Inject the data object as JSON into Dashboard.html and return HtmlOutput. */
 function renderDashboard_(data) {
   var t = HtmlService.createTemplateFromFile('Dashboard');
-  t.dataJson = JSON.stringify(data);
+  t.dataJson = JSON.stringify(data).replace(/<\/script>/gi, '<\\/script>');
   return t.evaluate()
     .setTitle('Wall Dashboard')
     .addMetaTag('viewport', 'width=device-width, initial-scale=1');
@@ -62,12 +62,14 @@ function renderDashboard_(data) {
 
 /** Minimal error page that still auto-refreshes. */
 function errorPage_(message) {
+  var safeMessage = message.replace(/&/g, '&amp;').replace(/</g, '&lt;');
   return HtmlService.createHtmlOutput(
+    '<head><meta http-equiv="refresh" content="60"></head>' +
     '<body style="margin:0;background:#0a0a0a;color:#e0e0e0;' +
     'font-family:sans-serif;font-size:32px;padding:48px">' +
     'Dashboard error — retrying<br><small style="font-size:18px;color:#888">' +
-    message + '</small>' +
-    '<meta http-equiv="refresh" content="60"></body>');
+    safeMessage + '</small>' +
+    '</body>');
 }
 
 // ---- Entry point -----------------------------------------------------------

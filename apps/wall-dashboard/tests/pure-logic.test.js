@@ -32,6 +32,9 @@ test('routeView_ maps trains', () => {
 test('routeView_ maps trains json', () => {
   assert.strictEqual(lib.routeView_('trains', 'json'), 'trainsJson');
 });
+test('routeView_ unknown view falls back to dashboard', () => {
+  assert.strictEqual(lib.routeView_('something-else', undefined), 'dashboard');
+});
 
 // === MORE TESTS APPENDED BELOW BY LATER TASKS ===
 
