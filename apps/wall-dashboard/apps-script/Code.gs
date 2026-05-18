@@ -90,6 +90,23 @@ function cachedFetch_(key, ttlSec, fn) {
   }
 }
 
+// ---- Config ----------------------------------------------------------------
+
+/** Read the Config tab into a {key: value} object. Cached 5 min. */
+function getConfig_() {
+  return cachedFetch_('config', 300, function () {
+    var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Config');
+    if (!sheet) throw new Error('Config sheet tab not found');
+    var rows = sheet.getDataRange().getValues();
+    var cfg = {};
+    for (var i = 1; i < rows.length; i++) {
+      var key = String(rows[i][0]).trim();
+      if (key) cfg[key] = rows[i][1];
+    }
+    return cfg;
+  });
+}
+
 // ---- Data assembly ---------------------------------------------------------
 
 /**
