@@ -99,6 +99,7 @@ defined interface.
 | Routing | `doGet(e)` | Parse `view` param, dispatch, catch all errors |
 | Config | `getConfig_()`, `getAmtrakSchedule_()` | Read Sheet tabs into plain objects |
 | Weather | `getWeather_()`, `bootstrapNwsUrl_()`, `getWeatherWindow_(now)` | NWS fetch + time-flip window logic |
+| Air quality | `getAqi_(config)`, `aqiInfo_(value)` | Open-Meteo AQI fetch + pure category/alert mapping |
 | Trains | `getMetraTrains_()`, `getAmtrakTrains_()`, `getCombinedTrains_(windowMin, maxCount, respectHours)` | Per-source fetch + merge/sort/filter |
 | Protobuf | `decodeProtobuf_(bytes)`, `parseTripUpdates_(decoded)` | Generic GTFS-RT wire decoder + field mapping |
 | Time helpers | `isWithinDisplayHours_(date)`, `nextTrainAfterHours_()`, `formatCountdown_(min)` | Pure date/format helpers |
@@ -155,6 +156,19 @@ the lowest-priority step, this risk does not block the skeleton or weather work.
   **SB −3 min**.
 - Day-of-week filtering required (`Mo-Fr`, `Sa`, `Su`, `Daily`, `Su-Fr`, etc.).
 
+### 5.4 Air Quality — Open-Meteo Air Quality API (no auth)
+- NWS does not provide AQI; Open-Meteo's air-quality API does, free and keyless.
+- `GET https://air-quality-api.open-meteo.com/v1/air-quality?latitude={lat}&longitude={lon}&current=us_aqi&timezone=America/Chicago`
+- Reuses the `nws_lat` / `nws_lon` Config values — no new Sheet rows needed.
+- Read `current.us_aqi` (integer, US EPA AQI scale). Cache 30 min.
+- `aqiInfo_(value)` is a pure function mapping the value to `{category, level,
+  alert}`: ≤50 Good (no alert); 51–100 Moderate (alert); 101–150 Unhealthy for
+  Sensitive (alert); 151–200 Unhealthy (alert); 201–300 Very Unhealthy (alert);
+  301+ Hazardous (alert). `level` is `good` / `moderate` / `unhealthy` for
+  styling.
+- Independent failure: if the AQI fetch fails the rest of the dashboard renders
+  normally and the AQI element is simply omitted.
+
 ---
 
 ## 6. Sheet Schema
@@ -201,8 +215,14 @@ Code handles an empty tab gracefully.
 
 ## 8. TV Dashboard View
 
-1920×1080, dark. Sections: header (location, date, time), current temp +
+1920×1080, dark. Sections: header (location, date, time, AQI), current temp +
 condition, hourly weather strip, Northbrook trains list.
+
+**AQI** (under the time, right-aligned):
+- Good (≤50) → dim plain text `AQI <n>`, no alert.
+- Moderate / Unhealthy / worse (≥51) → an alert pill: `⚠ AQI <n> · <category>`,
+  amber for Moderate, red for Unhealthy and above. The pill stays OLED-safe —
+  small, thin-bordered, near-black fill, no large bright element.
 
 **Weather window** (`getWeatherWindow_(now)`, pure):
 - Before 17:00 → next full hour through 19:00 today.
@@ -253,6 +273,7 @@ tomorrow morning. Auto-refresh every 60 s while open. Light background allowed.
 | Data | TTL |
 |---|---|
 | NWS hourly | 15 min |
+| Open-Meteo AQI | 30 min |
 | Metra realtime | 45 s |
 | Config sheet | 5 min |
 | Amtrak schedule | 1 hr |
@@ -268,6 +289,7 @@ Each data source fails independently — no failure may blank the screen.
 - `doGet` wraps everything in try/catch; total failure → a minimal
   "Dashboard error — retrying" page that still auto-refreshes.
 - Weather fails → trains still render; weather area shows "Weather unavailable".
+- AQI fails → the AQI element is omitted; the rest of the dashboard renders.
 - Trains fail → weather still renders; trains area shows "Trains unavailable".
 - `cachedFetch_` last-good-value fallback absorbs transient API blips.
 
@@ -279,6 +301,7 @@ Apps Script cannot run a standard test runner, so pure logic is isolated into
 GAS-independent functions and exercised by a Node-runnable test file
 (`tests/pure-logic.test.js`):
 - `getWeatherWindow_` (today→tomorrow flip)
+- `aqiInfo_` (AQI value → category / level / alert)
 - `formatCountdown_`
 - day-of-week parsing
 - Northbrook offset (NB +3 / SB −3)

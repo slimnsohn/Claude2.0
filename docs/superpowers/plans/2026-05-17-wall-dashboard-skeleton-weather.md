@@ -1135,17 +1135,178 @@ git commit -m "feat: add NWS weather fetch and bootstrap helper"
 
 ---
 
-## Task 14: Wire live weather into `buildDashboardData_` + Step 2 checkpoint
+> **Plan amendment (2026-05-17): AQI added.** During the Step 1 checkpoint the
+> user requested an Air Quality Index display with an alert state. Step 1 was
+> refined to add a placeholder `aqi` object to `buildDashboardData_` and an
+> `aqi` element + `renderAqi` to `Dashboard.html` (committed). Tasks 14 and 15
+> below add the real AQI logic; Task 16 wires it in. Also note: a router test
+> was added during Step 1 review, so every "X passed" count in Tasks 7–13 is
+> **+1** higher than printed — verify the count rises by the right delta, not
+> the absolute number.
+
+## Task 14: `aqiInfo_` — AQI category / alert mapping (TDD)
+
+**Files:**
+- Modify: `apps/wall-dashboard/apps-script/Code.gs`
+- Modify: `apps/wall-dashboard/tests/pure-logic.test.js`
+
+- [ ] **Step 1: Write the failing tests**
+
+In `pure-logic.test.js`, insert after the `cachedFetch_` tests:
+
+```javascript
+// --- aqiInfo_ ---
+test('aqiInfo_ Good has no alert', () => {
+  const r = lib.aqiInfo_(42);
+  assert.strictEqual(r.category, 'Good');
+  assert.strictEqual(r.level, 'good');
+  assert.strictEqual(r.alert, false);
+});
+test('aqiInfo_ Moderate alerts', () => {
+  const r = lib.aqiInfo_(86);
+  assert.strictEqual(r.category, 'Moderate');
+  assert.strictEqual(r.level, 'moderate');
+  assert.strictEqual(r.alert, true);
+});
+test('aqiInfo_ Unhealthy for Sensitive alerts', () => {
+  const r = lib.aqiInfo_(130);
+  assert.strictEqual(r.category, 'Unhealthy for Sensitive');
+  assert.strictEqual(r.level, 'unhealthy');
+  assert.strictEqual(r.alert, true);
+});
+test('aqiInfo_ Unhealthy alerts', () => {
+  const r = lib.aqiInfo_(175);
+  assert.strictEqual(r.category, 'Unhealthy');
+  assert.strictEqual(r.level, 'unhealthy');
+  assert.strictEqual(r.alert, true);
+});
+test('aqiInfo_ boundaries (50 Good, 51 Moderate)', () => {
+  assert.strictEqual(lib.aqiInfo_(50).alert, false);
+  assert.strictEqual(lib.aqiInfo_(51).alert, true);
+});
+test('aqiInfo_ Hazardous alerts', () => {
+  assert.strictEqual(lib.aqiInfo_(420).category, 'Hazardous');
+});
+```
+
+- [ ] **Step 2: Run the test to verify it fails**
+
+Run: `cd apps/wall-dashboard && node tests/pure-logic.test.js`
+Expected: FAIL — `lib.aqiInfo_ is not a function`.
+
+- [ ] **Step 3: Implement `aqiInfo_`**
+
+In `Code.gs`, add inside the weather-window section, after `matchHour_`:
+
+```javascript
+/**
+ * Pure: US AQI value -> { category, level, alert }.
+ * level is good|moderate|unhealthy for styling; alert is true for 51+.
+ */
+function aqiInfo_(value) {
+  if (value <= 50)  return { category: 'Good', level: 'good', alert: false };
+  if (value <= 100) return { category: 'Moderate', level: 'moderate', alert: true };
+  if (value <= 150) return { category: 'Unhealthy for Sensitive', level: 'unhealthy', alert: true };
+  if (value <= 200) return { category: 'Unhealthy', level: 'unhealthy', alert: true };
+  if (value <= 300) return { category: 'Very Unhealthy', level: 'unhealthy', alert: true };
+  return { category: 'Hazardous', level: 'unhealthy', alert: true };
+}
+```
+
+Add `aqiInfo_` to the export footer (keep all existing entries):
+
+```javascript
+if (typeof module !== 'undefined') {
+  module.exports = {
+    routeView_: routeView_,
+    getWeatherWindow_: getWeatherWindow_,
+    formatHourLabel_: formatHourLabel_,
+    feelsLike_: feelsLike_,
+    matchHour_: matchHour_,
+    cachedFetch_: cachedFetch_,
+    aqiInfo_: aqiInfo_
+  };
+}
+```
+
+- [ ] **Step 4: Run the test to verify it passes**
+
+Run: `cd apps/wall-dashboard && node tests/pure-logic.test.js`
+Expected: PASS — all tests pass, count up by 6 from the previous run.
+
+- [ ] **Step 5: Stage and commit**
+
+```bash
+git add apps/wall-dashboard/apps-script/Code.gs apps/wall-dashboard/tests/pure-logic.test.js
+git commit -m "feat: add AQI category/alert mapping"
+```
+
+---
+
+## Task 15: `getAqi_` — Open-Meteo air quality fetch
 
 **Files:**
 - Modify: `apps/wall-dashboard/apps-script/Code.gs`
 
-- [ ] **Step 1: Replace `buildDashboardData_` with the live-weather version**
+- [ ] **Step 1: Implement `getAqi_`**
 
-In `Code.gs`, replace the entire `buildDashboardData_` function from Task 4 with:
+In `Code.gs`, add in the weather-fetch section, after `getWeather_`:
 
 ```javascript
-/** Build the data object the dashboard renders, with live weather. */
+/**
+ * Fetch the current US AQI from Open-Meteo (no auth). Reuses the Config
+ * lat/lon. Returns { value: <int> }. Cached 30 min.
+ */
+function getAqi_(config) {
+  return cachedFetch_('aqi', 1800, function () {
+    var url = 'https://air-quality-api.open-meteo.com/v1/air-quality'
+      + '?latitude=' + config.nws_lat
+      + '&longitude=' + config.nws_lon
+      + '&current=us_aqi&timezone=America/Chicago';
+    var resp = UrlFetchApp.fetch(url, { muteHttpExceptions: true });
+    if (resp.getResponseCode() !== 200) {
+      throw new Error('Open-Meteo AQI returned ' + resp.getResponseCode());
+    }
+    var current = JSON.parse(resp.getContentText()).current;
+    if (!current || current.us_aqi == null) {
+      throw new Error('AQI response missing us_aqi');
+    }
+    return { value: Math.round(current.us_aqi) };
+  });
+}
+```
+
+I/O function — verified in Task 16's checkpoint.
+
+- [ ] **Step 2: Run the existing tests to confirm nothing broke**
+
+Run: `cd apps/wall-dashboard && node tests/pure-logic.test.js`
+Expected: PASS — same count as after Task 14.
+
+- [ ] **Step 3: Stage and commit**
+
+```bash
+git add apps/wall-dashboard/apps-script/Code.gs
+git commit -m "feat: add Open-Meteo AQI fetch"
+```
+
+---
+
+## Task 16: Wire live weather + AQI into `buildDashboardData_` + Step 2 checkpoint
+
+**Files:**
+- Modify: `apps/wall-dashboard/apps-script/Code.gs`
+
+- [ ] **Step 1: Replace `buildDashboardData_` with the live-data version**
+
+In `Code.gs`, replace the entire `buildDashboardData_` function (the Step 1
+placeholder version, which currently has placeholder `aqi`, `weather`, and
+`trains`) with the version below. It keeps the `aqi` field but now fills it from
+real data; weather and AQI fail independently so one outage never blanks the
+screen.
+
+```javascript
+/** Build the data object the dashboard renders, with live weather + AQI. */
 function buildDashboardData_() {
   var now = new Date();
   var tz = 'America/Chicago';
@@ -1153,18 +1314,25 @@ function buildDashboardData_() {
     location: 'Glenview',
     dateStr: Utilities.formatDate(now, tz, 'EEE MMM d'),
     timeStr: Utilities.formatDate(now, tz, 'h:mm a'),
+    aqi: { available: false },
     weather: { available: false },
     trains: { available: false, list: [], message: 'Trains — coming in a later step' },
     updatedAt: Utilities.formatDate(now, tz, 'h:mm a')
   };
+
+  var config;
   try {
-    var config = getConfig_();
+    config = getConfig_();
+  } catch (err) {
+    return data; // no config -> everything stays unavailable
+  }
+
+  // Weather
+  try {
     var weather = getWeather_(config);
     var nowHour = parseInt(Utilities.formatDate(now, tz, 'H'), 10);
-    var flipHour = parseInt(config.weather_flip_hour, 10);
-    var endHour = parseInt(config.weather_end_hour, 10);
-    var win = getWeatherWindow_(nowHour, flipHour, endHour);
-
+    var win = getWeatherWindow_(nowHour,
+      parseInt(config.weather_flip_hour, 10), parseInt(config.weather_end_hour, 10));
     var hourly = win.hours.map(function (h) {
       var match = matchHour_(weather.hourly, hourKeyFor_(now, win.dayOffset, h, tz));
       return {
@@ -1173,7 +1341,6 @@ function buildDashboardData_() {
         precip: match ? match.precip : null
       };
     });
-
     var current = matchHour_(weather.hourly, hourKeyFor_(now, 0, nowHour, tz));
     data.weather = {
       available: true,
@@ -1185,6 +1352,22 @@ function buildDashboardData_() {
   } catch (err) {
     data.weather = { available: false, error: String(err) };
   }
+
+  // Air quality
+  try {
+    var aqiVal = getAqi_(config).value;
+    var info = aqiInfo_(aqiVal);
+    data.aqi = {
+      available: true,
+      value: aqiVal,
+      category: info.category,
+      level: info.level,
+      alert: info.alert
+    };
+  } catch (err) {
+    data.aqi = { available: false };
+  }
+
   return data;
 }
 
@@ -1205,27 +1388,31 @@ Expected: PASS — `19 passed, 0 failed`.
 
 ```bash
 git add apps/wall-dashboard/apps-script/Code.gs
-git commit -m "feat: wire live NWS weather into the dashboard"
+git commit -m "feat: wire live weather and AQI into the dashboard"
 ```
 
-- [ ] **Step 4: USER CHECKPOINT — bootstrap and verify live weather**
+- [ ] **Step 4: USER CHECKPOINT — bootstrap and verify live weather + AQI**
 
 Hand off to the user. They:
 1. Re-paste the updated `Code.gs` into the Apps Script editor.
-2. In the editor, select `bootstrapNwsUrl_` from the function dropdown and click Run. Authorize if prompted. Confirm the execution log prints a `forecastHourly URL` and "Wrote URL to Config row N" — and that the `nws_forecast_hourly_url` cell in the Sheet is now filled.
+2. In the editor, select `bootstrapNwsUrl_` from the function dropdown and click Run. Authorize if prompted. Confirm the execution log prints a `forecastHourly URL` and "Wrote URL to Config row N" — and that the `nws_forecast_hourly_url` cell in the Sheet is now filled. (No bootstrap is needed for AQI — Open-Meteo needs no setup.)
 3. Deploy a new version of the existing deployment (Manage deployments → edit → New version).
 4. Open the `/exec` URL — confirm the current temperature, condition, and "Feels" line show **real Glenview values**, and the hourly strip shows real temps/precip.
-5. Sanity-check the window: before 5 PM it shows the rest of today through 7 PM; at/after 5 PM it shows tomorrow 7 AM–7 PM.
-6. Confirm it still renders correctly on the TV via the Fire Stick.
+5. Confirm the **AQI** shows under the time with the real current value — dim text if Good, or the amber/red alert pill if Moderate or worse.
+6. Sanity-check the window: before 5 PM it shows the rest of today through 7 PM; at/after 5 PM it shows tomorrow 7 AM–7 PM.
+7. Confirm it still renders correctly on the TV via the Fire Stick.
 
-Step 2 is complete once the user confirms live weather displays correctly. Trains, the phone widget, and Metra are covered by follow-up plans.
+Step 2 is complete once the user confirms live weather and AQI display correctly. Trains, the phone widget, and Metra are covered by follow-up plans.
 
 ---
 
 ## Verification Summary
 
-After all tasks, the full unit-test suite is `19 passed, 0 failed`:
+After all tasks the full unit-test suite passes (Node `assert`, no dependencies):
 
     cd apps/wall-dashboard && node tests/pure-logic.test.js
 
-Functional verification happens at the two user checkpoints (Task 6, Task 14) — there is no automated test for the deployed web app, by design (it depends on Google-side deployment the user controls).
+The suite covers `routeView_`, `getWeatherWindow_`, `formatHourLabel_`,
+`feelsLike_`, `matchHour_`, `cachedFetch_`, and `aqiInfo_`.
+
+Functional verification happens at the two user checkpoints (Task 6, Task 16) — there is no automated test for the deployed web app, by design (it depends on Google-side deployment the user controls).
