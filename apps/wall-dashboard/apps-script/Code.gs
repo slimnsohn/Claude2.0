@@ -535,6 +535,19 @@ function parseHHMM_(str) {
   return parseInt(m[1], 10) * 60 + parseInt(m[2], 10);
 }
 
+/**
+ * Pure: a 7-char Mon..Sun weekday bitstring -> sorted day indices
+ * (0=Sun..6=Sat). Position i (0=Mon) maps to index (i + 1) % 7.
+ */
+function parseDays_(bitstring) {
+  var s = String(bitstring);
+  var out = [];
+  for (var i = 0; i < 7 && i < s.length; i++) {
+    if (s.charAt(i) === '1') out.push((i + 1) % 7);
+  }
+  return out.sort(function (a, b) { return a - b; });
+}
+
 // ---- Entry point -----------------------------------------------------------
 
 function doGet(e) {
@@ -572,6 +585,7 @@ if (typeof module !== 'undefined') {
     unionBits_: unionBits_,
     dateInWindow_: dateInWindow_,
     extractAmtrakRows_: extractAmtrakRows_,
-    parseHHMM_: parseHHMM_
+    parseHHMM_: parseHHMM_,
+    parseDays_: parseDays_
   };
 }

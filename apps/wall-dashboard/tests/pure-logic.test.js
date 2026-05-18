@@ -344,5 +344,22 @@ test('parseHHMM_ throws on a bad string', () => {
   assert.throws(() => lib.parseHHMM_('not a time'), /Bad time/);
 });
 
+// --- parseDays_ ---
+test('parseDays_ parses a weekday bitstring', () => {
+  assert.deepStrictEqual(lib.parseDays_('1111100'), [1, 2, 3, 4, 5]);
+});
+test('parseDays_ parses a weekend bitstring', () => {
+  assert.deepStrictEqual(lib.parseDays_('0000011'), [0, 6]);
+});
+test('parseDays_ all seven days', () => {
+  assert.deepStrictEqual(lib.parseDays_('1111111'), [0, 1, 2, 3, 4, 5, 6]);
+});
+test('parseDays_ Sunday only', () => {
+  assert.deepStrictEqual(lib.parseDays_('0000001'), [0]);
+});
+test('parseDays_ Monday only', () => {
+  assert.deepStrictEqual(lib.parseDays_('1000000'), [1]);
+});
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
