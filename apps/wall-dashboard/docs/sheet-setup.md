@@ -6,8 +6,8 @@ Create one Google Sheet named **Wall Dashboard Config** with these tabs.
 
 | Key | Value |
 |---|---|
-| metra_api_token | (leave blank until the Metra step) |
-| metra_stop_id | (leave blank until the Metra step) |
+| metra_api_token | (paste your Metra GTFS API token) |
+| metra_stop_id | NBROOK |
 | nws_lat | 42.0728 |
 | nws_lon | -87.7878 |
 | nws_forecast_hourly_url | (leave blank — filled by bootstrapNwsUrl_) |

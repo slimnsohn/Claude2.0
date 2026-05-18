@@ -764,6 +764,33 @@ function metraPassMinutes_(arrivalEpoch, nowEpochSec, nowMinutes) {
   return nowMinutes + Math.round((arrivalEpoch - nowEpochSec) / 60);
 }
 
+/**
+ * Fetch the Metra realtime feed and return [{ type:'Metra', passMinutes }]
+ * for trains approaching the configured stop. Cached 45 s. Returns [] when
+ * Metra is not configured (no token / stop id in the Config tab).
+ */
+function getMetraTrains_(now, tz, config) {
+  if (!config.metra_api_token || !config.metra_stop_id) return [];
+  var parsed = cachedFetch_('metra', 45, function () {
+    var url = 'https://gtfspublic.metrarr.com/gtfs/public/tripupdates?api_token='
+      + encodeURIComponent(config.metra_api_token);
+    var resp = UrlFetchApp.fetch(url, { muteHttpExceptions: true });
+    if (resp.getResponseCode() !== 200) {
+      throw new Error('Metra feed returned ' + resp.getResponseCode());
+    }
+    return parseTripUpdates_(resp.getBlob().getBytes(), config.metra_stop_id);
+  });
+  var nowEpochSec = Math.floor(now.getTime() / 1000);
+  var nowMinutes = parseInt(Utilities.formatDate(now, tz, 'H'), 10) * 60
+                 + parseInt(Utilities.formatDate(now, tz, 'm'), 10);
+  return parsed.map(function (t) {
+    return {
+      type: 'Metra',
+      passMinutes: metraPassMinutes_(t.arrivalEpoch, nowEpochSec, nowMinutes)
+    };
+  });
+}
+
 /** Internal: StopTimeEvent.time (field 2) from an arrival/departure field. */
 function stopTimeEventTime_(bytes, eventField) {
   if (!eventField) return null;
