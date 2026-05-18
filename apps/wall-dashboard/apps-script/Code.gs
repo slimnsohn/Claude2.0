@@ -756,6 +756,45 @@ function decodeProtobuf_(bytes, start, end) {
   return fields;
 }
 
+/** Internal: StopTimeEvent.time (field 2) from an arrival/departure field. */
+function stopTimeEventTime_(bytes, eventField) {
+  if (!eventField) return null;
+  var ev = decodeProtobuf_(bytes, eventField[0].start, eventField[0].end);
+  return ev[2] ? ev[2][0] : null;
+}
+
+/**
+ * Pure: decode a GTFS-Realtime tripUpdates feed (raw bytes) -> a list of
+ * { routeId, tripId, arrivalEpoch } for every stop_time_update whose stop_id
+ * equals `stopId`. Uses the arrival time, falling back to departure.
+ */
+function parseTripUpdates_(bytes, stopId) {
+  var root = decodeProtobuf_(bytes, 0, bytes.length);
+  var entities = root[2] || [];                       // FeedMessage.entity
+  var out = [];
+  for (var i = 0; i < entities.length; i++) {
+    var e = decodeProtobuf_(bytes, entities[i].start, entities[i].end);
+    if (!e[3]) continue;                              // FeedEntity.trip_update
+    var tu = decodeProtobuf_(bytes, e[3][0].start, e[3][0].end);
+    var routeId = '', tripId = '';
+    if (tu[1]) {                                      // TripUpdate.trip
+      var trip = decodeProtobuf_(bytes, tu[1][0].start, tu[1][0].end);
+      if (trip[1]) tripId = pbString_(bytes, trip[1][0]);   // trip_id
+      if (trip[5]) routeId = pbString_(bytes, trip[5][0]);  // route_id
+    }
+    var stus = tu[2] || [];                           // TripUpdate.stop_time_update
+    for (var j = 0; j < stus.length; j++) {
+      var stu = decodeProtobuf_(bytes, stus[j].start, stus[j].end);
+      if (!stu[4] || pbString_(bytes, stu[4][0]) !== stopId) continue; // stop_id
+      var epoch = stopTimeEventTime_(bytes, stu[2]);  // arrival
+      if (epoch == null) epoch = stopTimeEventTime_(bytes, stu[3]); // departure
+      if (epoch == null) continue;
+      out.push({ routeId: routeId, tripId: tripId, arrivalEpoch: epoch });
+    }
+  }
+  return out;
+}
+
 /**
  * Pure: a { start, end } byte range -> string. GTFS-RT ids (route_id,
  * trip_id, stop_id) are ASCII, so a per-byte char code is sufficient.
@@ -813,6 +852,7 @@ if (typeof module !== 'undefined') {
     computeAmtrakTrains_: computeAmtrakTrains_,
     selectTrains_: selectTrains_,
     decodeProtobuf_: decodeProtobuf_,
-    pbString_: pbString_
+    pbString_: pbString_,
+    parseTripUpdates_: parseTripUpdates_
   };
 }

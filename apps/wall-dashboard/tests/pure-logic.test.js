@@ -504,6 +504,23 @@ test('pbString_ reads only the given sub-range', () => {
     'NBROOK');
 });
 
+// --- parseTripUpdates_ (uses the committed real-feed fixture) ---
+const metraFixture = fs.readFileSync(
+  path.join(__dirname, 'fixtures/metra-tripupdates.bin'));
+test('parseTripUpdates_ extracts the NBROOK trains from a real feed', () => {
+  const trains = lib.parseTripUpdates_(metraFixture, 'NBROOK');
+  assert.deepStrictEqual(trains, [
+    { routeId: 'MD-N', tripId: 'MD-N_MN2623_V7_AA', arrivalEpoch: 1779071189 },
+    { routeId: 'MD-N', tripId: 'MD-N_MN2620_V7_AA', arrivalEpoch: 1779070729 }
+  ]);
+});
+test('parseTripUpdates_ returns [] for a stop with no updates', () => {
+  assert.deepStrictEqual(lib.parseTripUpdates_(metraFixture, 'NOSUCHSTOP'), []);
+});
+test('parseTripUpdates_ handles an empty feed', () => {
+  assert.deepStrictEqual(lib.parseTripUpdates_([], 'NBROOK'), []);
+});
+
 // --- decodeProtobuf_ ---
 test('decodeProtobuf_ reads a single varint field', () => {
   // field 1 wire 0 (tag 0x08), value 5
