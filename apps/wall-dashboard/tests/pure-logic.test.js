@@ -389,5 +389,22 @@ test('formatCountdown_ over an hour', () => {
   assert.strictEqual(lib.formatCountdown_(69), '1h 9m');
 });
 
+// --- formatClockTime_ ---
+test('formatClockTime_ morning', () => {
+  assert.strictEqual(lib.formatClockTime_(403), '6:43 AM');
+});
+test('formatClockTime_ midnight', () => {
+  assert.strictEqual(lib.formatClockTime_(0), '12:00 AM');
+});
+test('formatClockTime_ noon', () => {
+  assert.strictEqual(lib.formatClockTime_(720), '12:00 PM');
+});
+test('formatClockTime_ evening pads minutes', () => {
+  assert.strictEqual(lib.formatClockTime_(1382), '11:02 PM');
+});
+test('formatClockTime_ wraps tomorrow values', () => {
+  assert.strictEqual(lib.formatClockTime_(1446), '12:06 AM');
+});
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

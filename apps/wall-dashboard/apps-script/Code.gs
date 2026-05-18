@@ -564,6 +564,16 @@ function formatCountdown_(minutes) {
   return Math.floor(minutes / 60) + 'h ' + (minutes % 60) + 'm';
 }
 
+/** Pure: minutes since midnight (any value) -> "6:43 AM". Wraps mod 1440. */
+function formatClockTime_(minutes) {
+  var t = ((minutes % 1440) + 1440) % 1440;
+  var h = Math.floor(t / 60), m = t % 60;
+  var period = h < 12 ? 'AM' : 'PM';
+  var h12 = h % 12;
+  if (h12 === 0) h12 = 12;
+  return h12 + ':' + (m < 10 ? '0' + m : '' + m) + ' ' + period;
+}
+
 // ---- Entry point -----------------------------------------------------------
 
 function doGet(e) {
@@ -604,6 +614,7 @@ if (typeof module !== 'undefined') {
     parseHHMM_: parseHHMM_,
     parseDays_: parseDays_,
     northbrookMinutes_: northbrookMinutes_,
-    formatCountdown_: formatCountdown_
+    formatCountdown_: formatCountdown_,
+    formatClockTime_: formatClockTime_
   };
 }
