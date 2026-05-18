@@ -203,6 +203,12 @@ test('parseCsv_ handles quoted fields with embedded commas', () => {
 test('parseCsv_ returns [] for header-only text', () => {
   assert.deepStrictEqual(lib.parseCsv_('a,b'), []);
 });
+test('parseCsv_ ignores fields beyond the header count', () => {
+  assert.deepStrictEqual(lib.parseCsv_('a,b\n1,2,3'), [{ a: '1', b: '2' }]);
+});
+test('parseCsv_ returns [] for empty input', () => {
+  assert.deepStrictEqual(lib.parseCsv_(''), []);
+});
 
 // --- gtfsTimeToMinutes_ ---
 test('gtfsTimeToMinutes_ parses a zero-padded time', () => {

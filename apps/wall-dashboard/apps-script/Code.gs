@@ -349,7 +349,7 @@ function parseCsv_(text) {
 
 /** Pure: GTFS "H:MM:SS" (hours may exceed 24) -> minutes since midnight 0..1439. */
 function gtfsTimeToMinutes_(str) {
-  var m = String(str).trim().match(/^(\d{1,3}):(\d{2}):(\d{2})$/);
+  var m = String(str).trim().match(/^(\d{1,4}):(\d{2}):(\d{2})$/);
   if (!m) throw new Error('Bad GTFS time: ' + str);
   var total = parseInt(m[1], 10) * 60 + parseInt(m[2], 10);
   return ((total % 1440) + 1440) % 1440;
@@ -426,6 +426,9 @@ function extractAmtrakRows_(tables, todayYmd) {
     var direction = headsignDirection_(t.trip_headsign);
     var bits = calendarBitstring_(cal);
     var key = trainNum + '|' + direction;
+    // Same train+direction across multiple service IDs: union the weekday
+    // bits. The Glenview time is identical across a train's services, so
+    // the first-seen time is kept.
     if (byKey[key]) {
       byKey[key].days = unionBits_(byKey[key].days, bits);
     } else {
@@ -467,7 +470,7 @@ function refreshAmtrakSchedule() {
   if (resp.getResponseCode() !== 200) {
     throw new Error('GTFS download returned ' + resp.getResponseCode());
   }
-  var need = { 'routes.txt': 1, 'trips.txt': 1, 'stop_times.txt': 1, 'calendar.txt': 1 };
+  var need = { 'routes.txt': true, 'trips.txt': true, 'stop_times.txt': true, 'calendar.txt': true };
   var raw = {};
   Utilities.unzip(resp.getBlob()).forEach(function (f) {
     var base = f.getName().split('/').pop();
