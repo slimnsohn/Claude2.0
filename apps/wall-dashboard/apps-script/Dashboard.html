@@ -120,7 +120,7 @@
         d.trains.list.forEach(function (t) {
           const row = el('div', 'train-row');
           row.appendChild(el('div', null, t.type + '   ' + t.time));
-          row.appendChild(el('div', 'cd', t.countdown));
+          row.appendChild(el('div', 'cd', '(' + t.countdown + ')'));
           trains.appendChild(row);
         });
       } else {

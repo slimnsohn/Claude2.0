@@ -299,6 +299,18 @@ function buildDashboardData_() {
     data.aqi = { available: false, error: String(err) };
   }
 
+  // Trains
+  try {
+    var combined = getCombinedTrains_(now, tz, config);
+    data.trains = {
+      available: combined.list.length > 0,
+      list: combined.list,
+      message: combined.message
+    };
+  } catch (err) {
+    data.trains = { available: false, list: [], message: 'Trains unavailable' };
+  }
+
   return data;
 }
 
@@ -551,6 +563,42 @@ function installAmtrakTrigger() {
     .atHour(3)
     .create();
   Logger.log('Weekly refreshAmtrakSchedule trigger installed (Mondays ~3 AM).');
+}
+
+// ---- Trains: orchestration -------------------------------------------------
+
+/**
+ * All Amtrak trains relevant to `now`: today's, plus tomorrow's with
+ * passMinutes shifted +1440 so overnight lookups work. tz is the script
+ * timezone string.
+ */
+function getAmtrakTrains_(now, tz) {
+  var schedule = getAmtrakSchedule_();
+  // Apps Script 'u' = 1(Mon)..7(Sun); % 7 maps to 0(Sun)..6(Sat).
+  var dow = parseInt(Utilities.formatDate(now, tz, 'u'), 10) % 7;
+  var today = computeAmtrakTrains_(schedule, dow);
+  var tomorrow = computeAmtrakTrains_(schedule, (dow + 1) % 7).map(function (t) {
+    return { type: t.type, passMinutes: t.passMinutes + 1440 };
+  });
+  return today.concat(tomorrow);
+}
+
+/**
+ * Gather every train source, merge, and run selectTrains_. Currently Amtrak
+ * only; Metra will be concatenated into `all` when that plan lands.
+ */
+function getCombinedTrains_(now, tz, config) {
+  var all = getAmtrakTrains_(now, tz);
+  var nowMinutes = parseInt(Utilities.formatDate(now, tz, 'H'), 10) * 60
+                 + parseInt(Utilities.formatDate(now, tz, 'm'), 10);
+  var nowHour = parseInt(Utilities.formatDate(now, tz, 'H'), 10);
+  return selectTrains_(all, nowMinutes, nowHour, {
+    windowMin: parseInt(config.train_window_min, 10),
+    maxCount: parseInt(config.max_trains, 10),
+    respectHours: true,
+    startHour: parseInt(config.display_start_hour, 10),
+    endHour: parseInt(config.display_end_hour, 10)
+  });
 }
 
 // ---- Trains: time + day parsing (pure) -------------------------------------
