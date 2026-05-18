@@ -51,6 +51,14 @@ function feelsLike_(tempF, humidityPct, windMph) {
   return Math.round(tempF);
 }
 
+/** Pure: find the hourly entry whose hourKey equals key, or null. */
+function matchHour_(hourly, key) {
+  for (var i = 0; i < hourly.length; i++) {
+    if (hourly[i].hourKey === key) return hourly[i];
+  }
+  return null;
+}
+
 /** Pure: hour 0-23 -> compact label like "9a" / "1p" / "12p". */
 function formatHourLabel_(hour) {
   var period = hour < 12 ? 'a' : 'p';
@@ -151,6 +159,7 @@ if (typeof module !== 'undefined') {
     routeView_: routeView_,
     getWeatherWindow_: getWeatherWindow_,
     formatHourLabel_: formatHourLabel_,
-    feelsLike_: feelsLike_
+    feelsLike_: feelsLike_,
+    matchHour_: matchHour_
   };
 }

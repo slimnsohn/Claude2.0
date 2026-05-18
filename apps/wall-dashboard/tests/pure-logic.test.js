@@ -96,6 +96,18 @@ test('feelsLike_ null temp returns null', () => {
   assert.strictEqual(lib.feelsLike_(null, 50, 5), null);
 });
 
+// --- matchHour_ ---
+test('matchHour_ finds the period with the matching key', () => {
+  const hourly = [
+    { hourKey: '2026-05-17-13', temp: 74 },
+    { hourKey: '2026-05-17-14', temp: 76 }
+  ];
+  assert.strictEqual(lib.matchHour_(hourly, '2026-05-17-14').temp, 76);
+});
+test('matchHour_ returns null when no period matches', () => {
+  assert.strictEqual(lib.matchHour_([], '2026-05-17-14'), null);
+});
+
 // === MORE TESTS APPENDED BELOW BY LATER TASKS ===
 
 console.log(`\n${pass} passed, ${fail} failed`);
