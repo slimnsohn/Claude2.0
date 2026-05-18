@@ -67,6 +67,29 @@ function formatHourLabel_(hour) {
   return hr + period;
 }
 
+// ---- Caching ---------------------------------------------------------------
+
+/**
+ * Run fn() at most once per ttlSec, caching the JSON-serializable result.
+ * On a fetch failure, serve the last good value (kept for 6 h) if one exists.
+ */
+function cachedFetch_(key, ttlSec, fn) {
+  var cache = CacheService.getScriptCache();
+  var hit = cache.get(key);
+  if (hit) return JSON.parse(hit);
+  try {
+    var fresh = fn();
+    var serialized = JSON.stringify(fresh);
+    cache.put(key, serialized, ttlSec);
+    cache.put(key + '__last_good', serialized, 21600);
+    return fresh;
+  } catch (err) {
+    var lastGood = cache.get(key + '__last_good');
+    if (lastGood) return JSON.parse(lastGood);
+    throw err;
+  }
+}
+
 // ---- Data assembly ---------------------------------------------------------
 
 /**
@@ -160,6 +183,7 @@ if (typeof module !== 'undefined') {
     getWeatherWindow_: getWeatherWindow_,
     formatHourLabel_: formatHourLabel_,
     feelsLike_: feelsLike_,
-    matchHour_: matchHour_
+    matchHour_: matchHour_,
+    cachedFetch_: cachedFetch_
   };
 }

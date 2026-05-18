@@ -108,6 +108,39 @@ test('matchHour_ returns null when no period matches', () => {
   assert.strictEqual(lib.matchHour_([], '2026-05-17-14'), null);
 });
 
+// --- cachedFetch_ (uses an injected CacheService stub) ---
+function makeStubbedLib() {
+  const store = {};
+  const fakeCache = {
+    get: function (k) { return Object.prototype.hasOwnProperty.call(store, k) ? store[k] : null; },
+    put: function (k, v) { store[k] = v; }
+  };
+  const stubbedLib = loadCode({ CacheService: { getScriptCache: function () { return fakeCache; } } });
+  return { lib: stubbedLib, store: store };
+}
+test('cachedFetch_ returns the cached value on the second call', () => {
+  const ctx = makeStubbedLib();
+  let calls = 0;
+  const r1 = ctx.lib.cachedFetch_('k', 60, function () { calls++; return { n: 1 }; });
+  const r2 = ctx.lib.cachedFetch_('k', 60, function () { calls++; return { n: 2 }; });
+  assert.strictEqual(r1.n, 1);
+  assert.strictEqual(r2.n, 1);
+  assert.strictEqual(calls, 1);
+});
+test('cachedFetch_ serves last-good value when the fetch throws', () => {
+  const ctx = makeStubbedLib();
+  ctx.lib.cachedFetch_('k', 60, function () { return { n: 1 }; });
+  delete ctx.store['k']; // primary cache expired, last-good remains
+  const r = ctx.lib.cachedFetch_('k', 60, function () { throw new Error('network down'); });
+  assert.strictEqual(r.n, 1);
+});
+test('cachedFetch_ rethrows when there is no last-good value', () => {
+  const ctx = makeStubbedLib();
+  assert.throws(function () {
+    ctx.lib.cachedFetch_('k', 60, function () { throw new Error('network down'); });
+  }, /network down/);
+});
+
 // === MORE TESTS APPENDED BELOW BY LATER TASKS ===
 
 console.log(`\n${pass} passed, ${fail} failed`);
