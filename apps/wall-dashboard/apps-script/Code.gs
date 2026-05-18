@@ -390,6 +390,69 @@ function dateInWindow_(today, start, end) {
   return today >= start && today <= end;
 }
 
+/**
+ * Pure: GTFS tables { routes, trips, stopTimes, calendar } + today's YYYYMMDD
+ * -> [{ trainNum, direction, glenviewTime, days }], one per (train, direction),
+ * sorted by Glenview time. Keeps only Hiawatha/Empire Builder trips that stop
+ * at Glenview under a service active today; unions weekday bits per train.
+ */
+function extractAmtrakRows_(tables, todayYmd) {
+  var WANTED = { 'Hiawatha Service': true, 'Empire Builder': true };
+  var routeIds = {};
+  tables.routes.forEach(function (r) {
+    if (WANTED[String(r.route_long_name).trim()]) routeIds[r.route_id] = true;
+  });
+
+  var calById = {};
+  tables.calendar.forEach(function (c) { calById[c.service_id] = c; });
+
+  var glnDeparture = {};
+  tables.stopTimes.forEach(function (st) {
+    if (String(st.stop_id).trim() === 'GLN') {
+      glnDeparture[st.trip_id] = st.departure_time;
+    }
+  });
+
+  var byKey = {};
+  tables.trips.forEach(function (t) {
+    if (!routeIds[t.route_id]) return;
+    var cal = calById[t.service_id];
+    if (!cal) return;
+    if (!dateInWindow_(todayYmd, cal.start_date, cal.end_date)) return;
+    var departure = glnDeparture[t.trip_id];
+    if (departure == null) return;
+
+    var trainNum = String(t.trip_short_name).trim();
+    var direction = headsignDirection_(t.trip_headsign);
+    var bits = calendarBitstring_(cal);
+    var key = trainNum + '|' + direction;
+    if (byKey[key]) {
+      byKey[key].days = unionBits_(byKey[key].days, bits);
+    } else {
+      byKey[key] = {
+        trainNum: trainNum,
+        direction: direction,
+        glenviewMinutes: gtfsTimeToMinutes_(departure),
+        days: bits
+      };
+    }
+  });
+
+  var rows = [];
+  for (var k in byKey) {
+    if (byKey.hasOwnProperty(k)) rows.push(byKey[k]);
+  }
+  rows.sort(function (a, b) { return a.glenviewMinutes - b.glenviewMinutes; });
+  return rows.map(function (r) {
+    return {
+      trainNum: r.trainNum,
+      direction: r.direction,
+      glenviewTime: minutesToHHMM_(r.glenviewMinutes),
+      days: r.days
+    };
+  });
+}
+
 // ---- Entry point -----------------------------------------------------------
 
 function doGet(e) {
@@ -425,6 +488,7 @@ if (typeof module !== 'undefined') {
     headsignDirection_: headsignDirection_,
     calendarBitstring_: calendarBitstring_,
     unionBits_: unionBits_,
-    dateInWindow_: dateInWindow_
+    dateInWindow_: dateInWindow_,
+    extractAmtrakRows_: extractAmtrakRows_
   };
 }

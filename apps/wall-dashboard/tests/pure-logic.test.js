@@ -270,5 +270,62 @@ test('dateInWindow_ inclusive on both ends', () => {
   assert.strictEqual(lib.dateInWindow_('20270517', '20260517', '20270517'), true);
 });
 
+// --- extractAmtrakRows_ ---
+const GTFS_FIXTURE = {
+  routes: [
+    { route_id: '54', route_long_name: 'Hiawatha Service' },
+    { route_id: '75', route_long_name: 'Empire Builder' },
+    { route_id: '99', route_long_name: 'Some Other Route' }
+  ],
+  calendar: [
+    { service_id: 'WK', monday: '1', tuesday: '1', wednesday: '1', thursday: '1',
+      friday: '1', saturday: '0', sunday: '0', start_date: '20260101', end_date: '20270101' },
+    { service_id: 'WE', monday: '0', tuesday: '0', wednesday: '0', thursday: '0',
+      friday: '0', saturday: '1', sunday: '1', start_date: '20260101', end_date: '20270101' },
+    { service_id: 'OLD', monday: '1', tuesday: '1', wednesday: '1', thursday: '1',
+      friday: '1', saturday: '1', sunday: '1', start_date: '20200101', end_date: '20200201' }
+  ],
+  trips: [
+    // train 329 NB, runs weekdays
+    { route_id: '54', service_id: 'WK', trip_id: 't1', trip_short_name: '329',
+      trip_headsign: 'Milwaukee' },
+    // train 329 NB again, weekend service -> should union into the same row
+    { route_id: '54', service_id: 'WE', trip_id: 't2', trip_short_name: '329',
+      trip_headsign: 'Milwaukee' },
+    // train 330 SB
+    { route_id: '54', service_id: 'WK', trip_id: 't3', trip_short_name: '330',
+      trip_headsign: 'Chicago' },
+    // expired service -> excluded
+    { route_id: '54', service_id: 'OLD', trip_id: 't4', trip_short_name: '999',
+      trip_headsign: 'Milwaukee' },
+    // other route -> excluded
+    { route_id: '99', service_id: 'WK', trip_id: 't5', trip_short_name: '500',
+      trip_headsign: 'Chicago' }
+  ],
+  stopTimes: [
+    { trip_id: 't1', stop_id: 'GLN', departure_time: '08:24:00' },
+    { trip_id: 't2', stop_id: 'GLN', departure_time: '08:24:00' },
+    { trip_id: 't3', stop_id: 'GLN', departure_time: '06:43:00' },
+    { trip_id: 't4', stop_id: 'GLN', departure_time: '09:00:00' },
+    { trip_id: 't5', stop_id: 'GLN', departure_time: '07:00:00' },
+    { trip_id: 't1', stop_id: 'CHI', departure_time: '08:50:00' }
+  ]
+};
+test('extractAmtrakRows_ joins, filters, sorts, and unions service days', () => {
+  const rows = lib.extractAmtrakRows_(GTFS_FIXTURE, '20260518');
+  assert.deepStrictEqual(rows, [
+    { trainNum: '330', direction: 'SB', glenviewTime: '06:43', days: '1111100' },
+    { trainNum: '329', direction: 'NB', glenviewTime: '08:24', days: '1111111' }
+  ]);
+});
+test('extractAmtrakRows_ excludes expired services and other routes', () => {
+  const rows = lib.extractAmtrakRows_(GTFS_FIXTURE, '20260518');
+  assert.ok(!rows.some(r => r.trainNum === '999'));
+  assert.ok(!rows.some(r => r.trainNum === '500'));
+});
+test('extractAmtrakRows_ returns [] when nothing matches', () => {
+  assert.deepStrictEqual(lib.extractAmtrakRows_(GTFS_FIXTURE, '20990101'), []);
+});
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
