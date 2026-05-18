@@ -29,6 +29,14 @@ function getWeatherWindow_(nowHour, flipHour, endHour) {
   return { dayOffset: 1, hours: hours };
 }
 
+/** Pure: hour 0-23 -> compact label like "9a" / "1p" / "12p". */
+function formatHourLabel_(hour) {
+  var period = hour < 12 ? 'a' : 'p';
+  var hr = hour % 12;
+  if (hr === 0) hr = 12;
+  return hr + period;
+}
+
 // ---- Data assembly ---------------------------------------------------------
 
 /**
@@ -119,6 +127,7 @@ function doGet(e) {
 if (typeof module !== 'undefined') {
   module.exports = {
     routeView_: routeView_,
-    getWeatherWindow_: getWeatherWindow_
+    getWeatherWindow_: getWeatherWindow_,
+    formatHourLabel_: formatHourLabel_
   };
 }

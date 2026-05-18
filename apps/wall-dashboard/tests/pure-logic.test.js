@@ -68,6 +68,18 @@ test('getWeatherWindow_ evening shows tomorrow', () => {
   assert.strictEqual(w.hours[0], 7);
 });
 
+// --- formatHourLabel_ ---
+test('formatHourLabel_ morning', () => {
+  assert.strictEqual(lib.formatHourLabel_(9), '9a');
+});
+test('formatHourLabel_ afternoon', () => {
+  assert.strictEqual(lib.formatHourLabel_(13), '1p');
+});
+test('formatHourLabel_ noon and midnight', () => {
+  assert.strictEqual(lib.formatHourLabel_(12), '12p');
+  assert.strictEqual(lib.formatHourLabel_(0), '12a');
+});
+
 // === MORE TESTS APPENDED BELOW BY LATER TASKS ===
 
 console.log(`\n${pass} passed, ${fail} failed`);
