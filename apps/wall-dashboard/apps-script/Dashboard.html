@@ -132,6 +132,18 @@
     }
 
     render(DATA);
+
+    // Live refresh: re-pull data every 60 s without a full page reload.
+    setInterval(function () {
+      google.script.run.withSuccessHandler(render).dashboardData();
+    }, 60000);
+
+    // OLED burn-in protection: nudge the whole frame a few pixels every 60 min.
+    setInterval(function () {
+      var dx = Math.floor(Math.random() * 7) - 3;  // -3..3 px
+      var dy = Math.floor(Math.random() * 7) - 3;
+      document.body.style.transform = 'translate(' + dx + 'px, ' + dy + 'px)';
+    }, 3600000);
   </script>
 </body>
 </html>

@@ -348,6 +348,11 @@ function buildTrainsData_() {
   return data;
 }
 
+/** Public wrapper so the page can re-pull dashboard data via google.script.run. */
+function dashboardData() {
+  return buildDashboardData_();
+}
+
 /** Build the 'yyyy-MM-dd-HH' key for now + dayOffset days at the given hour. */
 function hourKeyFor_(now, dayOffset, hour, tz) {
   var d = new Date(now.getTime() + dayOffset * 86400000);
