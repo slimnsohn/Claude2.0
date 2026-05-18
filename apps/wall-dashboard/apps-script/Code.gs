@@ -453,6 +453,57 @@ function extractAmtrakRows_(tables, todayYmd) {
   });
 }
 
+// ---- Amtrak GTFS refresh (I/O) ---------------------------------------------
+
+/**
+ * Download Amtrak's GTFS feed, extract the Glenview Hiawatha + Empire Builder
+ * trains, and rewrite the AmtrakSchedule tab. Public (no trailing underscore)
+ * so it can be run from the editor and used as a weekly trigger handler.
+ */
+function refreshAmtrakSchedule() {
+  var resp = UrlFetchApp.fetch('https://content.amtrak.com/content/gtfs/GTFS.zip', {
+    muteHttpExceptions: true
+  });
+  if (resp.getResponseCode() !== 200) {
+    throw new Error('GTFS download returned ' + resp.getResponseCode());
+  }
+  var need = { 'routes.txt': 1, 'trips.txt': 1, 'stop_times.txt': 1, 'calendar.txt': 1 };
+  var raw = {};
+  Utilities.unzip(resp.getBlob()).forEach(function (f) {
+    var base = f.getName().split('/').pop();
+    if (need[base]) raw[base] = f.getDataAsString();
+  });
+  ['routes.txt', 'trips.txt', 'stop_times.txt', 'calendar.txt'].forEach(function (n) {
+    if (raw[n] == null) throw new Error('GTFS feed missing ' + n);
+  });
+
+  var tables = {
+    routes: parseCsv_(raw['routes.txt']),
+    trips: parseCsv_(raw['trips.txt']),
+    stopTimes: parseCsv_(raw['stop_times.txt']),
+    calendar: parseCsv_(raw['calendar.txt'])
+  };
+  var today = Utilities.formatDate(new Date(), 'America/Chicago', 'yyyyMMdd');
+  var extracted = extractAmtrakRows_(tables, today);
+
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName('AmtrakSchedule');
+  if (!sheet) sheet = ss.insertSheet('AmtrakSchedule');
+  sheet.clearContents();
+
+  var values = [['train_num', 'direction', 'glenview_time', 'days']];
+  extracted.forEach(function (r) {
+    values.push([r.trainNum, r.direction, r.glenviewTime, r.days]);
+  });
+  // Plain-text format first, so "06:43" and bitstrings like "0000011" are not
+  // coerced to a time or a number.
+  var range = sheet.getRange(1, 1, values.length, 4);
+  range.setNumberFormat('@');
+  range.setValues(values);
+
+  Logger.log('AmtrakSchedule refreshed: ' + extracted.length + ' trains for ' + today);
+}
+
 // ---- Entry point -----------------------------------------------------------
 
 function doGet(e) {
