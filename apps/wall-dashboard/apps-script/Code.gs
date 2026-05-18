@@ -59,6 +59,19 @@ function matchHour_(hourly, key) {
   return null;
 }
 
+/**
+ * Pure: US AQI value -> { category, level, alert }.
+ * level is good|moderate|unhealthy for styling; alert is true for 51+.
+ */
+function aqiInfo_(value) {
+  if (value <= 50)  return { category: 'Good', level: 'good', alert: false };
+  if (value <= 100) return { category: 'Moderate', level: 'moderate', alert: true };
+  if (value <= 150) return { category: 'Unhealthy for Sensitive', level: 'unhealthy', alert: true };
+  if (value <= 200) return { category: 'Unhealthy', level: 'unhealthy', alert: true };
+  if (value <= 300) return { category: 'Very Unhealthy', level: 'unhealthy', alert: true };
+  return { category: 'Hazardous', level: 'unhealthy', alert: true };
+}
+
 /** Pure: hour 0-23 -> compact label like "9a" / "1p" / "12p". */
 function formatHourLabel_(hour) {
   var period = hour < 12 ? 'a' : 'p';
@@ -263,6 +276,7 @@ if (typeof module !== 'undefined') {
     formatHourLabel_: formatHourLabel_,
     feelsLike_: feelsLike_,
     matchHour_: matchHour_,
-    cachedFetch_: cachedFetch_
+    cachedFetch_: cachedFetch_,
+    aqiInfo_: aqiInfo_
   };
 }

@@ -141,6 +141,39 @@ test('cachedFetch_ rethrows when there is no last-good value', () => {
   }, /network down/);
 });
 
+// --- aqiInfo_ ---
+test('aqiInfo_ Good has no alert', () => {
+  const r = lib.aqiInfo_(42);
+  assert.strictEqual(r.category, 'Good');
+  assert.strictEqual(r.level, 'good');
+  assert.strictEqual(r.alert, false);
+});
+test('aqiInfo_ Moderate alerts', () => {
+  const r = lib.aqiInfo_(86);
+  assert.strictEqual(r.category, 'Moderate');
+  assert.strictEqual(r.level, 'moderate');
+  assert.strictEqual(r.alert, true);
+});
+test('aqiInfo_ Unhealthy for Sensitive alerts', () => {
+  const r = lib.aqiInfo_(130);
+  assert.strictEqual(r.category, 'Unhealthy for Sensitive');
+  assert.strictEqual(r.level, 'unhealthy');
+  assert.strictEqual(r.alert, true);
+});
+test('aqiInfo_ Unhealthy alerts', () => {
+  const r = lib.aqiInfo_(175);
+  assert.strictEqual(r.category, 'Unhealthy');
+  assert.strictEqual(r.level, 'unhealthy');
+  assert.strictEqual(r.alert, true);
+});
+test('aqiInfo_ boundaries (50 Good, 51 Moderate)', () => {
+  assert.strictEqual(lib.aqiInfo_(50).alert, false);
+  assert.strictEqual(lib.aqiInfo_(51).alert, true);
+});
+test('aqiInfo_ Hazardous alerts', () => {
+  assert.strictEqual(lib.aqiInfo_(420).category, 'Hazardous');
+});
+
 // === MORE TESTS APPENDED BELOW BY LATER TASKS ===
 
 console.log(`\n${pass} passed, ${fail} failed`);
