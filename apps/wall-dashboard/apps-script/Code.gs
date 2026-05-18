@@ -574,6 +574,23 @@ function formatClockTime_(minutes) {
   return h12 + ':' + (m < 10 ? '0' + m : '' + m) + ' ' + period;
 }
 
+/**
+ * Pure: schedule rows + a day index (0=Sun..6=Sat) -> trains running that
+ * day, each { type:'Amtrak', passMinutes }. Order follows the input rows.
+ */
+function computeAmtrakTrains_(rows, dayIndex) {
+  var out = [];
+  for (var i = 0; i < rows.length; i++) {
+    var r = rows[i];
+    if (parseDays_(r.days).indexOf(dayIndex) < 0) continue;
+    out.push({
+      type: 'Amtrak',
+      passMinutes: northbrookMinutes_(r.glenviewTime, r.direction)
+    });
+  }
+  return out;
+}
+
 // ---- Entry point -----------------------------------------------------------
 
 function doGet(e) {
@@ -615,6 +632,7 @@ if (typeof module !== 'undefined') {
     parseDays_: parseDays_,
     northbrookMinutes_: northbrookMinutes_,
     formatCountdown_: formatCountdown_,
-    formatClockTime_: formatClockTime_
+    formatClockTime_: formatClockTime_,
+    computeAmtrakTrains_: computeAmtrakTrains_
   };
 }

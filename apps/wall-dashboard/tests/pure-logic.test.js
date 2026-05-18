@@ -406,5 +406,28 @@ test('formatClockTime_ wraps tomorrow values', () => {
   assert.strictEqual(lib.formatClockTime_(1446), '12:06 AM');
 });
 
+// --- computeAmtrakTrains_ ---
+const SAMPLE_SCHEDULE = [
+  { trainNum: '329', direction: 'NB', glenviewTime: '06:43', days: '1111100' },
+  { trainNum: '330', direction: 'SB', glenviewTime: '08:00', days: '0000011' },
+  { trainNum: '8',   direction: 'SB', glenviewTime: '09:42', days: '1111111' }
+];
+test('computeAmtrakTrains_ keeps only trains running on the given day', () => {
+  // Wednesday = 3 -> 329 (Mon-Fri) and 8 (Daily) run; 330 (Sat,Sun) does not
+  const out = lib.computeAmtrakTrains_(SAMPLE_SCHEDULE, 3);
+  assert.strictEqual(out.length, 2);
+});
+test('computeAmtrakTrains_ computes Northbrook pass times and type', () => {
+  // Saturday = 6 -> 330 (SB 08:00 -> 477) and 8 (SB 09:42 -> 579)
+  const out = lib.computeAmtrakTrains_(SAMPLE_SCHEDULE, 6);
+  assert.deepStrictEqual(out, [
+    { type: 'Amtrak', passMinutes: 477 },
+    { type: 'Amtrak', passMinutes: 579 }
+  ]);
+});
+test('computeAmtrakTrains_ returns empty for an empty schedule', () => {
+  assert.deepStrictEqual(lib.computeAmtrakTrains_([], 3), []);
+});
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
