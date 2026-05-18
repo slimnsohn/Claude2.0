@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Northbrook Trains — iOS Widget Mockup</title>
+  <!--
+    Approximation of how the Scriptable iOS home-screen widget
+    (scriptable/northbrook-trains.js) will look. First-cut design — meant
+    for design feedback. Sample data.
+  -->
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #c8ccd2;  /* a neutral "home screen" backdrop */
+      font-family: -apple-system, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
+      padding: 48px; display: flex; gap: 56px; flex-wrap: wrap; align-items: flex-start;
+    }
+    .label { font-size: 13px; color: #555; margin-bottom: 10px; text-align: center; }
+    /* iOS widget: dark, 22px corner radius */
+    .widget {
+      background: #0a0a0a; color: #e0e0e0; border-radius: 22px;
+      padding: 14px 16px; box-shadow: 0 10px 26px rgba(0,0,0,0.28);
+      display: flex; flex-direction: column;
+    }
+    .small  { width: 158px; height: 158px; }
+    .medium { width: 338px; height: 158px; }
+    .title { font-size: 12px; font-weight: 600; letter-spacing: 1px; color: #9a9a9a; }
+    .rows { margin-top: 9px; display: flex; flex-direction: column; }
+    .row { display: flex; align-items: center; }
+    .small .row  { font-size: 14px; }
+    .medium .row { font-size: 16px; }
+    .row + .row { margin-top: 8px; }
+    .type { color: #7ab8ff; font-weight: 500; }
+    .time { color: #e0e0e0; font-weight: 500; margin-left: 6px; }
+    .cd { margin-left: auto; color: #9a9a9a; font-size: 14px; }
+    .small .cd { font-size: 12px; }
+    .upd { margin-top: auto; font-size: 10px; color: #6a6a6a; }
+    .caption { width: 100%; color: #444; font-size: 13px; margin-top: 8px; }
+  </style>
+</head>
+<body>
+  <div>
+    <div class="label">Small widget</div>
+    <div class="widget small">
+      <div class="title">NORTHBROOK</div>
+      <div class="rows">
+        <div class="row"><span class="type">Metra</span><span class="time">12:51</span><span class="cd">9 min</span></div>
+        <div class="row"><span class="type">Amtrak</span><span class="time">1:02</span><span class="cd">20 min</span></div>
+      </div>
+      <div class="upd">Updated 12:42 PM</div>
+    </div>
+  </div>
+
+  <div>
+    <div class="label">Medium widget</div>
+    <div class="widget medium">
+      <div class="title">NORTHBROOK</div>
+      <div class="rows">
+        <div class="row"><span class="type">Metra</span><span class="time">12:51 PM</span><span class="cd">9 min</span></div>
+        <div class="row"><span class="type">Amtrak</span><span class="time">1:02 PM</span><span class="cd">20 min</span></div>
+        <div class="row"><span class="type">Metra</span><span class="time">1:23 PM</span><span class="cd">41 min</span></div>
+      </div>
+      <div class="upd">Updated 12:42 PM</div>
+    </div>
+  </div>
+
+  <p class="caption">
+    First-cut design of the Scriptable iOS widget — train-only, dark/OLED palette
+    matching the TV dashboard. Small fits 2 trains, medium fits 3. Tell me what to
+    tweak (colors, font sizes, what each row shows, spacing).
+  </p>
+</body>
+</html>
