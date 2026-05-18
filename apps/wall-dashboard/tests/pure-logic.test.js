@@ -240,5 +240,23 @@ test('headsignDirection_ Seattle is northbound', () => {
   assert.strictEqual(lib.headsignDirection_('Seattle'), 'NB');
 });
 
+// --- calendarBitstring_ / unionBits_ ---
+test('calendarBitstring_ builds a Mon-Sun bitstring', () => {
+  const row = { monday: '1', tuesday: '1', wednesday: '1', thursday: '1',
+                friday: '1', saturday: '0', sunday: '0' };
+  assert.strictEqual(lib.calendarBitstring_(row), '1111100');
+});
+test('calendarBitstring_ all days', () => {
+  const row = { monday: '1', tuesday: '1', wednesday: '1', thursday: '1',
+                friday: '1', saturday: '1', sunday: '1' };
+  assert.strictEqual(lib.calendarBitstring_(row), '1111111');
+});
+test('unionBits_ ORs two bitstrings', () => {
+  assert.strictEqual(lib.unionBits_('1111100', '0000011'), '1111111');
+});
+test('unionBits_ is idempotent', () => {
+  assert.strictEqual(lib.unionBits_('1000001', '1000001'), '1000001');
+});
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

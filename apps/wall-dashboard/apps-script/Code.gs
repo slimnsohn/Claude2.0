@@ -367,6 +367,24 @@ function headsignDirection_(headsign) {
   return String(headsign).trim() === 'Chicago' ? 'SB' : 'NB';
 }
 
+/** Pure: a calendar.txt row -> 7-char Mon..Sun bitstring. */
+function calendarBitstring_(row) {
+  var days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday',
+              'saturday', 'sunday'];
+  return days.map(function (d) {
+    return String(row[d]).trim() === '1' ? '1' : '0';
+  }).join('');
+}
+
+/** Pure: bitwise-OR two 7-char weekday bitstrings. */
+function unionBits_(a, b) {
+  var out = '';
+  for (var i = 0; i < 7; i++) {
+    out += (a.charAt(i) === '1' || b.charAt(i) === '1') ? '1' : '0';
+  }
+  return out;
+}
+
 // ---- Entry point -----------------------------------------------------------
 
 function doGet(e) {
@@ -399,6 +417,8 @@ if (typeof module !== 'undefined') {
     parseCsv_: parseCsv_,
     gtfsTimeToMinutes_: gtfsTimeToMinutes_,
     minutesToHHMM_: minutesToHHMM_,
-    headsignDirection_: headsignDirection_
+    headsignDirection_: headsignDirection_,
+    calendarBitstring_: calendarBitstring_,
+    unionBits_: unionBits_
   };
 }
