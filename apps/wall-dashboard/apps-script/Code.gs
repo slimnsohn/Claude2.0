@@ -318,6 +318,36 @@ function buildDashboardData_() {
   return data;
 }
 
+/**
+ * Build the trains-only payload for the phone widget and JSON route:
+ * the next 3 trains regardless of hour or window.
+ */
+function buildTrainsData_() {
+  var now = new Date();
+  var tz = 'America/Chicago';
+  var data = {
+    location: 'Northbrook',
+    trains: { available: false, list: [], message: 'Trains unavailable' },
+    updatedAt: Utilities.formatDate(now, tz, 'h:mm a')
+  };
+  try {
+    var config = getConfig_();
+    var combined = getCombinedTrains_(now, tz, config, {
+      windowMin: 100000,     // effectively no window
+      maxCount: 3,
+      respectHours: false
+    });
+    data.trains = {
+      available: combined.list.length > 0,
+      list: combined.list,
+      message: combined.message
+    };
+  } catch (err) {
+    data.trains = { available: false, list: [], message: 'Trains unavailable' };
+  }
+  return data;
+}
+
 /** Build the 'yyyy-MM-dd-HH' key for now + dayOffset days at the given hour. */
 function hourKeyFor_(now, dayOffset, hour, tz) {
   var d = new Date(now.getTime() + dayOffset * 86400000);
