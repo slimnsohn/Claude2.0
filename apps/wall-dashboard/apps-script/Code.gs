@@ -917,12 +917,8 @@ function doGet(e) {
   try {
     var p = (e && e.parameter) || {};
     var route = routeView_(p.view, p.format);
-    if (route !== 'dashboard') {
-      return HtmlService.createHtmlOutput(
-        '<body style="margin:0;background:#0a0a0a;color:#e0e0e0;' +
-        'font-family:sans-serif;font-size:32px;padding:48px">' +
-        'Trains view — coming in a later step</body>');
-    }
+    if (route === 'trainsJson') return renderTrainsJson_(buildTrainsData_());
+    if (route === 'trains') return renderTrainsOnly_(buildTrainsData_());
     return renderDashboard_(buildDashboardData_());
   } catch (err) {
     return errorPage_(String(err));
