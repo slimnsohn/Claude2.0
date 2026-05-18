@@ -1,20 +1,20 @@
-# Wall Dashboard — Amtrak Trains Implementation Plan
+# Wall Dashboard — Amtrak Trains Display Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Add the Northbrook trains section to the Wall Dashboard, driven by the hardcoded Amtrak Hiawatha + Empire Builder schedule in the Sheet.
+**Goal:** Render the Northbrook trains section on the Wall Dashboard from the `AmtrakSchedule` tab that the GTFS extraction populates.
 
-**Architecture:** A chain of small pure functions parses the `AmtrakSchedule` Sheet tab (time strings, day-of-week specs), computes each train's Northbrook pass-through time, then filters/sorts/messages them for display. The pure core is unit-tested in Node; only `getAmtrakSchedule_` touches the Sheet. `getCombinedTrains_` is the seam where Metra trains will later merge in — for now it carries Amtrak only. `Dashboard.html` already renders the trains section, so it needs only a one-line tweak.
+**Architecture:** Small pure functions read the `AmtrakSchedule` rows (a `HH:MM` Glenview time and a 7-char weekday bitstring per train), compute each train's Northbrook pass-through time, then filter/sort/message them for display. The pure core is unit-tested in Node; only `getAmtrakSchedule_` touches the Sheet. `getCombinedTrains_` is the seam where Metra trains will later merge in — for now it carries Amtrak only. `Dashboard.html` already renders the trains section, so it needs only a one-line tweak.
 
 **Tech Stack:** Google Apps Script (V8), the existing `Code.gs` + `tests/pure-logic.test.js`. No new dependencies.
 
-**Scope:** This plan covers spec build-step 3 (Amtrak trains) from `docs/superpowers/specs/2026-05-17-wall-dashboard-design.md`. Metra realtime, the phone widget, and OLED polish remain follow-up plans. The trains section will show **Amtrak only** until the Metra plan lands.
+**Depends on:** the "Amtrak GTFS extraction" plan (`2026-05-17-wall-dashboard-amtrak-gtfs.md`) — its `refreshAmtrakSchedule` populates the `AmtrakSchedule` tab this plan reads. That plan is already implemented; its `days` column is a 7-char Mon→Sun bitstring (e.g. `1111100`).
 
-**Prerequisite for the checkpoint (not for the code):** the user provides the real Amtrak schedule rows. The code reads them from the Sheet, so they are deployment data — the build and tests do not need them (tests use fixtures).
+**Scope:** This is the second half of spec build-step 3 (Amtrak trains) — the display. The trains section will show **Amtrak only** until the Metra plan lands.
 
-**Commit policy:** This work is on the isolated, unpushed `worktree-wall-dashboard` branch. Run the commit steps as written.
+**Commit policy:** Work is on the isolated, unpushed `worktree-wall-dashboard` branch. Run the commit steps as written.
 
-**Test count note:** the suite currently stands at **30 passing**. Each TDD task below states the new running total.
+**Test count note:** the suite currently stands at **56 passing** (after the GTFS extraction plan). Each TDD task below states the new running total.
 
 ---
 
@@ -25,13 +25,12 @@
 | `apps/wall-dashboard/apps-script/Code.gs` | Add trains module: time/day parsers, Northbrook offset, schedule reader, select logic, wiring |
 | `apps/wall-dashboard/tests/pure-logic.test.js` | Add tests for every new pure function |
 | `apps/wall-dashboard/apps-script/Dashboard.html` | One-line tweak: wrap the countdown in parentheses |
-| `apps/wall-dashboard/docs/sheet-setup.md` | Note the `AmtrakSchedule` column formatting requirement |
 
 All paths below are relative to `C:\Users\slims\Desktop\Claude 2.0\.claude\worktrees\wall-dashboard\`.
 
 ### Data shapes (the contract across tasks)
 
-- **Schedule row** (`getAmtrakSchedule_`): `{ trainNum, direction, glenviewTime, days }` — all strings.
+- **Schedule row** (`getAmtrakSchedule_`): `{ trainNum, direction, glenviewTime, days }` — `glenviewTime` is `HH:MM`, `days` is a 7-char Mon→Sun bitstring.
 - **Train** (`computeAmtrakTrains_`, `getAmtrakTrains_`): `{ type: 'Amtrak', passMinutes }` — `passMinutes` is minutes-since-midnight of the Northbrook pass; tomorrow's trains carry `passMinutes + 1440`.
 - **Display item** (`selectTrains_` output, consumed by `Dashboard.html`): `{ type, time, countdown }` — `time` like `"6:43 AM"`, `countdown` like `"9 min"`.
 - **Trains result** (`selectTrains_` / `getCombinedTrains_`): `{ list: <display item[]>, message: <string|null> }`.
@@ -68,7 +67,7 @@ Expected: FAIL — `lib.parseHHMM_ is not a function`.
 
 - [ ] **Step 3: Implement `parseHHMM_`**
 
-In `Code.gs`, add a new section after the weather-window section (after `aqiInfo_`) and before the caching section:
+In `Code.gs`, add a new section after the GTFS refresh section (after `installAmtrakTrigger`) and before the entry point (`doGet`):
 
 ```javascript
 // ---- Trains: time + day parsing (pure) -------------------------------------
@@ -93,6 +92,14 @@ if (typeof module !== 'undefined') {
     matchHour_: matchHour_,
     cachedFetch_: cachedFetch_,
     aqiInfo_: aqiInfo_,
+    parseCsv_: parseCsv_,
+    gtfsTimeToMinutes_: gtfsTimeToMinutes_,
+    minutesToHHMM_: minutesToHHMM_,
+    headsignDirection_: headsignDirection_,
+    calendarBitstring_: calendarBitstring_,
+    unionBits_: unionBits_,
+    dateInWindow_: dateInWindow_,
+    extractAmtrakRows_: extractAmtrakRows_,
     parseHHMM_: parseHHMM_
   };
 }
@@ -101,7 +108,7 @@ if (typeof module !== 'undefined') {
 - [ ] **Step 4: Run the test to verify it passes**
 
 Run: `cd apps/wall-dashboard && node tests/pure-logic.test.js`
-Expected: PASS — `33 passed, 0 failed`.
+Expected: PASS — `59 passed, 0 failed`.
 
 - [ ] **Step 5: Commit**
 
@@ -112,13 +119,16 @@ git commit -m "feat: add HH:MM time parser"
 
 ---
 
-## Task 2: `parseDays_` — parse a day-of-week spec (TDD)
+## Task 2: `parseDays_` — parse a weekday bitstring (TDD)
 
 **Files:**
 - Modify: `apps/wall-dashboard/apps-script/Code.gs`
 - Modify: `apps/wall-dashboard/tests/pure-logic.test.js`
 
-Day indices follow JavaScript `Date.getDay()`: `0`=Sunday … `6`=Saturday.
+The `days` column is a 7-char bitstring, **Monday→Sunday** (e.g. `1111100` = Mon–Fri).
+`parseDays_` converts it to day indices that match JavaScript `Date.getDay()`:
+`0`=Sunday … `6`=Saturday. So bitstring position 0 (Monday) → index `1`, position 5
+(Saturday) → index `6`, position 6 (Sunday) → index `0`.
 
 - [ ] **Step 1: Write the failing tests**
 
@@ -126,20 +136,20 @@ In `pure-logic.test.js`, insert after the `parseHHMM_` tests:
 
 ```javascript
 // --- parseDays_ ---
-test('parseDays_ parses a weekday range', () => {
-  assert.deepStrictEqual(lib.parseDays_('Mo-Fr'), [1, 2, 3, 4, 5]);
+test('parseDays_ parses a weekday bitstring', () => {
+  assert.deepStrictEqual(lib.parseDays_('1111100'), [1, 2, 3, 4, 5]);
 });
-test('parseDays_ parses a single day', () => {
-  assert.deepStrictEqual(lib.parseDays_('Sa'), [6]);
+test('parseDays_ parses a weekend bitstring', () => {
+  assert.deepStrictEqual(lib.parseDays_('0000011'), [0, 6]);
 });
-test('parseDays_ Daily is all seven days', () => {
-  assert.deepStrictEqual(lib.parseDays_('Daily'), [0, 1, 2, 3, 4, 5, 6]);
+test('parseDays_ all seven days', () => {
+  assert.deepStrictEqual(lib.parseDays_('1111111'), [0, 1, 2, 3, 4, 5, 6]);
 });
-test('parseDays_ parses Su-Fr (Sunday through Friday)', () => {
-  assert.deepStrictEqual(lib.parseDays_('Su-Fr'), [0, 1, 2, 3, 4, 5]);
+test('parseDays_ Sunday only', () => {
+  assert.deepStrictEqual(lib.parseDays_('0000001'), [0]);
 });
-test('parseDays_ parses a comma list', () => {
-  assert.deepStrictEqual(lib.parseDays_('Sa,Su'), [0, 6]);
+test('parseDays_ Monday only', () => {
+  assert.deepStrictEqual(lib.parseDays_('1000000'), [1]);
 });
 ```
 
@@ -154,34 +164,16 @@ In `Code.gs`, add in the trains time/day section, after `parseHHMM_`:
 
 ```javascript
 /**
- * Pure: a day spec -> sorted array of day indices (0=Sun..6=Sat).
- * Accepts "Daily", single days ("Sa"), ranges ("Mo-Fr", wrap-aware),
- * and comma lists ("Sa,Su"). Unknown tokens are ignored.
+ * Pure: a 7-char Mon..Sun weekday bitstring -> sorted day indices
+ * (0=Sun..6=Sat). Position i (0=Mon) maps to index (i + 1) % 7.
  */
-function parseDays_(spec) {
-  var DAY = { Su: 0, Mo: 1, Tu: 2, We: 3, Th: 4, Fr: 5, Sa: 6 };
-  var s = String(spec).trim();
-  if (s === 'Daily') return [0, 1, 2, 3, 4, 5, 6];
-  var result = [];
-  s.split(',').forEach(function (part) {
-    part = part.trim();
-    if (part.indexOf('-') >= 0) {
-      var ends = part.split('-');
-      var a = DAY[ends[0].trim()], b = DAY[ends[1].trim()];
-      if (a == null || b == null) return;
-      var i = a;
-      while (true) {
-        result.push(i);
-        if (i === b) break;
-        i = (i + 1) % 7;
-      }
-    } else if (DAY[part] != null) {
-      result.push(DAY[part]);
-    }
-  });
-  return result
-    .filter(function (v, idx) { return result.indexOf(v) === idx; })
-    .sort(function (x, y) { return x - y; });
+function parseDays_(bitstring) {
+  var s = String(bitstring);
+  var out = [];
+  for (var i = 0; i < 7 && i < s.length; i++) {
+    if (s.charAt(i) === '1') out.push((i + 1) % 7);
+  }
+  return out.sort(function (a, b) { return a - b; });
 }
 ```
 
@@ -197,6 +189,14 @@ if (typeof module !== 'undefined') {
     matchHour_: matchHour_,
     cachedFetch_: cachedFetch_,
     aqiInfo_: aqiInfo_,
+    parseCsv_: parseCsv_,
+    gtfsTimeToMinutes_: gtfsTimeToMinutes_,
+    minutesToHHMM_: minutesToHHMM_,
+    headsignDirection_: headsignDirection_,
+    calendarBitstring_: calendarBitstring_,
+    unionBits_: unionBits_,
+    dateInWindow_: dateInWindow_,
+    extractAmtrakRows_: extractAmtrakRows_,
     parseHHMM_: parseHHMM_,
     parseDays_: parseDays_
   };
@@ -206,13 +206,13 @@ if (typeof module !== 'undefined') {
 - [ ] **Step 4: Run the test to verify it passes**
 
 Run: `cd apps/wall-dashboard && node tests/pure-logic.test.js`
-Expected: PASS — `38 passed, 0 failed`.
+Expected: PASS — `64 passed, 0 failed`.
 
 - [ ] **Step 5: Commit**
 
 ```bash
 git add apps/wall-dashboard/apps-script/Code.gs apps/wall-dashboard/tests/pure-logic.test.js
-git commit -m "feat: add day-of-week spec parser"
+git commit -m "feat: add weekday bitstring parser"
 ```
 
 ---
@@ -275,6 +275,14 @@ if (typeof module !== 'undefined') {
     matchHour_: matchHour_,
     cachedFetch_: cachedFetch_,
     aqiInfo_: aqiInfo_,
+    parseCsv_: parseCsv_,
+    gtfsTimeToMinutes_: gtfsTimeToMinutes_,
+    minutesToHHMM_: minutesToHHMM_,
+    headsignDirection_: headsignDirection_,
+    calendarBitstring_: calendarBitstring_,
+    unionBits_: unionBits_,
+    dateInWindow_: dateInWindow_,
+    extractAmtrakRows_: extractAmtrakRows_,
     parseHHMM_: parseHHMM_,
     parseDays_: parseDays_,
     northbrookMinutes_: northbrookMinutes_
@@ -285,7 +293,7 @@ if (typeof module !== 'undefined') {
 - [ ] **Step 4: Run the test to verify it passes**
 
 Run: `cd apps/wall-dashboard && node tests/pure-logic.test.js`
-Expected: PASS — `41 passed, 0 failed`.
+Expected: PASS — `67 passed, 0 failed`.
 
 - [ ] **Step 5: Commit**
 
@@ -354,6 +362,14 @@ if (typeof module !== 'undefined') {
     matchHour_: matchHour_,
     cachedFetch_: cachedFetch_,
     aqiInfo_: aqiInfo_,
+    parseCsv_: parseCsv_,
+    gtfsTimeToMinutes_: gtfsTimeToMinutes_,
+    minutesToHHMM_: minutesToHHMM_,
+    headsignDirection_: headsignDirection_,
+    calendarBitstring_: calendarBitstring_,
+    unionBits_: unionBits_,
+    dateInWindow_: dateInWindow_,
+    extractAmtrakRows_: extractAmtrakRows_,
     parseHHMM_: parseHHMM_,
     parseDays_: parseDays_,
     northbrookMinutes_: northbrookMinutes_,
@@ -365,7 +381,7 @@ if (typeof module !== 'undefined') {
 - [ ] **Step 4: Run the test to verify it passes**
 
 Run: `cd apps/wall-dashboard && node tests/pure-logic.test.js`
-Expected: PASS — `46 passed, 0 failed`.
+Expected: PASS — `72 passed, 0 failed`.
 
 - [ ] **Step 5: Commit**
 
@@ -438,6 +454,14 @@ if (typeof module !== 'undefined') {
     matchHour_: matchHour_,
     cachedFetch_: cachedFetch_,
     aqiInfo_: aqiInfo_,
+    parseCsv_: parseCsv_,
+    gtfsTimeToMinutes_: gtfsTimeToMinutes_,
+    minutesToHHMM_: minutesToHHMM_,
+    headsignDirection_: headsignDirection_,
+    calendarBitstring_: calendarBitstring_,
+    unionBits_: unionBits_,
+    dateInWindow_: dateInWindow_,
+    extractAmtrakRows_: extractAmtrakRows_,
     parseHHMM_: parseHHMM_,
     parseDays_: parseDays_,
     northbrookMinutes_: northbrookMinutes_,
@@ -450,7 +474,7 @@ if (typeof module !== 'undefined') {
 - [ ] **Step 4: Run the test to verify it passes**
 
 Run: `cd apps/wall-dashboard && node tests/pure-logic.test.js`
-Expected: PASS — `51 passed, 0 failed`.
+Expected: PASS — `77 passed, 0 failed`.
 
 - [ ] **Step 5: Commit**
 
@@ -473,19 +497,19 @@ In `pure-logic.test.js`, insert after the `formatClockTime_` tests:
 
 ```javascript
 // --- computeAmtrakTrains_ ---
-const SAMPLE_ROWS = [
-  { trainNum: '329', direction: 'NB', glenviewTime: '06:43', days: 'Mo-Fr' },
-  { trainNum: '330', direction: 'SB', glenviewTime: '08:00', days: 'Sa,Su' },
-  { trainNum: '8',   direction: 'SB', glenviewTime: '09:42', days: 'Daily' }
+const SAMPLE_SCHEDULE = [
+  { trainNum: '329', direction: 'NB', glenviewTime: '06:43', days: '1111100' },
+  { trainNum: '330', direction: 'SB', glenviewTime: '08:00', days: '0000011' },
+  { trainNum: '8',   direction: 'SB', glenviewTime: '09:42', days: '1111111' }
 ];
 test('computeAmtrakTrains_ keeps only trains running on the given day', () => {
-  // Wednesday = 3 -> 329 (Mo-Fr) and 8 (Daily) run; 330 (Sa,Su) does not
-  const out = lib.computeAmtrakTrains_(SAMPLE_ROWS, 3);
+  // Wednesday = 3 -> 329 (Mon-Fri) and 8 (Daily) run; 330 (Sat,Sun) does not
+  const out = lib.computeAmtrakTrains_(SAMPLE_SCHEDULE, 3);
   assert.strictEqual(out.length, 2);
 });
 test('computeAmtrakTrains_ computes Northbrook pass times and type', () => {
   // Saturday = 6 -> 330 (SB 08:00 -> 477) and 8 (SB 09:42 -> 579)
-  const out = lib.computeAmtrakTrains_(SAMPLE_ROWS, 6);
+  const out = lib.computeAmtrakTrains_(SAMPLE_SCHEDULE, 6);
   assert.deepStrictEqual(out, [
     { type: 'Amtrak', passMinutes: 477 },
     { type: 'Amtrak', passMinutes: 579 }
@@ -536,6 +560,14 @@ if (typeof module !== 'undefined') {
     matchHour_: matchHour_,
     cachedFetch_: cachedFetch_,
     aqiInfo_: aqiInfo_,
+    parseCsv_: parseCsv_,
+    gtfsTimeToMinutes_: gtfsTimeToMinutes_,
+    minutesToHHMM_: minutesToHHMM_,
+    headsignDirection_: headsignDirection_,
+    calendarBitstring_: calendarBitstring_,
+    unionBits_: unionBits_,
+    dateInWindow_: dateInWindow_,
+    extractAmtrakRows_: extractAmtrakRows_,
     parseHHMM_: parseHHMM_,
     parseDays_: parseDays_,
     northbrookMinutes_: northbrookMinutes_,
@@ -549,7 +581,7 @@ if (typeof module !== 'undefined') {
 - [ ] **Step 4: Run the test to verify it passes**
 
 Run: `cd apps/wall-dashboard && node tests/pure-logic.test.js`
-Expected: PASS — `54 passed, 0 failed`.
+Expected: PASS — `80 passed, 0 failed`.
 
 - [ ] **Step 5: Commit**
 
@@ -637,7 +669,7 @@ Expected: FAIL — `lib.selectTrains_ is not a function`.
 
 - [ ] **Step 3: Implement `selectTrains_`**
 
-In `Code.gs`, add a new section after the trains time/day section and before the caching section:
+In `Code.gs`, add a new section after the trains time/day section and before the entry point (`doGet`):
 
 ```javascript
 // ---- Trains: selection (pure) ----------------------------------------------
@@ -696,6 +728,14 @@ if (typeof module !== 'undefined') {
     matchHour_: matchHour_,
     cachedFetch_: cachedFetch_,
     aqiInfo_: aqiInfo_,
+    parseCsv_: parseCsv_,
+    gtfsTimeToMinutes_: gtfsTimeToMinutes_,
+    minutesToHHMM_: minutesToHHMM_,
+    headsignDirection_: headsignDirection_,
+    calendarBitstring_: calendarBitstring_,
+    unionBits_: unionBits_,
+    dateInWindow_: dateInWindow_,
+    extractAmtrakRows_: extractAmtrakRows_,
     parseHHMM_: parseHHMM_,
     parseDays_: parseDays_,
     northbrookMinutes_: northbrookMinutes_,
@@ -710,7 +750,7 @@ if (typeof module !== 'undefined') {
 - [ ] **Step 4: Run the test to verify it passes**
 
 Run: `cd apps/wall-dashboard && node tests/pure-logic.test.js`
-Expected: PASS — `60 passed, 0 failed`.
+Expected: PASS — `86 passed, 0 failed`.
 
 - [ ] **Step 5: Commit**
 
@@ -725,23 +765,23 @@ git commit -m "feat: add train selection and messaging logic"
 
 **Files:**
 - Modify: `apps/wall-dashboard/apps-script/Code.gs`
-- Modify: `apps/wall-dashboard/docs/sheet-setup.md`
 
 - [ ] **Step 1: Implement `getAmtrakSchedule_`**
 
-In `Code.gs`, add a new section after the Config section (after `getConfig_`) and before the weather-fetch section:
+In `Code.gs`, add a new section after the Config section (after `getConfig_`) and before the Amtrak GTFS extraction section:
 
 ```javascript
-// ---- Amtrak schedule -------------------------------------------------------
+// ---- Amtrak schedule read --------------------------------------------------
 
 /**
  * Read the AmtrakSchedule tab -> [{ trainNum, direction, glenviewTime, days }].
- * Skips blank rows. Returns [] for an empty tab. Cached 1 hour.
+ * The tab is machine-written by refreshAmtrakSchedule. Skips blank rows.
+ * Returns [] if the tab does not exist yet. Cached 1 hour.
  */
 function getAmtrakSchedule_() {
   return cachedFetch_('amtrak', 3600, function () {
     var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('AmtrakSchedule');
-    if (!sheet) throw new Error('AmtrakSchedule sheet tab not found');
+    if (!sheet) return [];
     var rows = sheet.getDataRange().getValues();
     var out = [];
     for (var i = 1; i < rows.length; i++) {
@@ -761,36 +801,15 @@ function getAmtrakSchedule_() {
 
 This is I/O (`SpreadsheetApp`) — verified at the Task 9 checkpoint. No automated test.
 
-- [ ] **Step 2: Note the column-formatting requirement in `sheet-setup.md`**
-
-In `apps/wall-dashboard/docs/sheet-setup.md`, replace the `AmtrakSchedule` section (the block starting `## Tab: \`AmtrakSchedule\``) with:
-
-```markdown
-## Tab: `AmtrakSchedule`  (header row: `train_num | direction | glenview_time | days`)
-
-The user provides these rows from the real Amtrak Hiawatha + Empire Builder
-timetable. Columns:
-
-- `train_num` — e.g. `329`, `8` (Empire Builder).
-- `direction` — `NB` (toward Milwaukee) or `SB` (toward Chicago).
-- `glenview_time` — Glenview scheduled time, 24-hour `HH:MM`. **Format the whole
-  column as Plain Text** (Format → Number → Plain text) before typing, so the
-  Sheet keeps `06:43` as text instead of converting it to a time value.
-- `days` — `Mo-Fr`, `Sa`, `Su`, `Su-Fr`, `Daily`, or a comma list like `Sa,Su`.
-
-The code reads Northbrook pass-through from these (NB +3 min, SB −3 min) and
-filters by the current day of week. An empty tab is handled gracefully.
-```
-
-- [ ] **Step 3: Run the existing tests to confirm nothing broke**
+- [ ] **Step 2: Run the existing tests to confirm nothing broke**
 
 Run: `cd apps/wall-dashboard && node tests/pure-logic.test.js`
-Expected: PASS — `60 passed, 0 failed`.
+Expected: PASS — `86 passed, 0 failed`.
 
-- [ ] **Step 4: Commit**
+- [ ] **Step 3: Commit**
 
 ```bash
-git add apps/wall-dashboard/apps-script/Code.gs apps/wall-dashboard/docs/sheet-setup.md
+git add apps/wall-dashboard/apps-script/Code.gs
 git commit -m "feat: add AmtrakSchedule sheet reader"
 ```
 
@@ -804,7 +823,7 @@ git commit -m "feat: add AmtrakSchedule sheet reader"
 
 - [ ] **Step 1: Add `getAmtrakTrains_` and `getCombinedTrains_`**
 
-In `Code.gs`, add a new section after the weather-fetch section (after `getAqi_`) and before `buildDashboardData_`:
+In `Code.gs`, add a new section after the Amtrak GTFS refresh section (after `installAmtrakTrigger`) and before the trains time/day section:
 
 ```javascript
 // ---- Trains: orchestration -------------------------------------------------
@@ -843,6 +862,10 @@ function getCombinedTrains_(now, tz, config) {
   });
 }
 ```
+
+Note: these functions live just below the GTFS refresh code; they reference
+`computeAmtrakTrains_` and `selectTrains_`, which are defined later in the
+file — fine, since Apps Script hoists function declarations.
 
 - [ ] **Step 2: Wire trains into `buildDashboardData_`**
 
@@ -887,7 +910,7 @@ stays paren-free so the future phone widget can show a bare `9 min`.)
 - [ ] **Step 4: Run the tests to confirm nothing broke**
 
 Run: `cd apps/wall-dashboard && node tests/pure-logic.test.js`
-Expected: PASS — `60 passed, 0 failed`.
+Expected: PASS — `86 passed, 0 failed`.
 
 - [ ] **Step 5: Commit**
 
@@ -896,16 +919,16 @@ git add apps/wall-dashboard/apps-script/Code.gs apps/wall-dashboard/apps-script/
 git commit -m "feat: wire Amtrak trains into the dashboard"
 ```
 
-- [ ] **Step 6: USER CHECKPOINT — populate the schedule, deploy, and verify**
+- [ ] **Step 6: USER CHECKPOINT — deploy and verify the trains section**
 
 Hand off to the user. They:
-1. In the Sheet's `AmtrakSchedule` tab, format the `glenview_time` column as Plain Text, then paste the real Amtrak Hiawatha + Empire Builder rows (`train_num`, `direction`, `glenview_time`, `days`).
+1. Make sure `refreshAmtrakSchedule` has been run at least once (from the GTFS extraction plan's checkpoint) so the `AmtrakSchedule` tab is populated.
 2. Re-paste the updated `Code.gs` and `Dashboard.html` into the Apps Script editor.
 3. Deploy a new version of the existing deployment (Manage deployments → edit → New version).
-4. Open the `/exec` URL — confirm the **NORTHBROOK TRAINS** section now shows real Amtrak trains, or a sensible message ("No train in next 30 min — next: …" during the day, "No train until …" outside 6 AM–9 PM). Cross-check against the timetable for the current day of week.
+4. Open the `/exec` URL — confirm the **NORTHBROOK TRAINS** section shows real Amtrak trains, or a sensible message ("No train in next 30 min — next: …" during the day, "No train until …" outside 6 AM–9 PM). Cross-check against amtrak.com's Hiawatha timetable for the current day.
 5. Confirm weather and AQI still display correctly.
 
-Step 3 is complete once the user confirms the trains section matches the schedule. Note: until the Metra plan lands, this section is Amtrak-only, so a "No train in next 30 min" message will be common.
+This plan is complete once the user confirms the trains section matches the schedule. Note: until the Metra plan lands, this section is Amtrak-only, so a "No train in next 30 min" message will be common.
 
 ---
 
@@ -915,7 +938,7 @@ After all tasks the full unit-test suite passes (Node `assert`, no dependencies)
 
     cd apps/wall-dashboard && node tests/pure-logic.test.js
 
-Expected: `60 passed, 0 failed`. The new pure functions covered are `parseHHMM_`,
+Expected: `86 passed, 0 failed`. The new pure functions covered are `parseHHMM_`,
 `parseDays_`, `northbrookMinutes_`, `formatCountdown_`, `formatClockTime_`,
 `computeAmtrakTrains_`, and `selectTrains_`.
 
