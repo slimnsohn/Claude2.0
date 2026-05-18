@@ -756,6 +756,18 @@ function decodeProtobuf_(bytes, start, end) {
   return fields;
 }
 
+/**
+ * Pure: a { start, end } byte range -> string. GTFS-RT ids (route_id,
+ * trip_id, stop_id) are ASCII, so a per-byte char code is sufficient.
+ */
+function pbString_(bytes, range) {
+  var s = '';
+  for (var i = range.start; i < range.end; i++) {
+    s += String.fromCharCode(bytes[i] & 0xff);
+  }
+  return s;
+}
+
 // ---- Entry point -----------------------------------------------------------
 
 function doGet(e) {
@@ -800,6 +812,7 @@ if (typeof module !== 'undefined') {
     formatClockTime_: formatClockTime_,
     computeAmtrakTrains_: computeAmtrakTrains_,
     selectTrains_: selectTrains_,
-    decodeProtobuf_: decodeProtobuf_
+    decodeProtobuf_: decodeProtobuf_,
+    pbString_: pbString_
   };
 }

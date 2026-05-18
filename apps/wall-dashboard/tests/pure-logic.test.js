@@ -493,6 +493,17 @@ test('selectTrains_ outside hours prefers the soonest upcoming train', () => {
   assert.strictEqual(r.message, 'No train until 10:55 PM');
 });
 
+// --- pbString_ ---
+test('pbString_ builds a string from a byte range', () => {
+  assert.strictEqual(lib.pbString_([0x68, 0x69], { start: 0, end: 2 }), 'hi');
+});
+test('pbString_ reads only the given sub-range', () => {
+  // bytes spell "XNBROOKX"; range covers the middle 6
+  assert.strictEqual(
+    lib.pbString_([0x58, 0x4E, 0x42, 0x52, 0x4F, 0x4F, 0x4B, 0x58], { start: 1, end: 7 }),
+    'NBROOK');
+});
+
 // --- decodeProtobuf_ ---
 test('decodeProtobuf_ reads a single varint field', () => {
   // field 1 wire 0 (tag 0x08), value 5
