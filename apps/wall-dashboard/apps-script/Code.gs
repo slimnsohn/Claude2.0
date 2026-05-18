@@ -591,6 +591,53 @@ function computeAmtrakTrains_(rows, dayIndex) {
   return out;
 }
 
+// ---- Trains: selection (pure) ----------------------------------------------
+
+/**
+ * Pure: pick the trains to show.
+ * trains: [{ type, passMinutes }] (tomorrow's carry passMinutes + 1440).
+ * nowMinutes / nowHour: current time. opts: { windowMin, maxCount,
+ * respectHours, startHour, endHour }.
+ * Returns { list:[{type,time,countdown}], message }. message is null when
+ * list is non-empty.
+ */
+function selectTrains_(trains, nowMinutes, nowHour, opts) {
+  var candidates = trains
+    .filter(function (t) { return t.passMinutes >= nowMinutes; })
+    .sort(function (a, b) { return a.passMinutes - b.passMinutes; });
+  var next = candidates.length ? candidates[0] : null;
+
+  function display(t) {
+    return {
+      type: t.type,
+      time: formatClockTime_(t.passMinutes),
+      countdown: formatCountdown_(t.passMinutes - nowMinutes)
+    };
+  }
+
+  var outsideHours = nowHour < opts.startHour || nowHour >= opts.endHour;
+  if (opts.respectHours && outsideHours) {
+    // Find the soonest train from the full list; a passed train represents
+    // tomorrow's run of that service.
+    var allSorted = trains.slice().sort(function (a, b) { return a.passMinutes - b.passMinutes; });
+    var anyNext = allSorted.length ? allSorted[0] : null;
+    return anyNext
+      ? { list: [], message: 'No train until ' + formatClockTime_(anyNext.passMinutes) }
+      : { list: [], message: 'No more trains' };
+  }
+
+  var windowed = candidates
+    .filter(function (t) { return t.passMinutes - nowMinutes <= opts.windowMin; })
+    .slice(0, opts.maxCount);
+  if (windowed.length) {
+    return { list: windowed.map(display), message: null };
+  }
+  return next
+    ? { list: [], message: 'No train in next ' + opts.windowMin
+        + ' min — next: ' + formatClockTime_(next.passMinutes) }
+    : { list: [], message: 'No more trains' };
+}
+
 // ---- Entry point -----------------------------------------------------------
 
 function doGet(e) {
@@ -633,6 +680,7 @@ if (typeof module !== 'undefined') {
     northbrookMinutes_: northbrookMinutes_,
     formatCountdown_: formatCountdown_,
     formatClockTime_: formatClockTime_,
-    computeAmtrakTrains_: computeAmtrakTrains_
+    computeAmtrakTrains_: computeAmtrakTrains_,
+    selectTrains_: selectTrains_
   };
 }

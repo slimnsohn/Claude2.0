@@ -429,5 +429,58 @@ test('computeAmtrakTrains_ returns empty for an empty schedule', () => {
   assert.deepStrictEqual(lib.computeAmtrakTrains_([], 3), []);
 });
 
+// --- selectTrains_ ---
+const SEL_OPTS = { windowMin: 30, maxCount: 3, respectHours: true, startHour: 6, endHour: 21 };
+// now = 12:42 PM -> 762 minutes, hour 12
+test('selectTrains_ lists trains inside the window, soonest first', () => {
+  const trains = [
+    { type: 'Amtrak', passMinutes: 783 }, // 13:03, +21 min
+    { type: 'Amtrak', passMinutes: 771 }, // 12:51, +9 min
+    { type: 'Amtrak', passMinutes: 900 }  // 15:00, out of window
+  ];
+  const r = lib.selectTrains_(trains, 762, 12, SEL_OPTS);
+  assert.strictEqual(r.message, null);
+  assert.deepStrictEqual(r.list, [
+    { type: 'Amtrak', time: '12:51 PM', countdown: '9 min' },
+    { type: 'Amtrak', time: '1:03 PM', countdown: '21 min' }
+  ]);
+});
+test('selectTrains_ caps the list at maxCount', () => {
+  const trains = [
+    { type: 'Amtrak', passMinutes: 765 },
+    { type: 'Amtrak', passMinutes: 770 },
+    { type: 'Amtrak', passMinutes: 775 },
+    { type: 'Amtrak', passMinutes: 780 }
+  ];
+  const r = lib.selectTrains_(trains, 762, 12, SEL_OPTS);
+  assert.strictEqual(r.list.length, 3);
+});
+test('selectTrains_ messages when nothing is in the window', () => {
+  const trains = [{ type: 'Amtrak', passMinutes: 900 }]; // 15:00
+  const r = lib.selectTrains_(trains, 762, 12, SEL_OPTS);
+  assert.deepStrictEqual(r.list, []);
+  assert.strictEqual(r.message, 'No train in next 30 min — next: 3:00 PM');
+});
+test('selectTrains_ outside display hours shows "No train until"', () => {
+  const trains = [{ type: 'Amtrak', passMinutes: 783 }];
+  // now 22:00 -> 1320 minutes, hour 22, outside 6..21
+  const r = lib.selectTrains_(trains, 1320, 22, SEL_OPTS);
+  assert.deepStrictEqual(r.list, []);
+  assert.strictEqual(r.message, 'No train until 1:03 PM');
+});
+test('selectTrains_ drops trains that already passed', () => {
+  const trains = [
+    { type: 'Amtrak', passMinutes: 700 }, // already passed
+    { type: 'Amtrak', passMinutes: 771 }
+  ];
+  const r = lib.selectTrains_(trains, 762, 12, SEL_OPTS);
+  assert.strictEqual(r.list.length, 1);
+  assert.strictEqual(r.list[0].time, '12:51 PM');
+});
+test('selectTrains_ messages when there are no trains at all', () => {
+  const r = lib.selectTrains_([], 762, 12, SEL_OPTS);
+  assert.deepStrictEqual(r, { list: [], message: 'No more trains' });
+});
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
