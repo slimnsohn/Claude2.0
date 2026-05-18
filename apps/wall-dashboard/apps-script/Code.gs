@@ -714,6 +714,48 @@ function selectTrains_(trains, nowMinutes, nowHour, opts) {
     : { list: [], message: 'No more trains' };
 }
 
+// ---- Metra GTFS-Realtime (pure protobuf decoding) --------------------------
+
+/**
+ * Pure: generic protobuf wire-format decoder.
+ * Returns { fieldNumber: [values] }. A varint value is a Number; a
+ * length-delimited value is a { start, end } range into the same `bytes`
+ * (sub-messages decode in place, no copying). 64-bit / 32-bit fields skipped.
+ * `bytes` may be a Node Buffer, a Uint8Array, or a (possibly signed) byte
+ * array — `& 0xff` normalizes each byte.
+ */
+function decodeProtobuf_(bytes, start, end) {
+  var pos = start;
+  var fields = {};
+  function readVarint() {
+    var result = 0, shift = 0, b;
+    do {
+      b = bytes[pos++] & 0xff;
+      result += (b & 0x7f) * Math.pow(2, shift);
+      shift += 7;
+    } while (b & 0x80);
+    return result;
+  }
+  while (pos < end) {
+    var tag = readVarint();
+    var field = Math.floor(tag / 8), wire = tag & 7;
+    if (wire === 0) {
+      (fields[field] || (fields[field] = [])).push(readVarint());
+    } else if (wire === 2) {
+      var len = readVarint();
+      (fields[field] || (fields[field] = [])).push({ start: pos, end: pos + len });
+      pos += len;
+    } else if (wire === 1) {
+      pos += 8;
+    } else if (wire === 5) {
+      pos += 4;
+    } else {
+      throw new Error('Bad protobuf wire type: ' + wire);
+    }
+  }
+  return fields;
+}
+
 // ---- Entry point -----------------------------------------------------------
 
 function doGet(e) {
@@ -757,6 +799,7 @@ if (typeof module !== 'undefined') {
     formatCountdown_: formatCountdown_,
     formatClockTime_: formatClockTime_,
     computeAmtrakTrains_: computeAmtrakTrains_,
-    selectTrains_: selectTrains_
+    selectTrains_: selectTrains_,
+    decodeProtobuf_: decodeProtobuf_
   };
 }

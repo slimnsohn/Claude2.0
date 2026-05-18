@@ -493,5 +493,28 @@ test('selectTrains_ outside hours prefers the soonest upcoming train', () => {
   assert.strictEqual(r.message, 'No train until 10:55 PM');
 });
 
+// --- decodeProtobuf_ ---
+test('decodeProtobuf_ reads a single varint field', () => {
+  // field 1 wire 0 (tag 0x08), value 5
+  assert.deepStrictEqual(lib.decodeProtobuf_([0x08, 0x05], 0, 2), { 1: [5] });
+});
+test('decodeProtobuf_ reads a multi-byte varint', () => {
+  // field 1, value 300 -> varint bytes 0xAC 0x02
+  assert.deepStrictEqual(lib.decodeProtobuf_([0x08, 0xAC, 0x02], 0, 3), { 1: [300] });
+});
+test('decodeProtobuf_ reads a length-delimited field as a range', () => {
+  // field 2 wire 2 (tag 0x12), length 2, then 2 bytes
+  assert.deepStrictEqual(lib.decodeProtobuf_([0x12, 0x02, 0x68, 0x69], 0, 4),
+    { 2: [{ start: 2, end: 4 }] });
+});
+test('decodeProtobuf_ collects repeated fields', () => {
+  assert.deepStrictEqual(lib.decodeProtobuf_([0x08, 0x01, 0x08, 0x02], 0, 4),
+    { 1: [1, 2] });
+});
+test('decodeProtobuf_ throws on a bad wire type', () => {
+  // tag 0x0F -> field 1, wire 7 (invalid)
+  assert.throws(() => lib.decodeProtobuf_([0x0F], 0, 1), /wire type/);
+});
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
