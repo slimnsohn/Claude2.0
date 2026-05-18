@@ -120,6 +120,33 @@ function getConfig_() {
   });
 }
 
+// ---- Amtrak schedule read --------------------------------------------------
+
+/**
+ * Read the AmtrakSchedule tab -> [{ trainNum, direction, glenviewTime, days }].
+ * The tab is machine-written by refreshAmtrakSchedule. Skips blank rows.
+ * Returns [] if the tab does not exist yet. Cached 1 hour.
+ */
+function getAmtrakSchedule_() {
+  return cachedFetch_('amtrak', 3600, function () {
+    var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('AmtrakSchedule');
+    if (!sheet) return [];
+    var rows = sheet.getDataRange().getValues();
+    var out = [];
+    for (var i = 1; i < rows.length; i++) {
+      var trainNum = String(rows[i][0]).trim();
+      if (!trainNum) continue;
+      out.push({
+        trainNum: trainNum,
+        direction: String(rows[i][1]).trim(),
+        glenviewTime: String(rows[i][2]).trim(),
+        days: String(rows[i][3]).trim()
+      });
+    }
+    return out;
+  });
+}
+
 // ---- Weather fetch ---------------------------------------------------------
 
 /**
