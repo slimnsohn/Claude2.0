@@ -182,6 +182,28 @@ function getWeather_(config) {
   });
 }
 
+/**
+ * Fetch the current US AQI from Open-Meteo (no auth). Reuses the Config
+ * lat/lon. Returns { value: <int> }. Cached 30 min.
+ */
+function getAqi_(config) {
+  return cachedFetch_('aqi', 1800, function () {
+    var url = 'https://air-quality-api.open-meteo.com/v1/air-quality'
+      + '?latitude=' + config.nws_lat
+      + '&longitude=' + config.nws_lon
+      + '&current=us_aqi&timezone=America/Chicago';
+    var resp = UrlFetchApp.fetch(url, { muteHttpExceptions: true });
+    if (resp.getResponseCode() !== 200) {
+      throw new Error('Open-Meteo AQI returned ' + resp.getResponseCode());
+    }
+    var current = JSON.parse(resp.getContentText()).current;
+    if (!current || current.us_aqi == null) {
+      throw new Error('AQI response missing us_aqi');
+    }
+    return { value: Math.round(current.us_aqi) };
+  });
+}
+
 // ---- Data assembly ---------------------------------------------------------
 
 /**
