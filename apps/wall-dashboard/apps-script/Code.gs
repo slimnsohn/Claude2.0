@@ -107,6 +107,68 @@ function getConfig_() {
   });
 }
 
+// ---- Weather fetch ---------------------------------------------------------
+
+/**
+ * One-time helper: resolve the NWS hourly-forecast URL and write it into the
+ * Config tab. Run manually from the editor (Run -> bootstrapNwsUrl_).
+ */
+function bootstrapNwsUrl_() {
+  var config = getConfig_();
+  var pointsUrl = 'https://api.weather.gov/points/' + config.nws_lat + ',' + config.nws_lon;
+  var resp = UrlFetchApp.fetch(pointsUrl, {
+    headers: { 'User-Agent': config.nws_user_agent },
+    muteHttpExceptions: true
+  });
+  if (resp.getResponseCode() !== 200) {
+    throw new Error('NWS /points returned ' + resp.getResponseCode());
+  }
+  var forecastHourly = JSON.parse(resp.getContentText()).properties.forecastHourly;
+  Logger.log('forecastHourly URL: ' + forecastHourly);
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Config');
+  var rows = sheet.getDataRange().getValues();
+  for (var i = 1; i < rows.length; i++) {
+    if (String(rows[i][0]).trim() === 'nws_forecast_hourly_url') {
+      sheet.getRange(i + 1, 2).setValue(forecastHourly);
+      Logger.log('Wrote URL to Config row ' + (i + 1));
+      return;
+    }
+  }
+  throw new Error('Config row nws_forecast_hourly_url not found');
+}
+
+/**
+ * Fetch the NWS hourly forecast, reduced to the fields the dashboard needs.
+ * Returns { hourly: [{hourKey, temp, precip, humidity, windMph, condition}] }.
+ * Cached 15 min.
+ */
+function getWeather_(config) {
+  return cachedFetch_('weather', 900, function () {
+    var url = config.nws_forecast_hourly_url;
+    if (!url) throw new Error('nws_forecast_hourly_url not set — run bootstrapNwsUrl_ first');
+    var resp = UrlFetchApp.fetch(url, {
+      headers: { 'User-Agent': config.nws_user_agent },
+      muteHttpExceptions: true
+    });
+    if (resp.getResponseCode() !== 200) {
+      throw new Error('NWS hourly returned ' + resp.getResponseCode());
+    }
+    var periods = JSON.parse(resp.getContentText()).properties.periods;
+    var hourly = periods.slice(0, 48).map(function (p) {
+      return {
+        hourKey: Utilities.formatDate(new Date(p.startTime), 'America/Chicago', 'yyyy-MM-dd-HH'),
+        temp: p.temperature,
+        precip: (p.probabilityOfPrecipitation && p.probabilityOfPrecipitation.value) || 0,
+        humidity: (p.relativeHumidity && p.relativeHumidity.value != null)
+          ? p.relativeHumidity.value : null,
+        windMph: parseInt(p.windSpeed, 10) || 0,
+        condition: p.shortForecast
+      };
+    });
+    return { hourly: hourly };
+  });
+}
+
 // ---- Data assembly ---------------------------------------------------------
 
 /**
