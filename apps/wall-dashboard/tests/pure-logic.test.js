@@ -504,6 +504,19 @@ test('pbString_ reads only the given sub-range', () => {
     'NBROOK');
 });
 
+// --- metraPassMinutes_ ---
+test('metraPassMinutes_ for an upcoming train', () => {
+  // arrival 1320 s (22 min) after now
+  assert.strictEqual(lib.metraPassMinutes_(1779071320, 1779070000, 1260), 1282);
+});
+test('metraPassMinutes_ for a train arriving now', () => {
+  assert.strictEqual(lib.metraPassMinutes_(1779070000, 1779070000, 1260), 1260);
+});
+test('metraPassMinutes_ for a train that already passed', () => {
+  // arrival 600 s (10 min) before now
+  assert.strictEqual(lib.metraPassMinutes_(1779069400, 1779070000, 1260), 1250);
+});
+
 // --- parseTripUpdates_ (uses the committed real-feed fixture) ---
 const metraFixture = fs.readFileSync(
   path.join(__dirname, 'fixtures/metra-tripupdates.bin'));

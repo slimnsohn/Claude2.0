@@ -756,6 +756,14 @@ function decodeProtobuf_(bytes, start, end) {
   return fields;
 }
 
+/**
+ * Pure: a train's arrival epoch (seconds) -> passMinutes, in the same
+ * minutes-since-midnight space the Amtrak trains use.
+ */
+function metraPassMinutes_(arrivalEpoch, nowEpochSec, nowMinutes) {
+  return nowMinutes + Math.round((arrivalEpoch - nowEpochSec) / 60);
+}
+
 /** Internal: StopTimeEvent.time (field 2) from an arrival/departure field. */
 function stopTimeEventTime_(bytes, eventField) {
   if (!eventField) return null;
@@ -853,6 +861,7 @@ if (typeof module !== 'undefined') {
     selectTrains_: selectTrains_,
     decodeProtobuf_: decodeProtobuf_,
     pbString_: pbString_,
-    parseTripUpdates_: parseTripUpdates_
+    parseTripUpdates_: parseTripUpdates_,
+    metraPassMinutes_: metraPassMinutes_
   };
 }
