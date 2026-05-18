@@ -4,10 +4,9 @@ const path = require('path');
 const vm = require('vm');
 const assert = require('assert');
 
-// Node 24 vm sandboxes create a separate realm whose Array prototype does not
-// satisfy `instanceof Array` in the host realm.  deepStrictEqual uses realm
-// identity, so cross-sandbox array comparisons fail even when values are equal.
-// Patch: JSON-normalize both sides before comparing objects/arrays.
+// Node 24's vm.runInNewContext runs Code.gs in a separate realm, so arrays it
+// returns fail deepStrictEqual's cross-realm prototype check against host-realm
+// array literals. JSON-normalize both sides before comparing. Test-harness only.
 const _origDSE = assert.deepStrictEqual.bind(assert);
 assert.deepStrictEqual = function (a, b, msg) {
   const norm = (v) => (v !== null && typeof v === 'object') ? JSON.parse(JSON.stringify(v)) : v;
@@ -94,6 +93,18 @@ test('feelsLike_ cold+windy uses wind chill (lower than temp)', () => {
 });
 test('feelsLike_ null temp returns null', () => {
   assert.strictEqual(lib.feelsLike_(null, 50, 5), null);
+});
+test('feelsLike_ hot but humidity missing returns raw temp', () => {
+  assert.strictEqual(lib.feelsLike_(90, null, 5), 90);
+});
+test('feelsLike_ cold but wind below 3mph returns raw temp', () => {
+  assert.strictEqual(lib.feelsLike_(20, 40, 2), 20);
+});
+test('feelsLike_ at 79F just below heat-index threshold returns raw temp', () => {
+  assert.strictEqual(lib.feelsLike_(79, 90, 0), 79);
+});
+test('feelsLike_ at 51F just above wind-chill threshold returns raw temp', () => {
+  assert.strictEqual(lib.feelsLike_(51, 40, 30), 51);
 });
 
 // --- matchHour_ ---

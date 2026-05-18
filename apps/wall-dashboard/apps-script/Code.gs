@@ -231,8 +231,12 @@ function buildDashboardData_() {
   try {
     var weather = getWeather_(config);
     var nowHour = parseInt(Utilities.formatDate(now, tz, 'H'), 10);
-    var win = getWeatherWindow_(nowHour,
-      parseInt(config.weather_flip_hour, 10), parseInt(config.weather_end_hour, 10));
+    var flipHour = parseInt(config.weather_flip_hour, 10);
+    var endHour = parseInt(config.weather_end_hour, 10);
+    if (isNaN(flipHour) || isNaN(endHour)) {
+      throw new Error('weather_flip_hour / weather_end_hour missing or invalid in Config');
+    }
+    var win = getWeatherWindow_(nowHour, flipHour, endHour);
     var hourly = win.hours.map(function (h) {
       var match = matchHour_(weather.hourly, hourKeyFor_(now, win.dayOffset, h, tz));
       return {
@@ -265,7 +269,7 @@ function buildDashboardData_() {
       alert: info.alert
     };
   } catch (err) {
-    data.aqi = { available: false };
+    data.aqi = { available: false, error: String(err) };
   }
 
   return data;
