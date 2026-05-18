@@ -372,5 +372,22 @@ test('northbrookMinutes_ wraps past midnight', () => {
   assert.strictEqual(lib.northbrookMinutes_('00:01', 'SB'), 1438);
 });
 
+// --- formatCountdown_ ---
+test('formatCountdown_ under an hour', () => {
+  assert.strictEqual(lib.formatCountdown_(9), '9 min');
+});
+test('formatCountdown_ at zero', () => {
+  assert.strictEqual(lib.formatCountdown_(0), '0 min');
+});
+test('formatCountdown_ at 59 minutes', () => {
+  assert.strictEqual(lib.formatCountdown_(59), '59 min');
+});
+test('formatCountdown_ at exactly an hour', () => {
+  assert.strictEqual(lib.formatCountdown_(60), '1h 0m');
+});
+test('formatCountdown_ over an hour', () => {
+  assert.strictEqual(lib.formatCountdown_(69), '1h 9m');
+});
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

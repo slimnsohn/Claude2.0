@@ -558,6 +558,12 @@ function northbrookMinutes_(glenviewHHMM, direction) {
   return ((base + offset) % 1440 + 1440) % 1440;
 }
 
+/** Pure: minutes -> "9 min" under an hour, "1h 9m" at/over an hour. */
+function formatCountdown_(minutes) {
+  if (minutes < 60) return minutes + ' min';
+  return Math.floor(minutes / 60) + 'h ' + (minutes % 60) + 'm';
+}
+
 // ---- Entry point -----------------------------------------------------------
 
 function doGet(e) {
@@ -597,6 +603,7 @@ if (typeof module !== 'undefined') {
     extractAmtrakRows_: extractAmtrakRows_,
     parseHHMM_: parseHHMM_,
     parseDays_: parseDays_,
-    northbrookMinutes_: northbrookMinutes_
+    northbrookMinutes_: northbrookMinutes_,
+    formatCountdown_: formatCountdown_
   };
 }
