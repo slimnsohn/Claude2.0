@@ -101,6 +101,7 @@ defined interface.
 | Weather | `getWeather_()`, `bootstrapNwsUrl_()`, `getWeatherWindow_(now)` | NWS fetch + time-flip window logic |
 | Air quality | `getAqi_(config)`, `aqiInfo_(value)` | Open-Meteo AQI fetch + pure category/alert mapping |
 | Trains | `getMetraTrains_()`, `getAmtrakTrains_()`, `getCombinedTrains_(windowMin, maxCount, respectHours)` | Per-source fetch + merge/sort/filter |
+| Amtrak GTFS | `refreshAmtrakSchedule_()` + CSV/calendar parsers | Weekly trigger: GTFS → `AmtrakSchedule` tab |
 | Protobuf | `decodeProtobuf_(bytes)`, `parseTripUpdates_(decoded)` | Generic GTFS-RT wire decoder + field mapping |
 | Time helpers | `isWithinDisplayHours_(date)`, `nextTrainAfterHours_()`, `formatCountdown_(min)` | Pure date/format helpers |
 | Rendering | `renderDashboard_(data)`, `renderTrainsOnly_(data)`, `renderTrainsJson_(data)` | Data objects → output (no fetching inside) |
@@ -149,12 +150,29 @@ decoder is isolated and unit-tested against captured feed bytes. The approach
 is prototyped against the live feed before being committed to. Because Metra is
 the lowest-priority step, this risk does not block the skeleton or weather work.
 
-### 5.3 Amtrak Hiawatha + Empire Builder — hardcoded schedule
-- No reliable realtime API. Static schedule lives in the `AmtrakSchedule` Sheet
-  tab, with rows **provided by the user** (no fabrication).
-- Northbrook pass-through computed from Glenview time: **NB +3 min**,
-  **SB −3 min**.
-- Day-of-week filtering required (`Mo-Fr`, `Sa`, `Su`, `Daily`, `Su-Fr`, etc.).
+### 5.3 Amtrak Hiawatha + Empire Builder — GTFS static feed
+- No realtime API, but Amtrak publishes an official GTFS static feed:
+  `https://content.amtrak.com/content/gtfs/GTFS.zip` (~18 MB, no auth,
+  refreshed daily).
+- A weekly Apps Script time-trigger, `refreshAmtrakSchedule_`, downloads the
+  feed, extracts the Hiawatha + Empire Builder trains that stop at Glenview,
+  and writes them to the `AmtrakSchedule` Sheet tab. The dashboard reads only
+  that small tab — it never parses GTFS at request time.
+- Extraction join: `routes.txt` (find route ids by `route_long_name`
+  "Hiawatha Service" / "Empire Builder") → `trips.txt` (those routes' trips:
+  `trip_short_name` = train number, `trip_headsign`) → `stop_times.txt`
+  (rows at `stop_id` = `GLN` give the Glenview `departure_time`) →
+  `calendar.txt` (`service_id` → weekday flags + `start_date`/`end_date`).
+- Direction from `trip_headsign`: "Chicago" → SB, anything else → NB.
+- GTFS `departure_time` hours can exceed 24 (multi-day Empire Builder); the
+  extractor takes minutes **mod 1440**.
+- A train number can appear under several `service_id`s; the extractor keeps
+  only services whose `[start_date, end_date]` window covers the refresh date,
+  then unions their weekday flags per (train number, direction).
+- The `AmtrakSchedule` tab `days` column is a 7-char weekday bitstring
+  (Mon→Sun, e.g. `1111100`), machine-written by the trigger and machine-read
+  by the dashboard. No human entry — no fabrication; GTFS is the authority.
+- Northbrook pass-through: **NB +3 min**, **SB −3 min** from the Glenview time.
 
 ### 5.4 Air Quality — Open-Meteo Air Quality API (no auth)
 - NWS does not provide AQI; Open-Meteo's air-quality API does, free and keyless.
@@ -190,13 +208,17 @@ the lowest-priority step, this risk does not block the skeleton or weather work.
 | `max_trains` | `3` |
 | `train_window_min` | `30` |
 
-### Tab: `AmtrakSchedule` — user-provided rows
+### Tab: `AmtrakSchedule` — machine-written by `refreshAmtrakSchedule_`
 
-| train_num | direction | glenview_time | days |
-|---|---|---|---|
-| (NB or SB) | (HH:MM 24h) | (e.g. `Mo-Fr`) |
+| Column | Value |
+|---|---|
+| `train_num` | Amtrak train number (`trip_short_name`) |
+| `direction` | `NB` or `SB` |
+| `glenview_time` | Glenview departure, `HH:MM` 24h |
+| `days` | 7-char weekday bitstring, Mon→Sun (e.g. `1111100`) |
 
-Code handles an empty tab gracefully.
+The weekly trigger clears and rewrites this tab. Not hand-edited. The dashboard
+handles an empty tab gracefully (shows no trains until the first refresh runs).
 
 ---
 
