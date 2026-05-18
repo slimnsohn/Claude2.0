@@ -698,8 +698,12 @@ function selectTrains_(trains, nowMinutes, nowHour, opts) {
 
   var outsideHours = nowHour < opts.startHour || nowHour >= opts.endHour;
   if (opts.respectHours && outsideHours) {
-    return next
-      ? { list: [], message: 'No train until ' + formatClockTime_(next.passMinutes) }
+    // Find the soonest train from the full list; a passed train represents
+    // tomorrow's run of that service (same clock time mod 24h).
+    var allSorted = trains.slice().sort(function (a, b) { return a.passMinutes - b.passMinutes; });
+    var anyNext = allSorted.length ? allSorted[0] : null;
+    return anyNext
+      ? { list: [], message: 'No train until ' + formatClockTime_(anyNext.passMinutes) }
       : { list: [], message: 'No more trains' };
   }
 
