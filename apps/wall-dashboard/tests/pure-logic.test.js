@@ -481,6 +481,17 @@ test('selectTrains_ messages when there are no trains at all', () => {
   const r = lib.selectTrains_([], 762, 12, SEL_OPTS);
   assert.deepStrictEqual(r, { list: [], message: 'No more trains' });
 });
+test('selectTrains_ outside hours prefers the soonest upcoming train', () => {
+  const trains = [
+    { type: 'Amtrak', passMinutes: 400 },         // already passed today
+    { type: 'Amtrak', passMinutes: 1375 },        // 10:55 PM, still upcoming
+    { type: 'Amtrak', passMinutes: 400 + 1440 }   // tomorrow's run of the first
+  ];
+  // now 22:00 -> 1320 minutes, hour 22, outside the 6..21 window
+  const r = lib.selectTrains_(trains, 1320, 22, SEL_OPTS);
+  assert.deepStrictEqual(r.list, []);
+  assert.strictEqual(r.message, 'No train until 10:55 PM');
+});
 
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

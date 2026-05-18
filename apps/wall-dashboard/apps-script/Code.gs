@@ -591,7 +591,7 @@ function getCombinedTrains_(now, tz, config) {
   var all = getAmtrakTrains_(now, tz);
   var nowMinutes = parseInt(Utilities.formatDate(now, tz, 'H'), 10) * 60
                  + parseInt(Utilities.formatDate(now, tz, 'm'), 10);
-  var nowHour = parseInt(Utilities.formatDate(now, tz, 'H'), 10);
+  var nowHour = Math.floor(nowMinutes / 60);
   return selectTrains_(all, nowMinutes, nowHour, {
     windowMin: parseInt(config.train_window_min, 10),
     maxCount: parseInt(config.max_trains, 10),
@@ -692,10 +692,11 @@ function selectTrains_(trains, nowMinutes, nowHour, opts) {
 
   var outsideHours = nowHour < opts.startHour || nowHour >= opts.endHour;
   if (opts.respectHours && outsideHours) {
-    // Find the soonest train from the full list; a passed train represents
-    // tomorrow's run of that service.
+    // Prefer the soonest upcoming train; fall back to the earliest of all
+    // (a passed train represents tomorrow's run, same clock time mod 24h).
     var allSorted = trains.slice().sort(function (a, b) { return a.passMinutes - b.passMinutes; });
-    var anyNext = allSorted.length ? allSorted[0] : null;
+    var anyNext = candidates.length ? candidates[0]
+                : (allSorted.length ? allSorted[0] : null);
     return anyNext
       ? { list: [], message: 'No train until ' + formatClockTime_(anyNext.passMinutes) }
       : { list: [], message: 'No more trains' };
