@@ -218,5 +218,16 @@ test('gtfsTimeToMinutes_ throws on a bad string', () => {
   assert.throws(() => lib.gtfsTimeToMinutes_('nope'), /Bad GTFS time/);
 });
 
+// --- minutesToHHMM_ ---
+test('minutesToHHMM_ zero-pads the hour', () => {
+  assert.strictEqual(lib.minutesToHHMM_(451), '07:31');
+});
+test('minutesToHHMM_ afternoon', () => {
+  assert.strictEqual(lib.minutesToHHMM_(1032), '17:12');
+});
+test('minutesToHHMM_ midnight', () => {
+  assert.strictEqual(lib.minutesToHHMM_(0), '00:00');
+});
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

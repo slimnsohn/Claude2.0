@@ -355,6 +355,13 @@ function gtfsTimeToMinutes_(str) {
   return ((total % 1440) + 1440) % 1440;
 }
 
+/** Pure: minutes since midnight -> "HH:MM" 24-hour, zero-padded. */
+function minutesToHHMM_(minutes) {
+  var t = ((minutes % 1440) + 1440) % 1440;
+  var h = Math.floor(t / 60), m = t % 60;
+  return (h < 10 ? '0' + h : '' + h) + ':' + (m < 10 ? '0' + m : '' + m);
+}
+
 // ---- Entry point -----------------------------------------------------------
 
 function doGet(e) {
@@ -385,6 +392,7 @@ if (typeof module !== 'undefined') {
     cachedFetch_: cachedFetch_,
     aqiInfo_: aqiInfo_,
     parseCsv_: parseCsv_,
-    gtfsTimeToMinutes_: gtfsTimeToMinutes_
+    gtfsTimeToMinutes_: gtfsTimeToMinutes_,
+    minutesToHHMM_: minutesToHHMM_
   };
 }
