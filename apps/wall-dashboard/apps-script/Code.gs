@@ -688,10 +688,12 @@ function selectTrains_(trains, nowMinutes, nowHour, opts) {
   var next = candidates.length ? candidates[0] : null;
 
   function display(t) {
+    var delta = t.passMinutes - nowMinutes;
     return {
       type: t.type,
       time: formatClockTime_(t.passMinutes),
-      countdown: formatCountdown_(t.passMinutes - nowMinutes)
+      countdown: formatCountdown_(delta),
+      countdownMin: delta
     };
   }
 

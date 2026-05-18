@@ -441,8 +441,8 @@ test('selectTrains_ lists trains inside the window, soonest first', () => {
   const r = lib.selectTrains_(trains, 762, 12, SEL_OPTS);
   assert.strictEqual(r.message, null);
   assert.deepStrictEqual(r.list, [
-    { type: 'Amtrak', time: '12:51 PM', countdown: '9 min' },
-    { type: 'Amtrak', time: '1:03 PM', countdown: '21 min' }
+    { type: 'Amtrak', time: '12:51 PM', countdown: '9 min', countdownMin: 9 },
+    { type: 'Amtrak', time: '1:03 PM', countdown: '21 min', countdownMin: 21 }
   ]);
 });
 test('selectTrains_ caps the list at maxCount', () => {
