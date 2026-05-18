@@ -526,6 +526,15 @@ function installAmtrakTrigger() {
   Logger.log('Weekly refreshAmtrakSchedule trigger installed (Mondays ~3 AM).');
 }
 
+// ---- Trains: time + day parsing (pure) -------------------------------------
+
+/** Pure: "HH:MM" or "H:MM" -> minutes since midnight. Throws on bad input. */
+function parseHHMM_(str) {
+  var m = String(str).trim().match(/^(\d{1,2}):(\d{2})$/);
+  if (!m) throw new Error('Bad time: ' + str);
+  return parseInt(m[1], 10) * 60 + parseInt(m[2], 10);
+}
+
 // ---- Entry point -----------------------------------------------------------
 
 function doGet(e) {
@@ -562,6 +571,7 @@ if (typeof module !== 'undefined') {
     calendarBitstring_: calendarBitstring_,
     unionBits_: unionBits_,
     dateInWindow_: dateInWindow_,
-    extractAmtrakRows_: extractAmtrakRows_
+    extractAmtrakRows_: extractAmtrakRows_,
+    parseHHMM_: parseHHMM_
   };
 }

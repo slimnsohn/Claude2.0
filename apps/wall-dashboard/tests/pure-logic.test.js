@@ -333,5 +333,16 @@ test('extractAmtrakRows_ returns [] when nothing matches', () => {
   assert.deepStrictEqual(lib.extractAmtrakRows_(GTFS_FIXTURE, '20990101'), []);
 });
 
+// --- parseHHMM_ ---
+test('parseHHMM_ parses a zero-padded time', () => {
+  assert.strictEqual(lib.parseHHMM_('06:43'), 403);
+});
+test('parseHHMM_ parses a non-padded hour', () => {
+  assert.strictEqual(lib.parseHHMM_('6:43'), 403);
+});
+test('parseHHMM_ throws on a bad string', () => {
+  assert.throws(() => lib.parseHHMM_('not a time'), /Bad time/);
+});
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
