@@ -504,6 +504,25 @@ function refreshAmtrakSchedule() {
   Logger.log('AmtrakSchedule refreshed: ' + extracted.length + ' trains for ' + today);
 }
 
+/**
+ * Install (or re-install) the weekly trigger that runs refreshAmtrakSchedule.
+ * Public so it can be run once from the editor. Idempotent — clears any
+ * existing refreshAmtrakSchedule trigger first.
+ */
+function installAmtrakTrigger() {
+  ScriptApp.getProjectTriggers().forEach(function (t) {
+    if (t.getHandlerFunction() === 'refreshAmtrakSchedule') {
+      ScriptApp.deleteTrigger(t);
+    }
+  });
+  ScriptApp.newTrigger('refreshAmtrakSchedule')
+    .timeBased()
+    .onWeekDay(ScriptApp.WeekDay.MONDAY)
+    .atHour(3)
+    .create();
+  Logger.log('Weekly refreshAmtrakSchedule trigger installed (Mondays ~3 AM).');
+}
+
 // ---- Entry point -----------------------------------------------------------
 
 function doGet(e) {
