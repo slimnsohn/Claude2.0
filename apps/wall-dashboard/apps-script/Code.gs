@@ -390,7 +390,7 @@ function renderTrainsJson_(data) {
       countdown_str: t.countdown
     };
   });
-  var payload = { trains: trains, updated_at: data.updatedAt };
+  var payload = { location: data.location, trains: trains, updated_at: data.updatedAt };
   return ContentService.createTextOutput(JSON.stringify(payload))
     .setMimeType(ContentService.MimeType.JSON);
 }
