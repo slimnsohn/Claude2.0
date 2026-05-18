@@ -12,6 +12,23 @@ function routeView_(view, format) {
   return 'dashboard';
 }
 
+// ---- Weather window (pure) -------------------------------------------------
+
+/**
+ * Pure: which hours of weather to display.
+ * Before flipHour -> rest of today (next full hour..endHour).
+ * At/after flipHour -> tomorrow 7..endHour.
+ */
+function getWeatherWindow_(nowHour, flipHour, endHour) {
+  var hours = [];
+  if (nowHour < flipHour) {
+    for (var h = nowHour + 1; h <= endHour; h++) hours.push(h);
+    return { dayOffset: 0, hours: hours };
+  }
+  for (var t = 7; t <= endHour; t++) hours.push(t);
+  return { dayOffset: 1, hours: hours };
+}
+
 // ---- Data assembly ---------------------------------------------------------
 
 /**
@@ -101,6 +118,7 @@ function doGet(e) {
 
 if (typeof module !== 'undefined') {
   module.exports = {
-    routeView_: routeView_
+    routeView_: routeView_,
+    getWeatherWindow_: getWeatherWindow_
   };
 }
