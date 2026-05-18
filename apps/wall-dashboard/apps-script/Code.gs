@@ -385,6 +385,11 @@ function unionBits_(a, b) {
   return out;
 }
 
+/** Pure: is YYYYMMDD `today` within [start, end] inclusive? */
+function dateInWindow_(today, start, end) {
+  return today >= start && today <= end;
+}
+
 // ---- Entry point -----------------------------------------------------------
 
 function doGet(e) {
@@ -419,6 +424,7 @@ if (typeof module !== 'undefined') {
     minutesToHHMM_: minutesToHHMM_,
     headsignDirection_: headsignDirection_,
     calendarBitstring_: calendarBitstring_,
-    unionBits_: unionBits_
+    unionBits_: unionBits_,
+    dateInWindow_: dateInWindow_
   };
 }

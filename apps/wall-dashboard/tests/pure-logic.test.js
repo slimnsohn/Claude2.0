@@ -258,5 +258,17 @@ test('unionBits_ is idempotent', () => {
   assert.strictEqual(lib.unionBits_('1000001', '1000001'), '1000001');
 });
 
+// --- dateInWindow_ ---
+test('dateInWindow_ true inside the window', () => {
+  assert.strictEqual(lib.dateInWindow_('20260518', '20260517', '20270517'), true);
+});
+test('dateInWindow_ false before the window', () => {
+  assert.strictEqual(lib.dateInWindow_('20260516', '20260517', '20270517'), false);
+});
+test('dateInWindow_ inclusive on both ends', () => {
+  assert.strictEqual(lib.dateInWindow_('20260517', '20260517', '20270517'), true);
+  assert.strictEqual(lib.dateInWindow_('20270517', '20260517', '20270517'), true);
+});
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
