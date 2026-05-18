@@ -187,5 +187,22 @@ test('aqiInfo_ Hazardous alerts', () => {
 
 // === MORE TESTS APPENDED BELOW BY LATER TASKS ===
 
+// --- parseCsv_ ---
+test('parseCsv_ parses rows into header-keyed objects', () => {
+  const rows = lib.parseCsv_('a,b\n1,2\n3,4');
+  assert.deepStrictEqual(rows, [{ a: '1', b: '2' }, { a: '3', b: '4' }]);
+});
+test('parseCsv_ tolerates CRLF line endings', () => {
+  const rows = lib.parseCsv_('a,b\r\n1,2\r\n');
+  assert.deepStrictEqual(rows, [{ a: '1', b: '2' }]);
+});
+test('parseCsv_ handles quoted fields with embedded commas', () => {
+  const rows = lib.parseCsv_('a,b\n"x,y",z');
+  assert.deepStrictEqual(rows, [{ a: 'x,y', b: 'z' }]);
+});
+test('parseCsv_ returns [] for header-only text', () => {
+  assert.deepStrictEqual(lib.parseCsv_('a,b'), []);
+});
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

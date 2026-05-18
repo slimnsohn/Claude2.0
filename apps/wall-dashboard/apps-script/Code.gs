@@ -305,6 +305,48 @@ function errorPage_(message) {
     '</body>');
 }
 
+// ---- Amtrak GTFS extraction (pure) -----------------------------------------
+
+/** Pure: split one CSV line into fields, honoring "quoted" fields. */
+function splitCsvLine_(line) {
+  var out = [], cur = '', inQ = false;
+  for (var i = 0; i < line.length; i++) {
+    var c = line.charAt(i);
+    if (inQ) {
+      if (c === '"') {
+        if (line.charAt(i + 1) === '"') { cur += '"'; i++; }
+        else inQ = false;
+      } else { cur += c; }
+    } else if (c === '"') {
+      inQ = true;
+    } else if (c === ',') {
+      out.push(cur); cur = '';
+    } else {
+      cur += c;
+    }
+  }
+  out.push(cur);
+  return out;
+}
+
+/** Pure: CSV text -> array of objects keyed by the header row. */
+function parseCsv_(text) {
+  var lines = String(text).split(/\r?\n/);
+  if (lines.length < 2) return [];
+  var headers = splitCsvLine_(lines[0]);
+  var rows = [];
+  for (var i = 1; i < lines.length; i++) {
+    if (lines[i] === '') continue;
+    var fields = splitCsvLine_(lines[i]);
+    var obj = {};
+    for (var j = 0; j < headers.length; j++) {
+      obj[headers[j]] = j < fields.length ? fields[j] : '';
+    }
+    rows.push(obj);
+  }
+  return rows;
+}
+
 // ---- Entry point -----------------------------------------------------------
 
 function doGet(e) {
@@ -333,6 +375,7 @@ if (typeof module !== 'undefined') {
     feelsLike_: feelsLike_,
     matchHour_: matchHour_,
     cachedFetch_: cachedFetch_,
-    aqiInfo_: aqiInfo_
+    aqiInfo_: aqiInfo_,
+    parseCsv_: parseCsv_
   };
 }
