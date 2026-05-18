@@ -584,11 +584,16 @@ function getAmtrakTrains_(now, tz) {
 }
 
 /**
- * Gather every train source, merge, and run selectTrains_. Currently Amtrak
- * only; Metra will be concatenated into `all` when that plan lands.
+ * Gather every train source (Amtrak + Metra), merge, and run selectTrains_.
+ * A Metra feed failure must never drop the Amtrak trains.
  */
 function getCombinedTrains_(now, tz, config) {
   var all = getAmtrakTrains_(now, tz);
+  try {
+    all = all.concat(getMetraTrains_(now, tz, config));
+  } catch (err) {
+    // Metra unavailable — fall through with Amtrak only.
+  }
   var nowMinutes = parseInt(Utilities.formatDate(now, tz, 'H'), 10) * 60
                  + parseInt(Utilities.formatDate(now, tz, 'm'), 10);
   var nowHour = Math.floor(nowMinutes / 60);
