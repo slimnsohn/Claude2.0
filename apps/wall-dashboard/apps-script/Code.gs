@@ -362,6 +362,11 @@ function minutesToHHMM_(minutes) {
   return (h < 10 ? '0' + h : '' + h) + ':' + (m < 10 ? '0' + m : '' + m);
 }
 
+/** Pure: GTFS trip_headsign -> 'SB' toward Chicago, else 'NB'. */
+function headsignDirection_(headsign) {
+  return String(headsign).trim() === 'Chicago' ? 'SB' : 'NB';
+}
+
 // ---- Entry point -----------------------------------------------------------
 
 function doGet(e) {
@@ -393,6 +398,7 @@ if (typeof module !== 'undefined') {
     aqiInfo_: aqiInfo_,
     parseCsv_: parseCsv_,
     gtfsTimeToMinutes_: gtfsTimeToMinutes_,
-    minutesToHHMM_: minutesToHHMM_
+    minutesToHHMM_: minutesToHHMM_,
+    headsignDirection_: headsignDirection_
   };
 }

@@ -229,5 +229,16 @@ test('minutesToHHMM_ midnight', () => {
   assert.strictEqual(lib.minutesToHHMM_(0), '00:00');
 });
 
+// --- headsignDirection_ ---
+test('headsignDirection_ Chicago is southbound', () => {
+  assert.strictEqual(lib.headsignDirection_('Chicago'), 'SB');
+});
+test('headsignDirection_ Milwaukee is northbound', () => {
+  assert.strictEqual(lib.headsignDirection_('Milwaukee'), 'NB');
+});
+test('headsignDirection_ Seattle is northbound', () => {
+  assert.strictEqual(lib.headsignDirection_('Seattle'), 'NB');
+});
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
