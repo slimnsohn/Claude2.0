@@ -206,46 +206,76 @@ function getAqi_(config) {
 
 // ---- Data assembly ---------------------------------------------------------
 
-/**
- * Build the data object the dashboard renders.
- * Step 1: placeholder weather + trains. Step 2 replaces the weather block.
- */
+/** Build the data object the dashboard renders, with live weather + AQI. */
 function buildDashboardData_() {
   var now = new Date();
   var tz = 'America/Chicago';
-  return {
+  var data = {
     location: 'Glenview',
     dateStr: Utilities.formatDate(now, tz, 'EEE MMM d'),
     timeStr: Utilities.formatDate(now, tz, 'h:mm a'),
-    aqi: {
-      available: true,
-      value: 64,
-      category: 'Moderate',
-      level: 'moderate',
-      alert: true
-    },
-    weather: {
-      available: true,
-      temp: 72,
-      feelsLike: 70,
-      condition: 'Partly cloudy (placeholder)',
-      hourly: [
-        { label: '1p', temp: 74, precip: 10 },
-        { label: '2p', temp: 76, precip: 15 },
-        { label: '3p', temp: 78, precip: 20 },
-        { label: '4p', temp: 77, precip: 35 },
-        { label: '5p', temp: 74, precip: 40 },
-        { label: '6p', temp: 70, precip: 20 },
-        { label: '7p', temp: 67, precip: 5 }
-      ]
-    },
-    trains: {
-      available: false,
-      list: [],
-      message: 'Trains — coming in a later step'
-    },
+    aqi: { available: false },
+    weather: { available: false },
+    trains: { available: false, list: [], message: 'Trains — coming in a later step' },
     updatedAt: Utilities.formatDate(now, tz, 'h:mm a')
   };
+
+  var config;
+  try {
+    config = getConfig_();
+  } catch (err) {
+    return data; // no config -> everything stays unavailable
+  }
+
+  // Weather
+  try {
+    var weather = getWeather_(config);
+    var nowHour = parseInt(Utilities.formatDate(now, tz, 'H'), 10);
+    var win = getWeatherWindow_(nowHour,
+      parseInt(config.weather_flip_hour, 10), parseInt(config.weather_end_hour, 10));
+    var hourly = win.hours.map(function (h) {
+      var match = matchHour_(weather.hourly, hourKeyFor_(now, win.dayOffset, h, tz));
+      return {
+        label: formatHourLabel_(h),
+        temp: match ? match.temp : null,
+        precip: match ? match.precip : null
+      };
+    });
+    var current = matchHour_(weather.hourly, hourKeyFor_(now, 0, nowHour, tz));
+    data.weather = {
+      available: true,
+      temp: current ? current.temp : null,
+      feelsLike: current ? feelsLike_(current.temp, current.humidity, current.windMph) : null,
+      condition: current ? current.condition : '',
+      hourly: hourly
+    };
+  } catch (err) {
+    data.weather = { available: false, error: String(err) };
+  }
+
+  // Air quality
+  try {
+    var aqiVal = getAqi_(config).value;
+    var info = aqiInfo_(aqiVal);
+    data.aqi = {
+      available: true,
+      value: aqiVal,
+      category: info.category,
+      level: info.level,
+      alert: info.alert
+    };
+  } catch (err) {
+    data.aqi = { available: false };
+  }
+
+  return data;
+}
+
+/** Build the 'yyyy-MM-dd-HH' key for now + dayOffset days at the given hour. */
+function hourKeyFor_(now, dayOffset, hour, tz) {
+  var d = new Date(now.getTime() + dayOffset * 86400000);
+  var hh = hour < 10 ? '0' + hour : '' + hour;
+  return Utilities.formatDate(d, tz, 'yyyy-MM-dd') + '-' + hh;
 }
 
 // ---- Rendering -------------------------------------------------------------
