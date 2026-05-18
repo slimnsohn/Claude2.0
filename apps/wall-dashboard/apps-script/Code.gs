@@ -29,6 +29,28 @@ function getWeatherWindow_(nowHour, flipHour, endHour) {
   return { dayOffset: 1, hours: hours };
 }
 
+/**
+ * Pure: apparent temperature in F.
+ * Heat index when hot+humid, wind chill when cold+windy, else the temp itself.
+ * Uses the NWS Rothfusz heat-index and the standard wind-chill regressions.
+ */
+function feelsLike_(tempF, humidityPct, windMph) {
+  if (tempF == null) return null;
+  if (tempF >= 80 && humidityPct != null) {
+    var T = tempF, R = humidityPct;
+    var hi = -42.379 + 2.04901523 * T + 10.14333127 * R
+      - 0.22475541 * T * R - 0.00683783 * T * T - 0.05481717 * R * R
+      + 0.00122874 * T * T * R + 0.00085282 * T * R * R
+      - 0.00000199 * T * T * R * R;
+    return Math.round(hi);
+  }
+  if (tempF <= 50 && windMph >= 3) {
+    var v = Math.pow(windMph, 0.16);
+    return Math.round(35.74 + 0.6215 * tempF - 35.75 * v + 0.4275 * tempF * v);
+  }
+  return Math.round(tempF);
+}
+
 /** Pure: hour 0-23 -> compact label like "9a" / "1p" / "12p". */
 function formatHourLabel_(hour) {
   var period = hour < 12 ? 'a' : 'p';
@@ -128,6 +150,7 @@ if (typeof module !== 'undefined') {
   module.exports = {
     routeView_: routeView_,
     getWeatherWindow_: getWeatherWindow_,
-    formatHourLabel_: formatHourLabel_
+    formatHourLabel_: formatHourLabel_,
+    feelsLike_: feelsLike_
   };
 }

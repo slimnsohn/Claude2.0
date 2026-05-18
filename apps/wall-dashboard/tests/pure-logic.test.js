@@ -80,6 +80,22 @@ test('formatHourLabel_ noon and midnight', () => {
   assert.strictEqual(lib.formatHourLabel_(0), '12a');
 });
 
+// --- feelsLike_ ---
+test('feelsLike_ mild temp returns temp itself', () => {
+  assert.strictEqual(lib.feelsLike_(70, 50, 5), 70);
+});
+test('feelsLike_ hot+humid uses heat index (higher than temp)', () => {
+  const f = lib.feelsLike_(90, 70, 5);
+  assert.ok(f >= 104 && f <= 110, 'expected ~106, got ' + f);
+});
+test('feelsLike_ cold+windy uses wind chill (lower than temp)', () => {
+  const f = lib.feelsLike_(20, 40, 20);
+  assert.ok(f >= 2 && f <= 8, 'expected ~4, got ' + f);
+});
+test('feelsLike_ null temp returns null', () => {
+  assert.strictEqual(lib.feelsLike_(null, 50, 5), null);
+});
+
 // === MORE TESTS APPENDED BELOW BY LATER TASKS ===
 
 console.log(`\n${pass} passed, ${fail} failed`);
