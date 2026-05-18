@@ -375,6 +375,21 @@ function renderTrainsOnly_(data) {
     .addMetaTag('viewport', 'width=device-width, initial-scale=1');
 }
 
+/** Serve the trains payload as JSON (for a future phone app). */
+function renderTrainsJson_(data) {
+  var trains = data.trains.list.map(function (t) {
+    return {
+      type: t.type,
+      time: t.time,
+      countdown_min: t.countdownMin,
+      countdown_str: t.countdown
+    };
+  });
+  var payload = { trains: trains, updated_at: data.updatedAt };
+  return ContentService.createTextOutput(JSON.stringify(payload))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
 /** Minimal error page that still auto-refreshes. */
 function errorPage_(message) {
   var safeMessage = message.replace(/&/g, '&amp;').replace(/</g, '&lt;');
