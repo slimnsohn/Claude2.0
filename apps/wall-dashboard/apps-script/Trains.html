@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="refresh" content="60">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
+      background: #ffffff; color: #111111;
+    }
+    .wrap { max-width: 380px; margin: 0 auto; padding: 22px; }
+    .loc { font-size: 22px; font-weight: 600; letter-spacing: 1px; margin-bottom: 14px; }
+    .train { padding: 14px 0; border-bottom: 1px solid #ededed; }
+    .train .top { display: flex; justify-content: space-between; font-size: 25px; }
+    .train .cd { font-size: 18px; color: #5a5a5a; margin-top: 3px; }
+    .empty { font-size: 20px; color: #777777; padding: 14px 0; }
+    .upd { font-size: 14px; color: #9a9a9a; margin-top: 18px; }
+  </style>
+</head>
+<body>
+  <div class="wrap" id="root"></div>
+  <script>
+    const DATA = <?!= dataJson ?>;
+
+    function el(tag, cls, text) {
+      const n = document.createElement(tag);
+      if (cls) n.className = cls;
+      if (text != null) n.textContent = text;
+      return n;
+    }
+
+    function render(d) {
+      const root = document.getElementById('root');
+      root.innerHTML = '';
+      root.appendChild(el('div', 'loc', d.location.toUpperCase()));
+      if (d.trains.available && d.trains.list.length) {
+        d.trains.list.forEach(function (t) {
+          const row = el('div', 'train');
+          const top = el('div', 'top');
+          top.appendChild(el('div', null, t.type));
+          top.appendChild(el('div', null, t.time));
+          row.appendChild(top);
+          row.appendChild(el('div', 'cd', t.countdown));
+          root.appendChild(row);
+        });
+      } else {
+        root.appendChild(el('div', 'empty', d.trains.message || 'No trains'));
+      }
+      root.appendChild(el('div', 'upd', 'Updated ' + d.updatedAt));
+    }
+
+    render(DATA);
+  </script>
+</body>
+</html>

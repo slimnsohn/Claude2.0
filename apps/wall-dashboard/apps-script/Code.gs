@@ -366,6 +366,15 @@ function renderDashboard_(data) {
     .addMetaTag('viewport', 'width=device-width, initial-scale=1');
 }
 
+/** Inject the trains payload into Trains.html and return HtmlOutput. */
+function renderTrainsOnly_(data) {
+  var t = HtmlService.createTemplateFromFile('Trains');
+  t.dataJson = JSON.stringify(data).replace(/<\/script>/gi, '<\\/script>');
+  return t.evaluate()
+    .setTitle('Northbrook Trains')
+    .addMetaTag('viewport', 'width=device-width, initial-scale=1');
+}
+
 /** Minimal error page that still auto-refreshes. */
 function errorPage_(message) {
   var safeMessage = message.replace(/&/g, '&amp;').replace(/</g, '&lt;');
