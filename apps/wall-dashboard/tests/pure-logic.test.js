@@ -556,6 +556,18 @@ test('decodeProtobuf_ throws on a bad wire type', () => {
   // tag 0x0F -> field 1, wire 7 (invalid)
   assert.throws(() => lib.decodeProtobuf_([0x0F], 0, 1), /wire type/);
 });
+test('decodeProtobuf_ skips a 64-bit field and reads the next field', () => {
+  // field 1 wire 1 (tag 0x09) + 8 bytes, then field 1 wire 0 (tag 0x08) value 5
+  assert.deepStrictEqual(
+    lib.decodeProtobuf_([0x09, 1, 2, 3, 4, 5, 6, 7, 8, 0x08, 0x05], 0, 11),
+    { 1: [5] });
+});
+test('decodeProtobuf_ skips a 32-bit field and reads the next field', () => {
+  // field 1 wire 5 (tag 0x0D) + 4 bytes, then field 2 wire 0 (tag 0x10) value 7
+  assert.deepStrictEqual(
+    lib.decodeProtobuf_([0x0D, 1, 2, 3, 4, 0x10, 0x07], 0, 7),
+    { 2: [7] });
+});
 
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

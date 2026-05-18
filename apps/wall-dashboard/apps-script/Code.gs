@@ -735,6 +735,7 @@ function decodeProtobuf_(bytes, start, end) {
   function readVarint() {
     var result = 0, shift = 0, b;
     do {
+      if (pos >= end) throw new Error('Truncated protobuf');
       b = bytes[pos++] & 0xff;
       result += (b & 0x7f) * Math.pow(2, shift);
       shift += 7;
@@ -776,6 +777,8 @@ function metraPassMinutes_(arrivalEpoch, nowEpochSec, nowMinutes) {
  */
 function getMetraTrains_(now, tz, config) {
   if (!config.metra_api_token || !config.metra_stop_id) return [];
+  // Cached value is the parsed result for config.metra_stop_id; a stop-id
+  // change would be masked for up to 45 s (fine — stop ids are static).
   var parsed = cachedFetch_('metra', 45, function () {
     var url = 'https://gtfspublic.metrarr.com/gtfs/public/tripupdates?api_token='
       + encodeURIComponent(config.metra_api_token);
