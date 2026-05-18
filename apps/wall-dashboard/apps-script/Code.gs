@@ -347,6 +347,14 @@ function parseCsv_(text) {
   return rows;
 }
 
+/** Pure: GTFS "H:MM:SS" (hours may exceed 24) -> minutes since midnight 0..1439. */
+function gtfsTimeToMinutes_(str) {
+  var m = String(str).trim().match(/^(\d{1,3}):(\d{2}):(\d{2})$/);
+  if (!m) throw new Error('Bad GTFS time: ' + str);
+  var total = parseInt(m[1], 10) * 60 + parseInt(m[2], 10);
+  return ((total % 1440) + 1440) % 1440;
+}
+
 // ---- Entry point -----------------------------------------------------------
 
 function doGet(e) {
@@ -376,6 +384,7 @@ if (typeof module !== 'undefined') {
     matchHour_: matchHour_,
     cachedFetch_: cachedFetch_,
     aqiInfo_: aqiInfo_,
-    parseCsv_: parseCsv_
+    parseCsv_: parseCsv_,
+    gtfsTimeToMinutes_: gtfsTimeToMinutes_
   };
 }

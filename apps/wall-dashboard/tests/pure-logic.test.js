@@ -204,5 +204,19 @@ test('parseCsv_ returns [] for header-only text', () => {
   assert.deepStrictEqual(lib.parseCsv_('a,b'), []);
 });
 
+// --- gtfsTimeToMinutes_ ---
+test('gtfsTimeToMinutes_ parses a zero-padded time', () => {
+  assert.strictEqual(lib.gtfsTimeToMinutes_('07:31:00'), 451);
+});
+test('gtfsTimeToMinutes_ parses a non-padded hour', () => {
+  assert.strictEqual(lib.gtfsTimeToMinutes_('7:31:00'), 451);
+});
+test('gtfsTimeToMinutes_ wraps hours past 24 (multi-day trip)', () => {
+  assert.strictEqual(lib.gtfsTimeToMinutes_('65:12:00'), 1032);
+});
+test('gtfsTimeToMinutes_ throws on a bad string', () => {
+  assert.throws(() => lib.gtfsTimeToMinutes_('nope'), /Bad GTFS time/);
+});
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
