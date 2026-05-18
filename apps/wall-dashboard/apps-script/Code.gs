@@ -301,7 +301,11 @@ function buildDashboardData_() {
 
   // Trains
   try {
-    var combined = getCombinedTrains_(now, tz, config);
+    var combined = getCombinedTrains_(now, tz, config, {
+      windowMin: parseInt(config.train_window_min, 10),
+      maxCount: parseInt(config.max_trains, 10),
+      respectHours: true
+    });
     data.trains = {
       available: combined.list.length > 0,
       list: combined.list,
@@ -585,9 +589,10 @@ function getAmtrakTrains_(now, tz) {
 
 /**
  * Gather every train source (Amtrak + Metra), merge, and run selectTrains_.
- * A Metra feed failure must never drop the Amtrak trains.
+ * `opts` = { windowMin, maxCount, respectHours }; display-hour bounds come
+ * from config. A Metra feed failure must never drop the Amtrak trains.
  */
-function getCombinedTrains_(now, tz, config) {
+function getCombinedTrains_(now, tz, config, opts) {
   var all = getAmtrakTrains_(now, tz);
   try {
     all = all.concat(getMetraTrains_(now, tz, config));
@@ -598,9 +603,9 @@ function getCombinedTrains_(now, tz, config) {
                  + parseInt(Utilities.formatDate(now, tz, 'm'), 10);
   var nowHour = Math.floor(nowMinutes / 60);
   return selectTrains_(all, nowMinutes, nowHour, {
-    windowMin: parseInt(config.train_window_min, 10),
-    maxCount: parseInt(config.max_trains, 10),
-    respectHours: true,
+    windowMin: opts.windowMin,
+    maxCount: opts.maxCount,
+    respectHours: opts.respectHours,
     startHour: parseInt(config.display_start_hour, 10),
     endHour: parseInt(config.display_end_hour, 10)
   });
