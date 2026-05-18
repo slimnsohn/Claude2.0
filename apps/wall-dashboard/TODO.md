@@ -1,10 +1,11 @@
 # Wall Dashboard — TODO
 
 ## Now
-- Step 1: deployable skeleton renders on the TV via Fire Stick.
+- Google-side deployment (see `README.md`) — pending the Fire Stick.
 
-## Next
-- Step 2: live NWS weather + today/tomorrow flip.
+## Done
+- Skeleton, live weather, AQI, Amtrak trains (weekly GTFS auto-extraction),
+  Metra realtime, phone widget + JSON route, OLED polish, Scriptable iOS widget.
 
-## Later
-- Amtrak trains, phone widget, Metra realtime, OLED polish (separate plans).
+## Later (post-deploy)
+- Verify rendering on the TV; iterate on the iOS widget design.

@@ -10,7 +10,7 @@ Create one Google Sheet named **Wall Dashboard Config** with these tabs.
 | metra_stop_id | NBROOK |
 | nws_lat | 42.0728 |
 | nws_lon | -87.7878 |
-| nws_forecast_hourly_url | (leave blank — filled by bootstrapNwsUrl_) |
+| nws_forecast_hourly_url | (leave blank — filled by bootstrapNwsUrl) |
 | nws_user_agent | WallDashboard/1.0 (help.sohn@gmail.com) |
 | display_start_hour | 6 |
 | display_end_hour | 21 |

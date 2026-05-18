@@ -243,7 +243,7 @@ function buildDashboardData_() {
     timeStr: Utilities.formatDate(now, tz, 'h:mm a'),
     aqi: { available: false },
     weather: { available: false },
-    trains: { available: false, list: [], message: 'Trains — coming in a later step' },
+    trains: { available: false, list: [], message: 'Trains unavailable' },
     updatedAt: Utilities.formatDate(now, tz, 'h:mm a')
   };
 
