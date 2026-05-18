@@ -124,9 +124,9 @@ function getConfig_() {
 
 /**
  * One-time helper: resolve the NWS hourly-forecast URL and write it into the
- * Config tab. Run manually from the editor (Run -> bootstrapNwsUrl_).
+ * Config tab. Run manually from the editor (Run -> bootstrapNwsUrl).
  */
-function bootstrapNwsUrl_() {
+function bootstrapNwsUrl() {
   var config = getConfig_();
   var pointsUrl = 'https://api.weather.gov/points/' + config.nws_lat + ',' + config.nws_lon;
   var resp = UrlFetchApp.fetch(pointsUrl, {
@@ -158,7 +158,7 @@ function bootstrapNwsUrl_() {
 function getWeather_(config) {
   return cachedFetch_('weather', 900, function () {
     var url = config.nws_forecast_hourly_url;
-    if (!url) throw new Error('nws_forecast_hourly_url not set — run bootstrapNwsUrl_ first');
+    if (!url) throw new Error('nws_forecast_hourly_url not set — run bootstrapNwsUrl first');
     var resp = UrlFetchApp.fetch(url, {
       headers: { 'User-Agent': config.nws_user_agent },
       muteHttpExceptions: true
