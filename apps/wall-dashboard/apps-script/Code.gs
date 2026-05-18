@@ -25,6 +25,13 @@ function buildDashboardData_() {
     location: 'Glenview',
     dateStr: Utilities.formatDate(now, tz, 'EEE MMM d'),
     timeStr: Utilities.formatDate(now, tz, 'h:mm a'),
+    aqi: {
+      available: true,
+      value: 64,
+      category: 'Moderate',
+      level: 'moderate',
+      alert: true
+    },
     weather: {
       available: true,
       temp: 72,

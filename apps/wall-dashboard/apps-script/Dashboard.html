@@ -17,6 +17,14 @@
     .clock { text-align: right; }
     .date { font-size: 30px; color: #9a9a9a; }
     .time { font-size: 40px; }
+    .aqi { margin-top: 9px; font-size: 21px; }
+    .aqi.good { color: #7a9a7a; }
+    .aqi.alert {
+      display: inline-block; padding: 4px 13px; border-radius: 7px;
+      font-size: 20px; font-weight: 600; letter-spacing: 0.5px;
+    }
+    .aqi.moderate  { color: #e3c45a; border: 1px solid #6b5e2a; background: #16130a; }
+    .aqi.unhealthy { color: #ef7a7a; border: 1px solid #6e2e2e; background: #160c0c; }
     .current { margin-top: 36px; display: flex; align-items: baseline; gap: 28px; }
     .current .temp { font-size: 110px; font-weight: 300; color: #7ab8ff; line-height: 1; }
     .current .meta { font-size: 30px; color: #c0c0c0; }
@@ -36,7 +44,7 @@
     .hour .p { font-size: 22px; color: #6f9fd0; margin-top: 4px; }
     .trains { margin-top: 16px; }
     .train-row {
-      display: flex; justify-content: space-between;
+      display: flex; justify-content: flex-start; gap: 28px;
       font-size: 38px; padding: 10px 0;
     }
     .train-row .cd { color: #9a9a9a; }
@@ -57,6 +65,13 @@
       return n;
     }
 
+    function renderAqi(aqi) {
+      if (!aqi || !aqi.available) return null;
+      if (!aqi.alert) return el('div', 'aqi good', 'AQI ' + aqi.value);
+      return el('div', 'aqi alert ' + aqi.level,
+        '⚠ AQI ' + aqi.value + ' · ' + aqi.category);
+    }
+
     function render(d) {
       const root = document.getElementById('root');
       root.innerHTML = '';
@@ -67,6 +82,8 @@
       const clock = el('div', 'clock');
       clock.appendChild(el('div', 'date', d.dateStr));
       clock.appendChild(el('div', 'time', d.timeStr));
+      const aqiEl = renderAqi(d.aqi);
+      if (aqiEl) clock.appendChild(aqiEl);
       header.appendChild(clock);
       root.appendChild(header);
 
