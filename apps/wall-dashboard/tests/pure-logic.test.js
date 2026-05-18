@@ -361,5 +361,16 @@ test('parseDays_ Monday only', () => {
   assert.deepStrictEqual(lib.parseDays_('1000000'), [1]);
 });
 
+// --- northbrookMinutes_ ---
+test('northbrookMinutes_ NB adds 3 minutes', () => {
+  assert.strictEqual(lib.northbrookMinutes_('06:43', 'NB'), 406);
+});
+test('northbrookMinutes_ SB subtracts 3 minutes', () => {
+  assert.strictEqual(lib.northbrookMinutes_('06:43', 'SB'), 400);
+});
+test('northbrookMinutes_ wraps past midnight', () => {
+  assert.strictEqual(lib.northbrookMinutes_('00:01', 'SB'), 1438);
+});
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

@@ -548,6 +548,16 @@ function parseDays_(bitstring) {
   return out.sort(function (a, b) { return a - b; });
 }
 
+/**
+ * Pure: Glenview "HH:MM" + direction -> Northbrook pass, minutes since
+ * midnight. NB reaches Northbrook +3 min, SB -3 min. Wraps within 0..1439.
+ */
+function northbrookMinutes_(glenviewHHMM, direction) {
+  var base = parseHHMM_(glenviewHHMM);
+  var offset = (String(direction).trim().toUpperCase() === 'NB') ? 3 : -3;
+  return ((base + offset) % 1440 + 1440) % 1440;
+}
+
 // ---- Entry point -----------------------------------------------------------
 
 function doGet(e) {
@@ -586,6 +596,7 @@ if (typeof module !== 'undefined') {
     dateInWindow_: dateInWindow_,
     extractAmtrakRows_: extractAmtrakRows_,
     parseHHMM_: parseHHMM_,
-    parseDays_: parseDays_
+    parseDays_: parseDays_,
+    northbrookMinutes_: northbrookMinutes_
   };
 }
