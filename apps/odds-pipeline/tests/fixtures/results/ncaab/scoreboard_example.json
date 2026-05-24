@@ -1,0 +1,50 @@
+{
+  "events": [
+    {
+      "id": "401747001",
+      "date": "2025-01-15T19:00:00Z",
+      "status": {"type": {"state": "post"}},
+      "competitions": [
+        {
+          "competitors": [
+            {
+              "homeAway": "home",
+              "score": "78",
+              "team": {"abbreviation": "DUKE"},
+              "linescores": [{"value": 42}, {"value": 36}]
+            },
+            {
+              "homeAway": "away",
+              "score": "70",
+              "team": {"abbreviation": "UNC"},
+              "linescores": [{"value": 33}, {"value": 37}]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "401747002",
+      "date": "2025-01-15T21:00:00Z",
+      "status": {"type": {"state": "post"}},
+      "competitions": [
+        {
+          "competitors": [
+            {
+              "homeAway": "home",
+              "score": "85",
+              "team": {"abbreviation": "KU"},
+              "linescores": [{"value": 35}, {"value": 38}, {"value": 12}]
+            },
+            {
+              "homeAway": "away",
+              "score": "82",
+              "team": {"abbreviation": "KSU"},
+              "linescores": [{"value": 30}, {"value": 43}, {"value": 9}]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
