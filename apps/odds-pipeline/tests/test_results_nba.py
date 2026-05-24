@@ -26,10 +26,10 @@ def test_nba_adapter_returns_per_quarter_scores():
     r = results[0]
     assert r.sport == "NBA"
     assert r.source_game_id == "0022400500"
-    assert "FULL" in r.segment_scores
-    assert "Q1" in r.segment_scores and "Q2" in r.segment_scores
-    assert "Q3" in r.segment_scores and "Q4" in r.segment_scores
-    assert "H1" in r.segment_scores and "H2" in r.segment_scores
+    assert r.home_team_canonical == "LAL"
+    assert r.away_team_canonical == "BOS"
+    assert r.went_to_ot is False
+    assert r.segment_scores["FULL"] == (108, 102)
     # H1 = Q1+Q2, H2 = Q3+Q4
     q1h, q1a = r.segment_scores["Q1"]
     q2h, q2a = r.segment_scores["Q2"]
