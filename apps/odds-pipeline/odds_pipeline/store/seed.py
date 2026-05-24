@@ -1,6 +1,4 @@
 """Seed reference tables: bookmakers and segment_types."""
-import sqlite3
-
 from odds_pipeline.store import migrate
 
 BOOKMAKERS = [
