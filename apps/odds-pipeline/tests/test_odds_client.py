@@ -59,3 +59,16 @@ def test_client_retries_on_429(monkeypatch):
             datetime(2025, 1, 15, tzinfo=timezone.utc),
         )
     assert events == []
+
+
+def test_client_raises_after_exhausting_429_retries(monkeypatch):
+    import pytest
+    monkeypatch.setattr(client, "BACKOFF_SECONDS", [0, 0, 0])
+    rate_limited = _mock_response(429, {}, {})
+    with patch.object(client.requests, "get", return_value=rate_limited):
+        c = client.TheOddsApiClient(api_key="x")
+        with pytest.raises(RuntimeError, match="429"):
+            c.get_historical_events(
+                "basketball_nba",
+                datetime(2025, 1, 15, tzinfo=timezone.utc),
+            )
