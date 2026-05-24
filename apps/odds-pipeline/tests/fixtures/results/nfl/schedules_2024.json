@@ -1,0 +1,42 @@
+[
+  {
+    "game_id": "2024_19_KC_BUF",
+    "season": 2024,
+    "season_type": "POST",
+    "week": 19,
+    "gameday": "2025-01-19",
+    "home_team": "BUF",
+    "away_team": "KC",
+    "home_score": 27,
+    "away_score": 32,
+    "home_score_q1": 0,
+    "home_score_q2": 14,
+    "home_score_q3": 0,
+    "home_score_q4": 13,
+    "away_score_q1": 7,
+    "away_score_q2": 10,
+    "away_score_q3": 8,
+    "away_score_q4": 7,
+    "overtime": 0
+  },
+  {
+    "game_id": "2024_19_PHI_LA",
+    "season": 2024,
+    "season_type": "POST",
+    "week": 19,
+    "gameday": "2025-01-19",
+    "home_team": "LA",
+    "away_team": "PHI",
+    "home_score": 22,
+    "away_score": 28,
+    "home_score_q1": 3,
+    "home_score_q2": 6,
+    "home_score_q3": 6,
+    "home_score_q4": 7,
+    "away_score_q1": 7,
+    "away_score_q2": 7,
+    "away_score_q3": 7,
+    "away_score_q4": 7,
+    "overtime": 0
+  }
+]
