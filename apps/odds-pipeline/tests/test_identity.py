@@ -9,10 +9,10 @@ def test_canonical_nba_lakers_variants():
 
 
 def test_canonical_unknown_returns_input_uppercased():
-    # Unknown names pass through (with a sentinel) so they show up in
+    # Unknown names pass through uppercased so they show up in
     # the unmatched-games log rather than silently failing.
     result = matcher.canonical_team("NBA", "Some Brand New Team")
-    assert result == "SOME BRAND NEW TEAM" or result is None
+    assert result == "SOME BRAND NEW TEAM"
 
 
 def test_build_game_id_format():
