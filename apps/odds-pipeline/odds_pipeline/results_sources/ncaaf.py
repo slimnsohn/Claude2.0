@@ -52,7 +52,10 @@ class NCAAFResultsAdapter(ResultsAdapter):
     segments = ["FULL", "Q1", "Q2", "Q3", "Q4", "H1", "H2", "OT1", "OT2", "OT3"]
 
     def fetch_completed_games(self, date_from: date, date_to: date) -> list[GameResult]:
-        years = {date_from.year, date_to.year}
+        # CFBD season year matches the fall semester, so January bowls + CFP
+        # games belong to the previous calendar year's `year=...` parameter.
+        # For a Jan 1-31 2025 query, year=2024 holds the bowl/CFP results.
+        years = {date_from.year, date_to.year, date_from.year - 1}
         all_games: list[dict] = []
         for y in sorted(years):
             all_games.extend(_fetch_games(y))
