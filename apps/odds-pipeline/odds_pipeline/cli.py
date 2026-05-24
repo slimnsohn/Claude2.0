@@ -55,7 +55,49 @@ def _cmd_pull_odds(args):
 
 
 def _cmd_pull_results(args):
-    print("pull-results: stub — implemented in later task")
+    from odds_pipeline.results_sources import ingest as r_ingest
+    from odds_pipeline.results_sources.nba import NBAResultsAdapter
+    from odds_pipeline.results_sources.nfl import NFLResultsAdapter
+    from odds_pipeline.results_sources.nhl import NHLResultsAdapter
+    from odds_pipeline.results_sources.mlb import MLBResultsAdapter
+    from odds_pipeline.results_sources.ncaab import NCAABResultsAdapter
+    from odds_pipeline.results_sources.ncaaf import NCAAFResultsAdapter
+
+    adapters = {
+        "NBA": NBAResultsAdapter, "NFL": NFLResultsAdapter,
+        "NHL": NHLResultsAdapter, "MLB": MLBResultsAdapter,
+        "NCAAB": NCAABResultsAdapter, "NCAAF": NCAAFResultsAdapter,
+    }
+    sports = [s.strip() for s in args.sport.split(",")]
+    date_from = dtparser.isoparse(args.date_from).date()
+    date_to = dtparser.isoparse(args.date_to).date()
+
+    conn = migrate.connect(config.DB_PATH)
+    try:
+        for sport in sports:
+            adapter_cls = adapters.get(sport)
+            if not adapter_cls:
+                print(f"Unknown sport: {sport}")
+                continue
+            started = _utc_now_iso()
+            res = r_ingest.pull_results_for_sport(
+                adapter=adapter_cls(), sport=sport,
+                date_from=date_from, date_to=date_to,
+                archive_root=config.RAW_RESULTS_DIR,
+            )
+            completed = _utc_now_iso()
+            status = "ok" if not res.errors else "partial"
+            conn.execute(
+                "INSERT INTO ingest_runs (run_type, sport, params_json, credits_used, "
+                "started_at, completed_at, status, error_message) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                ("results_fetch", sport,
+                 json.dumps({"from": args.date_from, "to": args.date_to}),
+                 None, started, completed, status, "; ".join(res.errors)[:500] or None),
+            )
+            conn.commit()
+            print(f"[{sport}] results archived={res.games_archived}")
+    finally:
+        conn.close()
 
 
 def _cmd_build(args):
