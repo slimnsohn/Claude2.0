@@ -1,0 +1,13 @@
+{
+  "summary": {
+    "linescore": {
+      "byPeriod": [
+        {"periodDescriptor": {"number": 1, "periodType": "REG"}, "home": 1, "away": 0},
+        {"periodDescriptor": {"number": 2, "periodType": "REG"}, "home": 2, "away": 1},
+        {"periodDescriptor": {"number": 3, "periodType": "REG"}, "home": 0, "away": 2},
+        {"periodDescriptor": {"number": 4, "periodType": "OT"}, "home": 1, "away": 0}
+      ],
+      "totals": {"home": 4, "away": 3}
+    }
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "gameWeek": [
+    {
+      "date": "2025-01-15",
+      "games": [
+        {
+          "id": 2024020700,
+          "startTimeUTC": "2025-01-16T00:00:00Z",
+          "gameState": "OFF",
+          "homeTeam": {"abbrev": "BOS"},
+          "awayTeam": {"abbrev": "NYR"}
+        }
+      ]
+    }
+  ]
+}
