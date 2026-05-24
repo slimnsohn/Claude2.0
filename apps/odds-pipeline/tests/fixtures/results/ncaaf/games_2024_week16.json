@@ -1,0 +1,28 @@
+[
+  {
+    "id": 401628503,
+    "season": 2024,
+    "week": 16,
+    "start_date": "2024-12-20T19:30:00.000Z",
+    "completed": true,
+    "home_team": "Ohio State",
+    "away_team": "Tennessee",
+    "home_points": 42,
+    "away_points": 17,
+    "home_line_scores": [14, 7, 14, 7],
+    "away_line_scores": [3, 7, 0, 7]
+  },
+  {
+    "id": 401628504,
+    "season": 2024,
+    "week": 16,
+    "start_date": "2024-12-21T16:00:00.000Z",
+    "completed": true,
+    "home_team": "Penn State",
+    "away_team": "SMU",
+    "home_points": 38,
+    "away_points": 10,
+    "home_line_scores": [14, 14, 7, 3],
+    "away_line_scores": [0, 3, 7, 0]
+  }
+]
