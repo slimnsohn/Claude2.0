@@ -1,0 +1,19 @@
+[project]
+name = "odds-pipeline"
+version = "0.1.0"
+requires-python = ">=3.11"
+dependencies = [
+  "requests>=2.31",
+  "nba_api>=1.4",
+  "nfl_data_py>=0.3",
+  "MLB-StatsAPI>=1.7",
+  "cfbd>=4.6",
+  "python-dateutil>=2.9",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0", "pytest-cov>=5.0"]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
