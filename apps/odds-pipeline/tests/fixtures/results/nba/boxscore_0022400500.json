@@ -1,0 +1,37 @@
+{
+  "resource": "boxscoresummaryv2",
+  "parameters": {"GameID": "0022400500"},
+  "resultSets": [
+    {
+      "name": "GameSummary",
+      "headers": ["GAME_ID", "GAME_DATE_EST", "HOME_TEAM_ID", "VISITOR_TEAM_ID"],
+      "rowSet": [["0022400500", "2025-01-15T00:00:00", 1610612747, 1610612738]]
+    },
+    {
+      "name": "LineScore",
+      "headers": [
+        "GAME_DATE_EST", "GAME_SEQUENCE", "GAME_ID", "TEAM_ID",
+        "TEAM_ABBREVIATION", "TEAM_CITY_NAME", "TEAM_NICKNAME", "TEAM_WINS_LOSSES",
+        "PTS_QTR1", "PTS_QTR2", "PTS_QTR3", "PTS_QTR4",
+        "PTS_OT1", "PTS_OT2", "PTS_OT3", "PTS_OT4", "PTS_OT5", "PTS_OT6", "PTS_OT7", "PTS_OT8", "PTS_OT9", "PTS_OT10",
+        "PTS", "FG_PCT", "FT_PCT", "FG3_PCT", "AST", "REB", "TOV"
+      ],
+      "rowSet": [
+        [
+          "2025-01-15T00:00:00", 1, "0022400500", 1610612738,
+          "BOS", "Boston", "Celtics", "30-10",
+          28, 22, 26, 26,
+          0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+          102, 0.45, 0.78, 0.36, 22, 44, 12
+        ],
+        [
+          "2025-01-15T00:00:00", 1, "0022400500", 1610612747,
+          "LAL", "Los Angeles", "Lakers", "25-15",
+          24, 30, 28, 26,
+          0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+          108, 0.48, 0.80, 0.40, 25, 46, 11
+        ]
+      ]
+    }
+  ]
+}
