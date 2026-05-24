@@ -1,15 +1,18 @@
 """odds_pipeline CLI: init | pull-odds | pull-results | build | status."""
 import argparse
 import json
-import sqlite3
 import sys
-from datetime import date, datetime
+from datetime import datetime, timezone
 from dateutil import parser as dtparser
 
-from odds_pipeline import config, archive
+from odds_pipeline import config
 from odds_pipeline.odds_source.client import TheOddsApiClient
 from odds_pipeline.odds_source import ingest as odds_ingest
 from odds_pipeline.store import migrate, seed
+
+
+def _utc_now_iso() -> str:
+    return datetime.now(tz=timezone.utc).isoformat()
 
 
 def _cmd_init(args):
@@ -29,14 +32,14 @@ def _cmd_pull_odds(args):
     conn = migrate.connect(config.DB_PATH)
     try:
         for sport in sports:
-            started = datetime.utcnow().isoformat()
+            started = _utc_now_iso()
             result = odds_ingest.pull_odds_for_sport(
                 client=client, sport=sport,
                 date_from=date_from, date_to=date_to,
                 regions=config.REGIONS, archive_root=config.RAW_ODDS_DIR,
                 limit=args.limit,
             )
-            completed = datetime.utcnow().isoformat()
+            completed = _utc_now_iso()
             status = "ok" if not result.errors else "partial"
             conn.execute(
                 "INSERT INTO ingest_runs (run_type, sport, params_json, credits_used, "
