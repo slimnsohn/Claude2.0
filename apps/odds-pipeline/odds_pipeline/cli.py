@@ -101,7 +101,26 @@ def _cmd_pull_results(args):
 
 
 def _cmd_build(args):
-    print("build: stub — implemented in later task")
+    from odds_pipeline.store import derive
+    derive.build_all(
+        db_path=config.DB_PATH,
+        odds_root=config.RAW_ODDS_DIR,
+        results_root=config.RAW_RESULTS_DIR,
+    )
+    conn = migrate.connect(config.DB_PATH)
+    try:
+        games_count = conn.execute("SELECT COUNT(*) FROM games").fetchone()[0]
+        odds_count = conn.execute("SELECT COUNT(*) FROM odds_snapshots").fetchone()[0]
+        scores_count = conn.execute("SELECT COUNT(*) FROM scores").fetchone()[0]
+        print(f"games={games_count} odds_snapshots={odds_count} scores={scores_count}")
+        unmatched = conn.execute(
+            "SELECT game_id FROM games WHERE game_id NOT IN (SELECT DISTINCT game_id FROM scores) "
+            "AND results_source_game_id IS NULL LIMIT 10"
+        ).fetchall()
+        if unmatched:
+            print(f"Unmatched (no scores) sample: {[u[0] for u in unmatched]}")
+    finally:
+        conn.close()
 
 
 def _cmd_status(args):
