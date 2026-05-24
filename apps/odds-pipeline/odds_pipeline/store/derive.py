@@ -46,7 +46,11 @@ def _american_to_decimal(american: int) -> float:
 
 
 def _clear_derived(conn):
-    # Order matters with FKs on: delete child rows first
+    # build_all() disables FKs for the duration of derive, so this order is not
+    # strictly required today. Kept child-tables-first as a safeguard if a caller
+    # ever invokes this function with FKs enabled. Note: executescript() commits
+    # implicitly, so this is not atomic with the ingest that follows — a crash
+    # mid-derive leaves an empty DB until the next successful rebuild.
     conn.executescript(
         "DELETE FROM odds_snapshots; DELETE FROM scores; DELETE FROM games;"
     )
@@ -112,7 +116,15 @@ def _ingest_results_file(conn, sport: str, path: Path):
         (data.get("source_game_id"), now, game_id),
     )
     rel_path = str(path)
-    for seg, (h_score, a_score) in data["segment_scores"].items():
+    for seg, score_pair in data["segment_scores"].items():
+        # Results adapters return segment_scores values as a 2-tuple (h, a), but
+        # JSON round-trip turns those into lists. Accept either; reject anything
+        # else with a clear error rather than silently corrupting the row.
+        if not (isinstance(score_pair, (list, tuple)) and len(score_pair) == 2):
+            raise ValueError(
+                f"Bad segment_scores shape in {path} for segment {seg!r}: expected [home, away], got {score_pair!r}"
+            )
+        h_score, a_score = score_pair
         conn.execute(
             "INSERT OR REPLACE INTO scores (game_id, segment_key, home_score, away_score, raw_archive_path) "
             "VALUES (?, ?, ?, ?, ?)",
