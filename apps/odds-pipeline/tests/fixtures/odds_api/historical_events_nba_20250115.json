@@ -1,0 +1,23 @@
+{
+  "timestamp": "2025-01-15T12:00:00Z",
+  "previous_timestamp": "2025-01-15T11:55:00Z",
+  "next_timestamp": "2025-01-15T12:05:00Z",
+  "data": [
+    {
+      "id": "evt-1-syn",
+      "sport_key": "basketball_nba",
+      "sport_title": "NBA",
+      "commence_time": "2025-01-16T01:00:00Z",
+      "home_team": "Los Angeles Lakers",
+      "away_team": "Boston Celtics"
+    },
+    {
+      "id": "evt-2-syn",
+      "sport_key": "basketball_nba",
+      "sport_title": "NBA",
+      "commence_time": "2025-01-16T03:30:00Z",
+      "home_team": "Miami Heat",
+      "away_team": "New York Knicks"
+    }
+  ]
+}

@@ -1,0 +1,93 @@
+{
+  "timestamp": "2025-01-16T00:25:00Z",
+  "previous_timestamp": "2025-01-16T00:20:00Z",
+  "next_timestamp": "2025-01-16T00:30:00Z",
+  "data": {
+    "id": "evt-1-syn",
+    "sport_key": "basketball_nba",
+    "sport_title": "NBA",
+    "commence_time": "2025-01-16T01:00:00Z",
+    "home_team": "Los Angeles Lakers",
+    "away_team": "Boston Celtics",
+    "bookmakers": [
+      {
+        "key": "draftkings",
+        "title": "DraftKings",
+        "last_update": "2025-01-16T00:24:30Z",
+        "markets": [
+          {
+            "key": "h2h",
+            "last_update": "2025-01-16T00:24:30Z",
+            "outcomes": [
+              {"name": "Los Angeles Lakers", "price": -150},
+              {"name": "Boston Celtics", "price": 130}
+            ]
+          },
+          {
+            "key": "spreads",
+            "last_update": "2025-01-16T00:24:30Z",
+            "outcomes": [
+              {"name": "Los Angeles Lakers", "price": -110, "point": -3.5},
+              {"name": "Boston Celtics", "price": -110, "point": 3.5}
+            ]
+          },
+          {
+            "key": "totals",
+            "last_update": "2025-01-16T00:24:30Z",
+            "outcomes": [
+              {"name": "Over", "price": -110, "point": 224.5},
+              {"name": "Under", "price": -110, "point": 224.5}
+            ]
+          },
+          {
+            "key": "spreads_q1",
+            "last_update": "2025-01-16T00:24:30Z",
+            "outcomes": [
+              {"name": "Los Angeles Lakers", "price": -110, "point": -1.5},
+              {"name": "Boston Celtics", "price": -110, "point": 1.5}
+            ]
+          },
+          {
+            "key": "totals_h1",
+            "last_update": "2025-01-16T00:24:30Z",
+            "outcomes": [
+              {"name": "Over", "price": -110, "point": 112.5},
+              {"name": "Under", "price": -110, "point": 112.5}
+            ]
+          }
+        ]
+      },
+      {
+        "key": "pinnacle",
+        "title": "Pinnacle",
+        "last_update": "2025-01-16T00:24:00Z",
+        "markets": [
+          {
+            "key": "h2h",
+            "last_update": "2025-01-16T00:24:00Z",
+            "outcomes": [
+              {"name": "Los Angeles Lakers", "price": -148},
+              {"name": "Boston Celtics", "price": 132}
+            ]
+          },
+          {
+            "key": "spreads",
+            "last_update": "2025-01-16T00:24:00Z",
+            "outcomes": [
+              {"name": "Los Angeles Lakers", "price": -105, "point": -3.5},
+              {"name": "Boston Celtics", "price": -106, "point": 3.5}
+            ]
+          },
+          {
+            "key": "totals",
+            "last_update": "2025-01-16T00:24:00Z",
+            "outcomes": [
+              {"name": "Over", "price": -105, "point": 224.0},
+              {"name": "Under", "price": -106, "point": 224.0}
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}
