@@ -1,0 +1,1 @@
+"""Per-sport results adapters."""
