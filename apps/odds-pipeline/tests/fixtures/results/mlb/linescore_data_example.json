@@ -1,0 +1,14 @@
+{
+  "innings": [
+    {"num": 1, "home": {"runs": 1}, "away": {"runs": 0}},
+    {"num": 2, "home": {"runs": 0}, "away": {"runs": 2}},
+    {"num": 3, "home": {"runs": 1}, "away": {"runs": 0}},
+    {"num": 4, "home": {"runs": 0}, "away": {"runs": 1}},
+    {"num": 5, "home": {"runs": 2}, "away": {"runs": 0}},
+    {"num": 6, "home": {"runs": 0}, "away": {"runs": 0}},
+    {"num": 7, "home": {"runs": 1}, "away": {"runs": 0}},
+    {"num": 8, "home": {"runs": 0}, "away": {"runs": 1}},
+    {"num": 9, "home": {"runs": 1}, "away": {"runs": 0}}
+  ],
+  "teams": {"home": {"runs": 6}, "away": {"runs": 4}}
+}
