@@ -124,18 +124,47 @@ def _cmd_build(args):
 
 
 def _cmd_status(args):
+    import requests
     conn = migrate.connect(config.DB_PATH)
     try:
-        games = conn.execute("SELECT sport, COUNT(*) FROM games GROUP BY sport").fetchall()
-        print("Games in DB:", dict(games))
-        runs = conn.execute(
-            "SELECT sport, run_type, status, credits_used, completed_at "
-            "FROM ingest_runs ORDER BY run_id DESC LIMIT 10"
-        ).fetchall()
-        for r in runs:
-            print(r)
+        print("=== DB summary ===")
+        games = dict(conn.execute("SELECT sport, COUNT(*) FROM games GROUP BY sport").fetchall())
+        odds = dict(conn.execute(
+            "SELECT g.sport, COUNT(*) FROM odds_snapshots o JOIN games g ON g.game_id=o.game_id "
+            "GROUP BY g.sport"
+        ).fetchall())
+        scores = dict(conn.execute(
+            "SELECT g.sport, COUNT(*) FROM scores s JOIN games g ON g.game_id=s.game_id "
+            "GROUP BY g.sport"
+        ).fetchall())
+        for sport in ("NBA", "NFL", "NHL", "MLB", "NCAAB", "NCAAF"):
+            print(f"  {sport}: games={games.get(sport,0)} odds_rows={odds.get(sport,0)} scores_rows={scores.get(sport,0)}")
+
+        unmatched = conn.execute(
+            "SELECT COUNT(*) FROM games WHERE game_id NOT IN (SELECT DISTINCT game_id FROM scores)"
+        ).fetchone()[0]
+        print(f"  Games missing scores: {unmatched}")
+
+        print("\n=== Recent ingest_runs ===")
+        for r in conn.execute(
+            "SELECT run_type, sport, status, credits_used, completed_at FROM ingest_runs "
+            "ORDER BY run_id DESC LIMIT 10"
+        ):
+            print(f"  {r}")
     finally:
         conn.close()
+
+    if config.THE_ODDS_API_KEY:
+        try:
+            r = requests.get(
+                "https://api.the-odds-api.com/v4/sports",
+                params={"apiKey": config.THE_ODDS_API_KEY}, timeout=10,
+            )
+            used = r.headers.get("x-requests-used")
+            remaining = r.headers.get("x-requests-remaining")
+            print(f"\n=== The Odds API quota ===\n  used={used} remaining={remaining}")
+        except Exception as e:
+            print(f"  (quota check failed: {e})")
 
 
 def main(argv=None):
