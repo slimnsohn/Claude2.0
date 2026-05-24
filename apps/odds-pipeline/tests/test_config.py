@@ -34,7 +34,10 @@ def test_ncaab_has_no_quarter_markets():
 
 def test_api_key_loaded_from_env(monkeypatch):
     monkeypatch.setenv("THE_ODDS_API_KEY", "test-key-123")
-    # Force reimport so config re-reads env
     import importlib
     importlib.reload(config)
-    assert config.THE_ODDS_API_KEY == "test-key-123"
+    try:
+        assert config.THE_ODDS_API_KEY == "test-key-123"
+    finally:
+        monkeypatch.delenv("THE_ODDS_API_KEY", raising=False)
+        importlib.reload(config)
