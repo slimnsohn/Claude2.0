@@ -52,3 +52,21 @@ def test_exists_returns_true_after_write(tmp_path):
         root=str(tmp_path), sport="NBA", event_id="e",
         snapshot_time=datetime(2025, 1, 16, 0, 25, tzinfo=timezone.utc),
     )
+
+
+def test_results_exists_returns_true_after_write(tmp_path):
+    """Guards path-reuse: write_results and results_archive_exists must share the
+    same path-builder including sanitization of ':' and '@'."""
+    archive.write_results(
+        root=str(tmp_path), sport="NBA",
+        game_id="NBA:20250115:BOS@LAL",
+        payload={"final": [108, 102]},
+    )
+    assert archive.results_archive_exists(
+        root=str(tmp_path), sport="NBA",
+        game_id="NBA:20250115:BOS@LAL",
+    )
+    assert not archive.results_archive_exists(
+        root=str(tmp_path), sport="NBA",
+        game_id="NBA:20250115:DIFFERENT@GAME",
+    )
