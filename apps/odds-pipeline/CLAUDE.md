@@ -20,5 +20,5 @@ start.bat
 - `data/odds_pipeline.db` — Derived working database
 
 ## Environment Variables
-- `THE_ODDS_API_KEY` — required for odds pulls
+- `ODDS_API_KEY` (or `THE_ODDS_API_KEY`) — required for odds pulls
 - `CFBD_API_KEY` — required for NCAAF results

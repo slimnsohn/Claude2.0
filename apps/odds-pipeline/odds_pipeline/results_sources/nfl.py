@@ -1,4 +1,14 @@
-"""NFL results via nfl_data_py (nflfastR schedules with per-quarter columns)."""
+"""NFL results via nfl_data_py.
+
+NOTE: nfl_data_py.import_schedules() only exposes full-game scores
+(`home_score`, `away_score`). It does NOT have per-quarter score columns.
+Per-quarter NFL scores need a different source (ESPN scoreboard or
+nfl_data_py.import_pbp_data aggregated by qtr). This adapter therefore
+emits ONLY the FULL segment. Per-quarter/half adds are a v2 follow-up.
+
+Per the workspace rule "missing data shows as missing", we do NOT emit
+(0, 0) for Q1-Q4/H1/H2 — they're simply absent from segment_scores.
+"""
 from datetime import date, datetime, timezone
 import pandas as pd
 
@@ -11,19 +21,11 @@ def _import_schedules(seasons: list[int]) -> pd.DataFrame:
 
 
 def _row_to_result(row: pd.Series) -> GameResult:
-    segs: dict[str, tuple[int, int]] = {}
-    for q in range(1, 5):
-        h = int(row.get(f"home_score_q{q}") or 0)
-        a = int(row.get(f"away_score_q{q}") or 0)
-        segs[f"Q{q}"] = (h, a)
-    segs["H1"] = (segs["Q1"][0] + segs["Q2"][0], segs["Q1"][1] + segs["Q2"][1])
-    segs["H2"] = (segs["Q3"][0] + segs["Q4"][0], segs["Q3"][1] + segs["Q4"][1])
-    if pd.notna(row.get("overtime")) and int(row.get("overtime") or 0) == 1:
-        ot_h = int(row["home_score"]) - sum(segs[f"Q{i}"][0] for i in range(1, 5))
-        ot_a = int(row["away_score"]) - sum(segs[f"Q{i}"][1] for i in range(1, 5))
-        if ot_h or ot_a:
-            segs["OT1"] = (ot_h, ot_a)
-    segs["FULL"] = (int(row["home_score"]), int(row["away_score"]))
+    # Only FULL is reliably available from import_schedules.
+    segs: dict[str, tuple[int, int]] = {
+        "FULL": (int(row["home_score"]), int(row["away_score"])),
+    }
+    went_to_ot = bool(int(row.get("overtime") or 0))
     commence = datetime.fromisoformat(str(row["gameday"])).replace(tzinfo=timezone.utc)
     return GameResult(
         sport="NFL",
@@ -32,7 +34,7 @@ def _row_to_result(row: pd.Series) -> GameResult:
         away_team_canonical=str(row["away_team"]),
         source_game_id=str(row["game_id"]),
         segment_scores=segs,
-        went_to_ot=bool(int(row.get("overtime") or 0)),
+        went_to_ot=went_to_ot,
         raw_payload=row.to_dict(),
     )
 

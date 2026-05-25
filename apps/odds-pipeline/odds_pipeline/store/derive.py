@@ -61,10 +61,16 @@ def _ingest_odds_file(conn, sport: str, path: Path):
     meta = data["_meta"]
     payload = data["payload"]
     snapshot_time = meta["snapshot_time"]
-    commence = dtparser.isoparse(payload["commence_time"])
 
-    home_raw = payload["home_team"]
-    away_raw = payload["away_team"]
+    # The historical-event-odds endpoint returns {timestamp, previous_timestamp,
+    # next_timestamp, data: {event...}}. Unwrap `data` to reach the event. Some
+    # older or test-shape archives may already be unwrapped — accept both.
+    event = payload["data"] if isinstance(payload, dict) and "data" in payload and "commence_time" not in payload else payload
+
+    commence = dtparser.isoparse(event["commence_time"])
+
+    home_raw = event["home_team"]
+    away_raw = event["away_team"]
     home = matcher.canonical_team(sport, home_raw)
     away = matcher.canonical_team(sport, away_raw)
     game_id = matcher.build_game_id(sport, commence, home, away)
@@ -74,18 +80,18 @@ def _ingest_odds_file(conn, sport: str, path: Path):
         "INSERT OR IGNORE INTO games (game_id, sport, commence_time, home_team, away_team, "
         "odds_api_event_id, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
         (game_id, sport, commence.isoformat(), home, away,
-         payload.get("id"), now, now),
+         event.get("id"), now, now),
     )
 
     rel_path = str(path)
-    for bm in payload.get("bookmakers", []):
+    for bm in event.get("bookmakers", []):
         book_key = bm["key"]
         for market in bm.get("markets", []):
             mkey = market["key"]
             mtype = _market_type_for(mkey)
             segment = MARKET_SEGMENT_MAP.get(mkey, "FULL")
             for outcome in market.get("outcomes", []):
-                side = _outcome_side(mtype, outcome["name"], payload["home_team"], payload["away_team"])
+                side = _outcome_side(mtype, outcome["name"], event["home_team"], event["away_team"])
                 line = outcome.get("point")
                 price = int(outcome["price"])
                 conn.execute(

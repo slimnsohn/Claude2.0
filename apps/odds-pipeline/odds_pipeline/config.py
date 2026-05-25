@@ -1,7 +1,8 @@
 """Static config: env keys, sport->market map, segment shape per sport."""
 import os
 
-THE_ODDS_API_KEY = os.environ.get("THE_ODDS_API_KEY", "")
+# Accept either THE_ODDS_API_KEY or the shorter ODDS_API_KEY (the workspace convention).
+THE_ODDS_API_KEY = os.environ.get("THE_ODDS_API_KEY") or os.environ.get("ODDS_API_KEY") or ""
 
 # Markets to pull per sport. Names assumed; verify empirically against
 # GET /v4/sports/{sport}/events/{eventId}/markets on first pull.
