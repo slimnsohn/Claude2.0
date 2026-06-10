@@ -1,0 +1,8 @@
+data/
+__pycache__/
+.venv/
+*.log
+*.pyc
+.coverage
+heartbeat
+.pytest_cache/
