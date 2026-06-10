@@ -59,11 +59,20 @@ def gather_observations(store: Store) -> list[dict]:
             if band in seen_bands:
                 continue
             seen_bands.add(band)
+            # YES-side observation: buy YES at price + half spread
             entry = min(0.999, price + HALF_SPREAD)
             fee = taker_fee_per_share(entry, schedule=m.fee_schedule,
                                       fees_enabled=m.fees_enabled)
             obs.append({"category": m.category, "entry": entry, "days": days,
                         "won": won, "fee": fee, "end_ts": end_ts,
+                        "condition_id": m.condition_id})
+            # NO-side mirror: buy NO at (1 - price) + half spread. This is
+            # how "the longshot is overpriced" becomes a tradeable bucket.
+            no_entry = min(0.999, (1.0 - price) + HALF_SPREAD)
+            no_fee = taker_fee_per_share(no_entry, schedule=m.fee_schedule,
+                                         fees_enabled=m.fees_enabled)
+            obs.append({"category": m.category, "entry": no_entry, "days": days,
+                        "won": not won, "fee": no_fee, "end_ts": end_ts,
                         "condition_id": m.condition_id})
     return obs
 
