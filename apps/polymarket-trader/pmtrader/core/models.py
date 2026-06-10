@@ -112,6 +112,7 @@ class Market(BaseModel):
     active: bool = True
     volume_24h: float = 0.0
     rewards_enabled: bool = False
+    event_id: Optional[str] = None
 
 
 class Intent(BaseModel):

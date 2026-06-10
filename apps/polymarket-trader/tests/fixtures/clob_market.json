@@ -1,0 +1,56 @@
+{
+ "enable_order_book": true,
+ "active": true,
+ "closed": false,
+ "archived": false,
+ "accepting_orders": true,
+ "accepting_order_timestamp": "2025-11-25T18:07:59Z",
+ "minimum_order_size": 5,
+ "minimum_tick_size": 0.001,
+ "condition_id": "0x0b4cc3b739e1dfe5d73274740e7308b6fb389c5af040c3a174923d928d134bee",
+ "question_id": "0x0ee573e74e7e285cf5f2ecd35bfb1d3da0b54e9ba54db6e97fdd9c726e28c6b5",
+ "question": "Will Jesus Christ return before 2027?",
+ "description": "This market will resolve to \"Yes\" if The Second Coming of Jesus Christ occurs by December 31, 2026, 11:59 PM ET. Otherwise, this market will resolve to \"No\".\n\nThe resolution source for this market will be a consensus of credible sources.",
+ "market_slug": "will-jesus-christ-return-before-2027",
+ "end_date_iso": "2026-12-31T00:00:00Z",
+ "game_start_time": null,
+ "seconds_delay": 0,
+ "fpmm": "",
+ "maker_base_fee": 1000,
+ "taker_base_fee": 1000,
+ "notifications_enabled": true,
+ "neg_risk": false,
+ "neg_risk_market_id": "",
+ "neg_risk_request_id": "",
+ "icon": "https://polymarket-upload.s3.us-east-2.amazonaws.com/will-jesus-christ-return-in-2025-qulWN7QCehv8.jpg",
+ "image": "https://polymarket-upload.s3.us-east-2.amazonaws.com/will-jesus-christ-return-in-2025-qulWN7QCehv8.jpg",
+ "rewards": {
+  "rates": [
+   {
+    "asset_address": "0xc011a7e12a19f7b1f670d46f03b03f3342e82dfb",
+    "rewards_daily_rate": 0.001
+   }
+  ],
+  "min_size": 0,
+  "max_spread": 0
+ },
+ "is_50_50_outcome": false,
+ "tokens": [
+  {
+   "token_id": "69324317355037271422943965141382095011871956039434394956830818206664869608517",
+   "outcome": "Yes",
+   "price": 0.0215,
+   "winner": false
+  },
+  {
+   "token_id": "51797157743046504218541616681751597845468055908324407922581755135522797852101",
+   "outcome": "No",
+   "price": 0.9785,
+   "winner": false
+  }
+ ],
+ "tags": [
+  "Culture",
+  "Parent For Derivative"
+ ]
+}
