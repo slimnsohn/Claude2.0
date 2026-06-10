@@ -203,6 +203,18 @@ class TestBranchEdges:
         decision = risk.check(mk_intent(event_id=None), mk_snapshot())
         assert not isinstance(decision, Veto)
 
+    def test_marketable_buy_within_depth_approved(self, risk):
+        snap = mk_snapshot(books={"m1-yes": mk_book(depth=1000.0)})
+        decision = risk.check(mk_intent(price=0.41, size=50.0), snap)
+        assert not isinstance(decision, Veto)
+
+    def test_buy_into_empty_ask_book_rests(self, risk):
+        empty_asks = OrderBook(token_id="m1-yes", ts=100.0,
+                               bids=[Level(price=0.39, size=1000.0)], asks=[])
+        snap = mk_snapshot(books={"m1-yes": empty_asks})
+        decision = risk.check(mk_intent(price=0.40, size=20.0), snap)
+        assert not isinstance(decision, Veto)
+
     def test_sell_into_empty_bid_book_rests(self, risk):
         empty_bids = OrderBook(token_id="m1-yes", ts=100.0, bids=[],
                                asks=[Level(price=0.41, size=1000.0)])
