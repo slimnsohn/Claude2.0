@@ -17,6 +17,7 @@ import uvicorn
 
 from pmtrader.api.app import build_app
 from pmtrader.config import load_config
+from pmtrader.core.lock import TRADER_LOCK_PORT, acquire_single_instance_lock
 from pmtrader.datalayer.clob_rest import ClobRestClient
 from pmtrader.datalayer.clob_ws import ClobMarketFeed
 from pmtrader.datalayer.coinbase import CoinbaseClient
@@ -60,6 +61,12 @@ async def main() -> int:
     logging.basicConfig(
         level=logging.INFO,
         format="%(asctime)s %(name)s %(levelname)s %(message)s")
+    # two traders sharing one DB/heartbeat/port corrupt the run — refuse.
+    # exit 0 so a duplicate watchdog treats it as a clean exit and stops.
+    instance_lock = acquire_single_instance_lock(TRADER_LOCK_PORT)
+    if instance_lock is None:
+        log.error("another pmtrader instance is already running — exiting")
+        return 0
     cfg = load_config(ROOT / "config" / "settings.yaml")
 
     store = Store(ROOT / "data" / "pmtrader.db")
