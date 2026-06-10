@@ -58,12 +58,19 @@ class HistoryFetcher:
         for n, market in enumerate(targets):
             for token_id in (market.token_id_yes, market.token_id_no):
                 key = f"hist:{token_id}:{self.fidelity}"
-                if self.store.get_checkpoint(key):
+                done = self.store.get_checkpoint(key)
+                if done is not None and done != "0":
                     stats["tokens_skipped"] += 1
                     continue
-                await self._throttle()
+                points: list[tuple[float, float]] = []
                 try:
-                    points = await self.clob.prices_history(token_id, fidelity=self.fidelity)
+                    # CLOB serves fine fidelity only for recent data; fall back
+                    # to daily for older/closed markets rather than losing them.
+                    for fidelity in (self.fidelity, 1440):
+                        await self._throttle()
+                        points = await self.clob.prices_history(token_id, fidelity=fidelity)
+                        if points:
+                            break
                 except DataError as exc:
                     log.warning("history fetch failed for %s: %s", token_id, exc)
                     stats["errors"] += 1

@@ -66,6 +66,28 @@ async def test_max_markets_respected(store, gamma, clob):
     assert stats["markets"] == 2
 
 
+async def test_fidelity_fallback_to_daily(store, gamma, clob):
+    async def fine_empty(token_id, **kw):
+        return [] if kw.get("fidelity") == 60 else [(1000.0, 0.5), (2000.0, 0.6)]
+
+    clob.prices_history.side_effect = fine_empty
+    f = HistoryFetcher(store, gamma, clob, rate_limit_per_s=10_000)
+    stats = await f.run(resolved_since="2024-01-01", max_markets=1)
+    assert stats["tokens_fetched"] == 2
+    assert len(store.price_history("ty0")) == 2  # daily fallback data stored
+
+
+async def test_zero_point_checkpoint_is_retried(store, gamma, clob):
+    clob.prices_history.return_value = []
+    f = HistoryFetcher(store, gamma, clob, rate_limit_per_s=10_000)
+    await f.run(resolved_since="2024-01-01", max_markets=1)
+    clob.prices_history.return_value = [(1000.0, 0.5)]
+    clob.prices_history.side_effect = None
+    stats = await f.run(resolved_since="2024-01-01", max_markets=1)
+    assert stats["tokens_fetched"] == 2  # empty checkpoints retried, now filled
+    assert len(store.price_history("ty0")) == 1
+
+
 async def test_fetch_error_skips_token_and_continues(store, gamma, clob):
     from pmtrader.datalayer.errors import DataError
 
