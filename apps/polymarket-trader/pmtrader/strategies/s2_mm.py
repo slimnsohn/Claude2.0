@@ -95,9 +95,15 @@ class S2MarketMaker(Strategy):
     # -- quoting ----------------------------------------------------------------------
     def on_books(self, market: Market, books: dict[str, OrderBook],
                  ctx: StrategyContext) -> list[Intent]:
+        if not self.select_markets([market], ctx.now):
+            return []  # market fails volume/rewards/time-to-end filters
         token = market.token_id_yes
         book = books.get(token)
         if book is None or book.microprice is None:
+            return []
+        # don't make markets in extreme-priced books: adverse selection is
+        # one-sided and the min-spread quote would sit at the price floor
+        if not (0.05 <= book.microprice <= 0.95):
             return []
         ref = book.microprice
         self._update_vol(token, ref)

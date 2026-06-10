@@ -198,6 +198,21 @@ class TestMarkoutDefense:
 
 
 class TestMarketSelection:
+    def test_on_books_respects_own_filters(self):
+        mm = S2MarketMaker()
+        low_vol = mk_market(cid="lowvol", volume_24h=100.0)
+        feed_calm_books(mm, low_vol, n=20)
+        assert mm.on_books(low_vol, mk_books(low_vol, ts=200.0),
+                           ctx(now=200.0)) == []
+
+    def test_no_quotes_in_extreme_priced_books(self):
+        mm = S2MarketMaker()
+        m = mk_market()
+        for i in range(21):
+            books = mk_books(m, bid=0.002, ask=0.006, ts=100.0 + i)
+            intents = mm.on_books(m, books, ctx(now=100.0 + i))
+        assert intents == []
+
     def test_filters(self, s2):
         good = mk_market(cid="good")
         low_vol = mk_market(cid="lowvol", volume_24h=100.0)
