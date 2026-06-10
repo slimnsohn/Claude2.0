@@ -122,26 +122,41 @@ class TestHaltAndStale:
 
 
 class TestDepthAndBlackout:
-    def test_veto_size_vs_depth(self, risk):
+    def test_marketable_buy_downsized_to_depth_cap(self, risk):
         snap = mk_snapshot(books={"m1-yes": mk_book(depth=100.0)})
-        # marketable buy at the ask: 50 > 25% of 100 displayed
+        # marketable buy at the ask: 50 requested, 25% of 100 displayed = 25
+        decision = risk.check(mk_intent(price=0.41, size=50.0), snap)
+        assert not isinstance(decision, Veto)
+        assert decision.size == pytest.approx(25.0)
+
+    def test_tiny_depth_vetoed(self, risk):
+        snap = mk_snapshot(books={"m1-yes": mk_book(depth=2.0)})
         decision = risk.check(mk_intent(price=0.41, size=50.0), snap)
         assert isinstance(decision, Veto) and decision.rule == "max_book_frac"
+
+    def test_grouped_intent_skips_kelly(self, risk):
+        # arb leg with tiny per-leg edge would be kelly-vetoed if ungrouped
+        decision = risk.check(
+            mk_intent(size=20.0, expected_edge=0.0003, group_id="g1"),
+            mk_snapshot())
+        assert not isinstance(decision, Veto)
+        assert decision.size == pytest.approx(20.0)
 
     def test_resting_buy_not_depth_limited(self, risk):
         snap = mk_snapshot(books={"m1-yes": mk_book(depth=100.0)})
         decision = risk.check(mk_intent(price=0.40, size=50.0), snap)  # rests below ask
         assert not isinstance(decision, Veto)
 
-    def test_sell_side_checks_bid_depth(self, risk):
+    def test_sell_side_downsized_to_bid_depth(self, risk):
         snap = mk_snapshot(books={"m1-yes": mk_book(depth=100.0)},
                            positions={"m1-yes": Position(
                                token_id="m1-yes", size=30.0, avg_cost=0.4,
                                condition_id="m1")},
                            marks={"m1-yes": 0.40})
-        # marketable sell into the bid: 30 > 25% of 100
+        # marketable sell into the bid: 30 requested, cap 25
         decision = risk.check(mk_intent(side=Side.SELL, price=0.39, size=30.0), snap)
-        assert isinstance(decision, Veto) and decision.rule == "max_book_frac"
+        assert not isinstance(decision, Veto)
+        assert decision.size == pytest.approx(25.0)
 
     def test_veto_resolution_blackout(self, risk):
         m = mk_market(end_date="2026-12-31T00:00:00Z")

@@ -101,7 +101,9 @@ class RiskManager:
                             f"edge {intent.expected_edge:.4f} - fee {fee:.4f} <= 0")
 
         # depth: marketable orders may consume at most max_book_frac of the
-        # displayed liquidity they would take. Resting orders add liquidity.
+        # displayed liquidity they would take (downsized, not vetoed — the
+        # per-share edge is unchanged). Resting orders add liquidity.
+        size = intent.size
         marketable = (intent.side == Side.BUY and book.best_ask is not None
                       and intent.price >= book.best_ask) or \
                      (intent.side == Side.SELL and book.best_bid is not None
@@ -110,12 +112,11 @@ class RiskManager:
             depth = (book.ask_depth_at_or_below(intent.price)
                      if intent.side == Side.BUY
                      else book.bid_depth_at_or_above(intent.price))
-            if intent.size > r["max_book_frac"] * depth:
+            depth_cap = r["max_book_frac"] * depth
+            if depth_cap < 1.0:
                 return Veto("max_book_frac",
-                            f"size {intent.size} > {r['max_book_frac']:.0%} "
-                            f"of depth {depth}")
-
-        size = intent.size
+                            f"{r['max_book_frac']:.0%} of depth {depth} < 1 share")
+            size = min(size, depth_cap)
         if not is_reduce:
             # exposure caps (notional at intent price)
             new_notional = size * intent.price
@@ -140,15 +141,19 @@ class RiskManager:
                             f"at risk {total_at_risk + new_notional:.2f} "
                             f"> {r['max_at_risk_frac']:.0%} of {snap.equity:.2f}")
 
-            # fractional Kelly cap on entries: f* = edge / (p(1-p))
-            variance = max(1e-6, intent.price * (1 - intent.price))
-            kelly_dollars = (intent.expected_edge / variance) * snap.equity \
-                * r["kelly_fraction"]
-            kelly_shares = max(0.0, kelly_dollars / intent.price)
-            size = min(size, kelly_shares)
-            if size < 1.0:
-                return Veto("kelly_zero",
-                            f"kelly cap {kelly_shares:.2f} shares < 1")
+            # fractional Kelly cap on entries: f* = edge / (p(1-p)).
+            # Grouped (hedged multi-leg) intents skip Kelly — the structure's
+            # variance is near zero, so per-leg Kelly math doesn't apply;
+            # exposure caps above are their real constraint.
+            if intent.group_id is None:
+                variance = max(1e-6, intent.price * (1 - intent.price))
+                kelly_dollars = (intent.expected_edge / variance) * snap.equity \
+                    * r["kelly_fraction"]
+                kelly_shares = max(0.0, kelly_dollars / intent.price)
+                size = min(size, kelly_shares)
+                if size < 1.0:
+                    return Veto("kelly_zero",
+                                f"kelly cap {kelly_shares:.2f} shares < 1")
 
         return Approved(size=size,
                         detail=f"approved size={size:.0f} "
