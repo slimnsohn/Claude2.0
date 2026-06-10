@@ -65,7 +65,8 @@ class S1Arb(Strategy):
         intents = [
             Intent(strategy=self.name, token_id=token_id, side=Side.BUY,
                    price=price, size=size, expected_edge=edge / len(legs),
-                   reasoning=text, group_id=group, condition_id=m.condition_id)
+                   reasoning=text, group_id=group, condition_id=m.condition_id,
+                   event_id=m.event_id)
             for m, token_id, price, _ in legs
         ]
         self.pending.add(key)

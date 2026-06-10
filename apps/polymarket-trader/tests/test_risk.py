@@ -46,6 +46,23 @@ def risk():
     return RiskManager()
 
 
+class TestMissingConditionId:
+    def test_veto_entry_without_condition_id(self, risk):
+        # exposure caps key off condition_id; an entry without one would
+        # silently bypass the per-market cap, so it is vetoed outright
+        decision = risk.check(mk_intent(condition_id=None), mk_snapshot())
+        assert isinstance(decision, Veto)
+        assert decision.rule == "missing_condition_id"
+
+    def test_reduce_sell_without_condition_id_allowed(self, risk):
+        snap = mk_snapshot(positions={"m1-yes": Position(
+            token_id="m1-yes", size=100.0, avg_cost=0.40, condition_id="m1")},
+            marks={"m1-yes": 0.40})
+        decision = risk.check(
+            mk_intent(side=Side.SELL, size=50.0, condition_id=None), snap)
+        assert not isinstance(decision, Veto)
+
+
 class TestEvRule:
     def test_veto_negative_ev_after_fees(self, risk):
         m = mk_market(schedule=GENERAL)

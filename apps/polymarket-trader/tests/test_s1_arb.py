@@ -48,6 +48,13 @@ class TestBinaryPairArb:
         assert intents[0].group_id is not None
         assert "sum=0.9600" in intents[0].reasoning
 
+    def test_legs_carry_condition_and_event_ids(self, s1):
+        m = mk_market()
+        m = m.model_copy(update={"event_id": "ev42"})
+        intents = s1.on_books(m, mk_books(m, 0.46, 0.50), ctx())
+        assert all(i.condition_id == m.condition_id for i in intents)
+        assert all(i.event_id == "ev42" for i in intents)  # event risk cap needs it
+
     def test_edge_must_clear_epsilon(self, s1):
         m = mk_market()
         # sum = 0.998, epsilon default 0.005 -> no fire

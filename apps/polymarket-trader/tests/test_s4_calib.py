@@ -88,6 +88,15 @@ class TestS4Strategy:
         assert intents[0].token_id == m.token_id_yes
         assert "bucket" in intents[0].reasoning
 
+    def test_intent_carries_condition_and_event_ids(self):
+        s4 = self.make_s4()
+        m = mk_market(end_date="2026-01-02T00:00:00Z")
+        m = m.model_copy(update={"event_id": "ev42"})
+        ctx = StrategyContext(now=1767225600.0, budget=10_000)
+        intents = s4.on_books(m, mk_books(m, 0.94, 0.95), ctx)
+        assert intents[0].condition_id == m.condition_id
+        assert intents[0].event_id == "ev42"  # event risk cap needs it
+
     def test_inert_with_empty_whitelist(self):
         s4 = self.make_s4(whitelist=[])
         m = mk_market(end_date="2026-01-02T00:00:00Z")

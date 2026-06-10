@@ -98,6 +98,13 @@ class TestControls:
         assert r.status_code == 200
         assert client.orch.halted is False
 
+    def test_resume_refused_after_bankroll_verdict(self, client):
+        # double-or-bust is a run-ending verdict; the dashboard cannot undo it
+        client.orch.halt("bankroll verdict: RunVerdict.STOP_LOST", now=100.0)
+        r = client.post("/api/control/resume", json={"token": TOKEN})
+        assert r.status_code == 409
+        assert client.orch.halted is True
+
 
 class TestWebSocket:
     def test_ws_pushes_state(self, client):

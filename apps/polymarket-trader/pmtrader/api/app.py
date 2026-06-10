@@ -104,6 +104,10 @@ def build_app(orch, store, cfg) -> FastAPI:
         err = check_token(body)
         if err:
             return err
+        if orch.stop_reason and orch.stop_reason.startswith("bankroll"):
+            # double-or-bust is a run-ending verdict, not a pause
+            return JSONResponse(status_code=409, content={
+                "error": f"cannot resume: {orch.stop_reason}"})
         orch.halted = False
         orch.stop_reason = None
         store.insert_decision(time.time(), "orchestrator", "resume",

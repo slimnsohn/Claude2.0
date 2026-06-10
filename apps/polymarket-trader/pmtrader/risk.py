@@ -80,6 +80,12 @@ class RiskManager:
             return Veto("short_sale",
                         f"sell {intent.size} > held {held_size}")
 
+        # exposure caps key off condition_id; an entry without one would
+        # silently bypass the per-market cap below
+        if not is_reduce and not intent.condition_id:
+            return Veto("missing_condition_id",
+                        "entry intent lacks condition_id")
+
         # resolution blackout (exits by exempt strategies allowed)
         if market is not None:
             end_ts = parse_end_date(market.end_date)

@@ -130,6 +130,35 @@ class TestInventorySkew:
         _, paired = self.quotes_with_inventory(m, yes_size=300.0, no_size=300.0)
         assert split(flat, m)[0].price == pytest.approx(split(paired, m)[0].price)
 
+    def test_skew_is_clamped_to_half_max_spread(self):
+        # at max inventory the unclamped skew (gamma*inv) would shift the
+        # quote center by 0.25 — quotes must stay anchored near the reference
+        m = mk_market()
+        mm = S2MarketMaker()
+        feed_calm_books(mm, m, n=20)
+        pos = {m.token_id_yes: Position(
+            token_id=m.token_id_yes, size=500.0,
+            avg_cost=0.50, condition_id=m.condition_id)}
+        intents = mm.on_books(m, mk_books(m, ts=130.0),
+                              ctx(now=130.0, positions=pos))
+        assert len(intents) == 1  # YES side suppressed at max inventory
+        no_bid = intents[0]
+        # center = ref - clamped skew = 0.50 - 0.10; ask = center + half
+        assert no_bid.price == pytest.approx(1 - (0.40 + 0.01), abs=0.02)
+
+    def test_quote_notional_capped(self):
+        # 100 shares at 0.89 would be $89 — far past what the 5%-per-market
+        # risk cap can approve on a $1k bankroll; size to max_quote_notional
+        m = mk_market()
+        mm = S2MarketMaker()
+        intents = feed_calm_books(mm, m, mid=0.90)
+        yes_bid, no_bid = split(intents, m)
+        cap = mm.params["max_quote_notional"]
+        assert yes_bid.size * yes_bid.price <= cap + 1e-6
+        assert yes_bid.size < mm.params["quote_size"]
+        # the cheap NO leg is unconstrained by notional
+        assert no_bid.size == mm.params["quote_size"]
+
     def test_max_inventory_one_sided(self):
         m = mk_market()
         mm = S2MarketMaker()

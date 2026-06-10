@@ -141,7 +141,7 @@ class S4Calib(Strategy):
                        f"{bucket.dtr_band}: hist wilson_lo={entry['wilson_lo']:.4f} "
                        f"(n={entry['n']}) vs ask={ask:.3f} fee={fee:.4f} "
                        f"edge={edge:.4f}"),
-            condition_id=market.condition_id)]
+            condition_id=market.condition_id, event_id=market.event_id)]
 
     def on_market_resolved(self, condition_id: str) -> None:
         self.traded.discard(condition_id)

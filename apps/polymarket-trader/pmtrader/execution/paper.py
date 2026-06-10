@@ -2,8 +2,9 @@
 
 Conservative by construction:
 - Marketable orders fill by walking the displayed book (taker fees applied).
-- Resting orders fill ONLY when a real trade prints at-or-through the limit
-  price, bounded by the print's size. A touched quote is not a fill.
+- Resting orders fill ONLY when a real trade prints strictly THROUGH the limit
+  price, bounded by the print's size. A print at the limit price is not a fill
+  (queue priority: others were ahead of us), and a touched quote is not a fill.
 - Maker rebates are not credited.
 Emits the same fill events and store writes as the live backend, so the rest
 of the system cannot tell the difference.
@@ -105,8 +106,8 @@ class PaperExecution:
             if rec.intent.token_id != token_id:
                 continue
             i = rec.intent
-            through = (i.side == Side.BUY and price <= i.price) or \
-                      (i.side == Side.SELL and price >= i.price)
+            through = (i.side == Side.BUY and price < i.price) or \
+                      (i.side == Side.SELL and price > i.price)
             if not through:
                 continue
             qty = min(rec.remaining, size)

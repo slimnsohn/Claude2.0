@@ -17,7 +17,7 @@ from pmtrader.allocator import Allocator, GateStatus
 from pmtrader.config import Config
 from pmtrader.core.bankroll import Bankroll, RunVerdict
 from pmtrader.core.models import (
-    Fill, Intent, Market, OrderBook, Position, Side,
+    Fill, Intent, Market, OrderBook, OrderStatus, Position, Side,
 )
 from pmtrader.execution.paper import PaperExecution
 from pmtrader.execution.router import ExecutionRouter
@@ -52,9 +52,11 @@ class Orchestrator:
         self.positions: dict[str, Position] = {}
         self.books: dict[str, OrderBook] = {}
         self.markets: dict[str, Market] = {}
+        self._token_market: dict[str, Market] = {}
         self.halted = False
         self.stop_reason: Optional[str] = None
         self._shutdown_done = False
+        self._strategy_errors: dict[str, int] = {}
 
         backend.on_fill_callbacks.append(self._on_fill)
 
@@ -170,8 +172,7 @@ class Orchestrator:
         self.books[book.token_id] = book
         if hasattr(self.backend, "on_book"):
             self.backend.on_book(book)
-        market = next((m for m in self.markets.values()
-                       if book.token_id in (m.token_id_yes, m.token_id_no)), None)
+        market = self._token_market.get(book.token_id)
         if market is None or self.halted:
             return
         now = book.ts
@@ -180,9 +181,19 @@ class Orchestrator:
             ctx = StrategyContext(now=now, cash=self.cash,
                                   budget=self.allocator.budget(s.name),
                                   positions=positions)
-            intents = s.on_books(market, self.books, ctx)
-            if intents:
-                self.process_intents(intents, now)
+            # one buggy strategy must not take down the tick loop (the feed
+            # would silently stall while the heartbeat keeps beating)
+            try:
+                intents = s.on_books(market, self.books, ctx)
+                if intents:
+                    self.process_intents(intents, now)
+            except Exception as exc:  # noqa: BLE001
+                self._strategy_errors[s.name] = \
+                    self._strategy_errors.get(s.name, 0) + 1
+                log.exception("strategy %s failed on book tick", s.name)
+                if self._strategy_errors[s.name] == 1:  # don't spam the log table
+                    self.store.insert_decision(now, s.name, "strategy_error", {
+                        "error": f"{type(exc).__name__}: {exc}"})
 
     def on_trade(self, trade) -> None:
         if hasattr(self.backend, "on_trade"):
@@ -191,8 +202,28 @@ class Orchestrator:
 
     def register_market(self, market: Market) -> None:
         self.markets[market.condition_id] = market
+        self._token_market[market.token_id_yes] = market
+        self._token_market[market.token_id_no] = market
         if hasattr(self.backend, "register_market"):
             self.backend.register_market(market)
+
+    def startup_reconcile(self, now: float) -> None:
+        """A fresh process has no in-memory orders; anything still marked
+        working in the store is an orphan from a previous run. Expire it,
+        and in live mode clear the exchange before strategies start."""
+        stale = self.store.orders_by_status(
+            OrderStatus.SUBMITTED.value, OrderStatus.OPEN.value,
+            OrderStatus.PARTIALLY_FILLED.value)
+        for o in stale:
+            self.store.upsert_order(o.model_copy(update={
+                "status": OrderStatus.EXPIRED, "updated_ts": now}))
+        if hasattr(self.backend, "reconcile_with_api"):  # live backend
+            self.router.cancel_all(now)
+        if stale:
+            log.warning("expired %d orphaned orders from a previous run",
+                        len(stale))
+            self.store.insert_decision(now, "orchestrator", "startup_reconcile",
+                                       {"expired_stale_orders": len(stale)})
 
     # -- housekeeping ----------------------------------------------------------------------
     def heartbeat(self) -> None:
@@ -280,10 +311,13 @@ class Orchestrator:
                 if hasattr(s, "on_market_resolved"):
                     s.on_market_resolved(market.condition_id)
             self.markets.pop(market.condition_id, None)
+            self._token_market.pop(market.token_id_yes, None)
+            self._token_market.pop(market.token_id_no, None)
 
     async def run(self) -> None:
         log.info("orchestrator starting in %s mode, bankroll %.2f",
                  self.cfg.mode, self.cfg.bankroll)
+        self.startup_reconcile(time.time())
         if self.feed is not None:
             self.feed.cache.on_book = self.on_book
             self.feed.cache.on_trade = self.on_trade

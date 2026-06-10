@@ -3,10 +3,13 @@ import pytest
 
 from pmtrader.config import Config
 from pmtrader.core.fees import FeeSchedule
-from pmtrader.core.models import Level, Market, OrderBook, OrderStatus
+from pmtrader.core.models import (
+    Intent, Level, Market, Order, OrderBook, OrderStatus, Side,
+)
 from pmtrader.datalayer.store import Store
 from pmtrader.execution.paper import PaperExecution
 from pmtrader.orchestrator import Orchestrator
+from pmtrader.strategies.base import Strategy
 from pmtrader.strategies.s1_arb import S1Arb
 
 FREE = FeeSchedule(exponent=1, rate=0.0, taker_only=True, rebate_rate=0.0)
@@ -127,3 +130,50 @@ class TestFullLoop:
         curve = store.equity_curve()
         assert curve and curve[-1]["equity"] == pytest.approx(1000.0)
         assert curve[-1]["mode"] == "paper"
+
+
+class TestStartupReconcile:
+    def test_stale_open_orders_expired_at_startup(self, orch, store):
+        # an OPEN order left in the DB by a previous process must not linger
+        intent = Intent(strategy="s1_arb", token_id="m1-yes", side=Side.BUY,
+                        price=0.40, size=10.0, expected_edge=0.02,
+                        reasoning="stale from prior run", condition_id="m1")
+        store.upsert_order(Order(id="prior-run-1", intent=intent,
+                                 status=OrderStatus.OPEN, filled_size=0.0,
+                                 avg_fill_price=0.0, created_ts=1.0,
+                                 updated_ts=1.0))
+        orch.startup_reconcile(now=100.0)
+        assert store.orders_by_status("OPEN", "SUBMITTED",
+                                      "PARTIALLY_FILLED") == []
+        expired = store.orders_by_status("EXPIRED")
+        assert [o.id for o in expired] == ["prior-run-1"]
+        kinds = [d["kind"] for d in store.decisions(limit=10)]
+        assert "startup_reconcile" in kinds
+
+    def test_noop_when_no_stale_orders(self, orch, store):
+        orch.startup_reconcile(now=100.0)
+        kinds = [d["kind"] for d in store.decisions(limit=10)]
+        assert "startup_reconcile" not in kinds
+
+
+class _BoomStrategy(Strategy):
+    name = "boom"
+    DEFAULTS = {}
+
+    def on_books(self, market, books, ctx):
+        raise KeyError("boom")
+
+
+class TestStrategyIsolation:
+    def test_one_bad_strategy_does_not_block_others(self, store, tmp_path):
+        cfg = Config(mode="paper", bankroll=1000.0)
+        backend = PaperExecution(store=store, starting_cash=1000.0)
+        o = Orchestrator(cfg=cfg, store=store,
+                         strategies=[_BoomStrategy(), S1Arb()],
+                         backend=backend,
+                         heartbeat_path=tmp_path / "heartbeat")
+        o.register_market(mk_market())
+        plant_arb(o)  # raises inside boom.on_books; s1 must still trade
+        assert len(store.fills()) == 2
+        kinds = [d["kind"] for d in store.decisions(limit=20)]
+        assert "strategy_error" in kinds

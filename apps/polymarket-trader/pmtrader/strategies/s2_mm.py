@@ -25,6 +25,7 @@ class S2MarketMaker(Strategy):
         "min_spread": 0.02,       # full spread floor
         "max_spread": 0.20,
         "quote_size": 100.0,
+        "max_quote_notional": 40.0,  # $ per quote — stay under the 5%/market risk cap
         "max_inventory": 500.0,   # shares per token
         "markout_threshold": -0.005,   # avg $/share markout that triggers widening
         "markout_window": 20,     # fills
@@ -38,7 +39,9 @@ class S2MarketMaker(Strategy):
     PARAM_BOUNDS = {
         "gamma": (0.0, 0.1), "k_spread": (0.5, 50.0),
         "min_spread": (0.005, 0.10), "max_spread": (0.02, 0.5),
-        "quote_size": (5.0, 10_000.0), "max_inventory": (10.0, 100_000.0),
+        "quote_size": (5.0, 10_000.0),
+        "max_quote_notional": (1.0, 1e6),
+        "max_inventory": (10.0, 100_000.0),
         "markout_threshold": (-0.10, 0.0), "markout_window": (5, 200),
         "markout_horizon": (5.0, 600.0), "vol_window": (5, 500),
         "vol_lambda": (0.5, 0.999), "requote_tick": (0.001, 0.05),
@@ -141,8 +144,12 @@ class S2MarketMaker(Strategy):
                    self.params["k_spread"] * sigma) * self.widen_mult[token]
         half = min(half, self.params["max_spread"] / 2)
 
-        # inventory skew: shift the quote midpoint against current inventory
+        # inventory skew: shift the quote midpoint against current inventory,
+        # clamped so the quotes always stay anchored near the reference
+        # (unclamped, max inventory would shift the center right off the book)
         skew = self.params["gamma"] * inventory * (1 + sigma * 100)
+        max_skew = self.params["max_spread"] / 2
+        skew = max(-max_skew, min(max_skew, skew))
         center = ref - skew
 
         bid = max(0.001, min(0.998, center - half))
@@ -154,7 +161,11 @@ class S2MarketMaker(Strategy):
         self.last_quote_ref[token] = ref
         self.last_quote_inv[token] = inventory
 
-        size = self.params["quote_size"]
+        def quote_size(price: float) -> float:
+            # cap notional per quote so risk's per-market cap can approve it
+            return min(self.params["quote_size"],
+                       self.params["max_quote_notional"] / max(price, 1e-3))
+
         reasoning = (f"mm ref={ref:.4f} sigma={sigma:.5f} half={half:.4f} "
                      f"inv={inventory:.0f} skew={skew:.4f} "
                      f"markout={avg_markout:.4f}x{len(self.markouts[token])}")
@@ -163,15 +174,15 @@ class S2MarketMaker(Strategy):
         if inventory < max_inv:  # may add YES exposure
             intents.append(Intent(
                 strategy=self.name, token_id=market.token_id_yes,
-                side=Side.BUY, price=bid, size=size, expected_edge=half,
-                reasoning=reasoning, post_only=True,
+                side=Side.BUY, price=bid, size=quote_size(bid),
+                expected_edge=half, reasoning=reasoning, post_only=True,
                 condition_id=market.condition_id, event_id=market.event_id))
         if inventory > -max_inv:  # may add NO exposure (synthetic YES ask)
             no_bid = max(0.001, min(0.998, 1.0 - ask))
             intents.append(Intent(
                 strategy=self.name, token_id=market.token_id_no,
-                side=Side.BUY, price=no_bid, size=size, expected_edge=half,
-                reasoning=reasoning, post_only=True,
+                side=Side.BUY, price=no_bid, size=quote_size(no_bid),
+                expected_edge=half, reasoning=reasoning, post_only=True,
                 condition_id=market.condition_id, event_id=market.event_id))
         return intents
 

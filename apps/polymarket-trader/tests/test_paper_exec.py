@@ -93,13 +93,19 @@ class TestMakerFills:
 
     def test_partial_maker_fill_bounded_by_print_size(self, paper):
         order = paper.submit(mk_intent(price=0.38, size=100.0), now=101.0)
-        paper.on_trade("m1-yes", price=0.38, size=30.0, ts=102.0)
+        paper.on_trade("m1-yes", price=0.37, size=30.0, ts=102.0)
         assert order.status == OrderStatus.PARTIALLY_FILLED
         assert order.filled_size == 30.0
 
     def test_trade_above_bid_no_fill(self, paper):
         order = paper.submit(mk_intent(price=0.38), now=101.0)
         paper.on_trade("m1-yes", price=0.39, size=500.0, ts=102.0)
+        assert order.status == OrderStatus.OPEN
+
+    def test_trade_at_bid_is_not_fill(self, paper):
+        # queue priority: a print AT our limit does not mean we were filled
+        order = paper.submit(mk_intent(price=0.38), now=101.0)
+        paper.on_trade("m1-yes", price=0.38, size=500.0, ts=102.0)
         assert order.status == OrderStatus.OPEN
 
     def test_resting_ask_fills_on_trade_through(self, paper):
@@ -110,6 +116,13 @@ class TestMakerFills:
         assert order.status == OrderStatus.OPEN
         paper.on_trade("m1-yes", price=0.46, size=80.0, ts=103.0)
         assert order.status == OrderStatus.FILLED
+
+    def test_trade_at_ask_is_not_fill(self, paper):
+        paper.submit(mk_intent(price=0.41, size=50.0), now=101.0)
+        order = paper.submit(mk_intent(side=Side.SELL, price=0.45, size=50.0),
+                             now=102.0)
+        paper.on_trade("m1-yes", price=0.45, size=80.0, ts=103.0)
+        assert order.status == OrderStatus.OPEN
 
 
 class TestCancel:
