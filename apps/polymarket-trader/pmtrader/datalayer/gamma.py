@@ -10,6 +10,7 @@ Field semantics confirmed by recon 2026-06-09 (scripts/recon.py):
 from __future__ import annotations
 
 import json
+import logging
 from typing import Optional
 
 import httpx
@@ -17,7 +18,10 @@ from pydantic import BaseModel
 
 from pmtrader.core.fees import FeeSchedule
 from pmtrader.core.models import Market
+from pmtrader.datalayer.errors import DataError
 from pmtrader.datalayer.http_base import get_json
+
+log = logging.getLogger(__name__)
 
 GAMMA_BASE = "https://gamma-api.polymarket.com"
 
@@ -119,12 +123,20 @@ class GammaClient:
         await self.http.aclose()
 
     async def _paged(self, path: str, params: dict, page_size: int,
-                     max_pages: int = 200) -> list[dict]:
+                     max_pages: int = 100) -> list[dict]:
+        # Gamma rejects offsets beyond ~10k with HTTP 422 ("use /markets/keyset").
+        # A failure mid-pagination returns the partial result rather than losing it.
         out: list[dict] = []
         for page in range(max_pages):
             page_params = {**params, "limit": page_size, "offset": page * page_size}
-            batch = await get_json(self.http, f"{self.base}{path}", page_params,
-                                   base_delay=self.retry_base_delay)
+            try:
+                batch = await get_json(self.http, f"{self.base}{path}", page_params,
+                                       base_delay=self.retry_base_delay)
+            except DataError:
+                if not out:
+                    raise
+                log.warning("pagination of %s stopped at offset %d", path, page * page_size)
+                break
             if not batch:
                 break
             out.extend(batch)
@@ -132,15 +144,16 @@ class GammaClient:
                 break
         return out
 
-    async def active_markets(self, page_size: int = 100) -> list[Market]:
+    async def active_markets(self, page_size: int = 100,
+                             max_pages: int = 100) -> list[Market]:
         raws = await self._paged("/markets", {
             "active": "true", "closed": "false", "order": "volume24hr",
-            "ascending": "false"}, page_size)
+            "ascending": "false"}, page_size, max_pages)
         return [m for m in (parse_market(r) for r in raws) if m is not None]
 
     async def resolved_markets(self, end_date_min: Optional[str] = None,
                                page_size: int = 100,
-                               max_pages: int = 200) -> list[tuple[Market, str]]:
+                               max_pages: int = 100) -> list[tuple[Market, str]]:
         params = {"closed": "true", "order": "endDate", "ascending": "false"}
         if end_date_min:
             params["end_date_min"] = end_date_min

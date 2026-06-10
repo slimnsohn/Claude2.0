@@ -120,3 +120,17 @@ class TestGammaClient:
         client = make_client(handler)
         with pytest.raises(DataError):
             await client.active_markets()
+
+    async def test_mid_pagination_failure_returns_partial(self, fixture_json):
+        # Gamma 422s past its offset cap — keep what we already fetched
+        markets_page = fixture_json("gamma_markets.json")
+
+        def handler(request):
+            offset = int(request.url.params.get("offset", 0))
+            if offset >= 5:
+                return httpx.Response(422)
+            return httpx.Response(200, json=markets_page)
+
+        client = make_client(handler)
+        result = await client.active_markets(page_size=5, max_pages=10)
+        assert len(result) == 5

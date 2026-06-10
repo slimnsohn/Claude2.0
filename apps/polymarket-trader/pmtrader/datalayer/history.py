@@ -37,15 +37,18 @@ class HistoryFetcher:
                   max_markets: int = 10_000, include_active: bool = True) -> dict:
         stats = {"markets": 0, "tokens_fetched": 0, "tokens_skipped": 0, "errors": 0}
         targets = []
+        # Gamma caps offset pagination ~10k rows; bound pages to what we need.
+        pages = max(1, -(-max_markets // 100))
 
-        resolved = await self.gamma.resolved_markets(end_date_min=resolved_since)
+        resolved = await self.gamma.resolved_markets(end_date_min=resolved_since,
+                                                     max_pages=pages)
         for market, winner in resolved:
             self.store.upsert_market(market)
             self.store.set_resolution(market.condition_id, winner, time.time())
             targets.append(market)
 
         if include_active:
-            for market in await self.gamma.active_markets():
+            for market in await self.gamma.active_markets(max_pages=pages):
                 self.store.upsert_market(market)
                 targets.append(market)
 
