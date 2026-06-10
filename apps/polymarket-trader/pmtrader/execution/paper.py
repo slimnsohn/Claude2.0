@@ -12,6 +12,7 @@ of the system cannot tell the difference.
 from __future__ import annotations
 
 import itertools
+import uuid
 from typing import Callable
 
 from pmtrader.core.fees import order_taker_fee
@@ -26,6 +27,8 @@ _order_ids = itertools.count(1)
 class PaperExecution:
     def __init__(self, store, starting_cash: float = 1000.0):
         self.store = store
+        # run-scoped so order ids never collide with a previous run's DB rows
+        self.run_id = uuid.uuid4().hex[:8]
         self.cash = starting_cash
         self.books: dict[str, OrderBook] = {}
         self.markets: dict[str, Market] = {}        # by condition_id
@@ -53,7 +56,8 @@ class PaperExecution:
 
     # -- order entry -----------------------------------------------------------
     def submit(self, intent: Intent, now: float) -> OrderRecord:
-        rec = OrderRecord(order_id=f"paper-{next(_order_ids)}", intent=intent, ts=now)
+        rec = OrderRecord(order_id=f"paper-{self.run_id}-{next(_order_ids)}",
+                          intent=intent, ts=now)
         self.orders[rec.order_id] = rec
         rec.transition(OrderStatus.SUBMITTED, now, "paper submit")
         book = self.books.get(intent.token_id)

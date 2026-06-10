@@ -5,6 +5,7 @@ from pmtrader.core.fees import FeeSchedule
 from pmtrader.core.models import Intent, Level, Market, OrderBook, OrderStatus, Side
 from pmtrader.datalayer.store import Store
 from pmtrader.execution.paper import PaperExecution
+from pmtrader.execution.router import ExecutionRouter
 
 GENERAL = FeeSchedule(exponent=1, rate=0.05, taker_only=True, rebate_rate=0.25)
 
@@ -177,3 +178,42 @@ class TestFillEvents:
         paper.on_fill_callbacks.append(lambda fill, order: events.append(fill))
         paper.submit(mk_intent(), now=101.0)
         assert len(events) == 1 and events[0].size == 100.0
+
+
+class TestRunScopedOrderIds:
+    def test_order_ids_carry_run_tag(self, paper):
+        # ids must be unique ACROSS runs or DB rows from a prior run get
+        # silently overwritten by this run's paper-1, paper-2, ...
+        rec = paper.submit(mk_intent(price=0.38), now=101.0)
+        assert rec.order_id.startswith(f"paper-{paper.run_id}-")
+
+
+class TestQuoteReplace:
+    """A requote replaces the prior resting quote; stale quote ladders from
+    earlier reference prices must not accumulate and fill adversely."""
+
+    def mk_router(self, paper):
+        return ExecutionRouter(backend=paper, store=paper.store)
+
+    def test_post_only_requote_cancels_prior_quote(self, paper):
+        router = self.mk_router(paper)
+        r1 = router.submit(mk_intent(price=0.37, post_only=True), now=101.0)
+        r2 = router.submit(mk_intent(price=0.38, post_only=True), now=102.0)
+        assert r1.status == OrderStatus.CANCELLED
+        assert paper.open_orders() == [r2]
+
+    def test_replace_scoped_to_strategy_and_token(self, paper):
+        router = self.mk_router(paper)
+        other_strat = router.submit(
+            mk_intent(price=0.36, post_only=True, strategy="s3"), now=101.0)
+        same_strat_other_token = router.submit(
+            mk_intent(price=0.36, post_only=True, token_id="m1-no"), now=101.0)
+        router.submit(mk_intent(price=0.38, post_only=True), now=102.0)
+        assert other_strat.status == OrderStatus.OPEN
+        assert same_strat_other_token.status == OrderStatus.OPEN
+
+    def test_taker_intents_do_not_replace(self, paper):
+        router = self.mk_router(paper)
+        resting = router.submit(mk_intent(price=0.37, post_only=True), now=101.0)
+        router.submit(mk_intent(price=0.41), now=102.0)  # marketable taker
+        assert resting.status == OrderStatus.OPEN

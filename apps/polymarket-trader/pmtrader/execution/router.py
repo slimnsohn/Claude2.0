@@ -33,12 +33,26 @@ class ExecutionRouter:
                               ts=now)
             rec.transition(OrderStatus.REJECTED, now, "group already failed")
             return rec
+        if intent.post_only:
+            self._replace_quote(intent, now)
         rec = self.backend.submit(intent, now)
         if intent.group_id:
             self.groups[intent.group_id].append(rec)
             if rec.status == OrderStatus.REJECTED:
                 self._fail_group(intent.group_id, now)
         return rec
+
+    def _replace_quote(self, intent: Intent, now: float) -> None:
+        """A post_only quote replaces the same strategy's prior resting quote
+        on that token — otherwise requotes accumulate a ladder of stale
+        orders at old reference prices that fill adversely."""
+        if not hasattr(self.backend, "open_orders"):
+            return
+        for rec in self.backend.open_orders():
+            if (rec.intent.post_only
+                    and rec.intent.strategy == intent.strategy
+                    and rec.intent.token_id == intent.token_id):
+                self.backend.cancel(rec.order_id, now)
 
     def cancel(self, order_id: str, now: float) -> None:
         self.backend.cancel(order_id, now)
