@@ -27,6 +27,10 @@ OUTLET_FAMILY = {
     "the_hill": "mainstream", "politico": "mainstream",
 }
 
+# Deliberate design decision: belief topics WITHOUT a CES mapping (crime,
+# foreign_policy, social) still accumulate and decay — they feed the population
+# drift chart and are ready for future CES column coverage (e.g. CC24_330 gun
+# grid, CC24_321 abortion grid) but do not influence opinion probabilities today.
 # CES column topic → belief taxonomy topic
 CES_TOPIC_TO_BELIEF = {
     "approval": "trump_approval", "economy": "economy", "immigration": "immigration",

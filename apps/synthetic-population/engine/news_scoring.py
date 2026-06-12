@@ -87,13 +87,16 @@ NEGATIVE_SIGNALS = [
     "indict", "investigation", "shutdown", "attack", "threat", "tension",
 ]
 
+# Bad news about public programs/climate action confirms Republican-leaning priors;
+# good news confirms Democratic-leaning priors (used by the belief layer's
+# confirmation-bias alignment).
 PARTY_VALENCE = {
     "economy":         {"positive": "incumbent", "negative": "opposition"},
     "trump_approval":  {"positive": "rep", "negative": "dem"},
     "immigration":     {"positive": "rep", "negative": "dem"},
-    "healthcare":      {"positive": "dem", "negative": "dem"},
-    "climate":         {"positive": "dem", "negative": "dem"},
-    "gun_policy":      {"positive": "dem", "negative": "dem"},
+    "healthcare":      {"positive": "dem", "negative": "rep"},
+    "climate":         {"positive": "dem", "negative": "rep"},
+    "gun_policy":      {"positive": "dem", "negative": "rep"},
     "foreign_policy":  {"positive": "incumbent", "negative": "opposition"},
     "social":          {"positive": "mixed", "negative": "mixed"},
     "education":       {"positive": "dem", "negative": "mixed"},

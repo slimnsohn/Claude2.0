@@ -56,9 +56,9 @@ def main():
     # Backup then write
     if registry_path.exists():
         ts = datetime.now().strftime("%Y%m%d%H%M%S")
-        backup = registry_path.with_name(f"registry.backup.{ts}.json")
+        backup = registry_path.with_name(f"registry.rebuild-backup.{ts}.json")
         shutil.copy2(registry_path, backup)
-        print(f"Backed up old registry to {backup.name}")
+        print(f"Backed up pre-rebuild registry to {backup.name}")
 
     registry_path.write_text(json.dumps(profiles, indent=2, default=str))
     (base / "data" / "profiles" / "build_report.json").write_text(

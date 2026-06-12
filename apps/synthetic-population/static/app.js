@@ -1059,10 +1059,19 @@ async function loadProfileDetail(profileId) {
         if (p.drift_log && p.drift_log.length > 0) {
             html += `<div class="section-title">Drift Log</div><div class="card">`;
             for (const entry of p.drift_log) {
+                let entryText;
+                if (entry.topic !== undefined && entry.delta !== undefined) {
+                    const sign = entry.delta >= 0 ? "+" : "";
+                    const after = entry.shift_after !== undefined ? ` (→ ${entry.shift_after})` : "";
+                    entryText = esc(`${entry.date || ""} · ${entry.topic} ${sign}${entry.delta}${after}`);
+                } else if (entry.type === "calibration_dampening") {
+                    entryText = esc(`${entry.date || ""} · calibration dampening ×${entry.factor}`);
+                } else {
+                    entryText = esc(entry.description || entry.change || JSON.stringify(entry));
+                }
                 html += `
                     <div style="padding:6px 0;border-bottom:1px solid var(--border);font-size:12px">
-                        <span style="color:var(--text2)">${esc(entry.date || "")}</span>
-                        <span style="margin-left:8px;color:var(--text)">${esc(entry.description || entry.change || JSON.stringify(entry))}</span>
+                        <span style="color:var(--text)">${entryText}</span>
                     </div>
                 `;
             }
@@ -1614,15 +1623,30 @@ function renderEventsView(el) {
             if (!hist.length) { el.innerHTML = ""; return; }
             const latest = hist[hist.length - 1].mean_shift_by_topic || {};
             const topics = Object.keys(latest);
-            el.innerHTML = `<div class="section-title" style="font-size:12px">Population belief drift (mean shift, last cycle of ${hist.length})</div>` +
+            el.innerHTML = `<div class="section-title" style="font-size:12px">Population belief drift by topic (${hist.length} cycles)</div>` +
                 topics.map(t => {
                     const v = latest[t] || 0;
                     const w = v === 0 ? 0 : Math.max(2, Math.min(100, Math.abs(v) * 800));
                     const color = v >= 0 ? "var(--accent, #4a9eff)" : "#e06c5a";
+                    // Sparkline across all history
+                    const series = hist.map(h => (h.mean_shift_by_topic || {})[t] || 0);
+                    let sparkSvg = "";
+                    if (hist.length >= 2) {
+                        const maxAbs = Math.max(...series.map(Math.abs), 1e-9);
+                        const W = 120, H = 14;
+                        const pts = series.map((val, i) => {
+                            const x = (i / (series.length - 1)) * W;
+                            const y = H / 2 - (val / maxAbs) * (H / 2 - 1);
+                            return `${x.toFixed(1)},${y.toFixed(1)}`;
+                        }).join(" ");
+                        sparkSvg = `<svg width="${W}" height="${H}" style="overflow:visible;flex-shrink:0" viewBox="0 0 ${W} ${H}">` +
+                            `<polyline points="${pts}" fill="none" stroke="${color}" stroke-width="1.5" stroke-linejoin="round"/></svg>`;
+                    }
                     return `<div style="display:flex;align-items:center;gap:6px;font-size:11px">
                         <span style="width:110px;color:var(--text2)">${esc(t)}</span>
                         <div style="width:${w}px;height:8px;background:${color};border-radius:2px"></div>
-                        <span>${(v >= 0 ? "+" : "") + v.toFixed(4)}</span></div>`;
+                        <span style="width:52px">${(v >= 0 ? "+" : "") + v.toFixed(4)}</span>
+                        ${sparkSvg}</div>`;
                 }).join("");
         } catch (e) { el.innerHTML = ""; }
     }
