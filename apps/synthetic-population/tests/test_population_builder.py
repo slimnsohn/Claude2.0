@@ -41,6 +41,51 @@ def test_harmonize_adds_profile_fields():
     assert str(df["age_bracket"].dtype) in ("object", "category")
 
 
+def test_compute_targets_uses_commonweight_when_present():
+    """Party/urban targets must be commonweight-weighted shares, not raw row shares.
+
+    70% of rows are dem but carry weight 0.5; 30% are rep with weight 2.0.
+    Weighted dem share = (7*0.5) / (7*0.5 + 3*2.0) = 3.5/9.5 = 7/19.
+    """
+    df = pd.DataFrame({
+        "party_id": ["dem"] * 7 + ["rep"] * 3,
+        "urban_rural": ["urban"] * 7 + ["rural"] * 3,
+        "commonweight": [0.5] * 7 + [2.0] * 3,
+    })
+    targets = compute_targets(df)
+    expected_dem = 3.5 / 9.5  # 7/19 ~= 0.3684
+    assert targets["party_id"]["dem"] == pytest.approx(expected_dem)
+    assert targets["party_id"]["rep"] == pytest.approx(6.0 / 9.5)
+    assert targets["party_id"]["dem"] != pytest.approx(0.70)
+    # urban_rural weighted the same way
+    assert targets["urban_rural"]["urban"] == pytest.approx(expected_dem)
+    assert targets["urban_rural"]["rural"] == pytest.approx(6.0 / 9.5)
+    # shares sum to 1
+    assert sum(targets["party_id"].values()) == pytest.approx(1.0)
+
+
+def test_compute_targets_unweighted_fallback_without_commonweight():
+    df = pd.DataFrame({
+        "party_id": ["dem"] * 7 + ["rep"] * 3,
+        "urban_rural": ["urban"] * 7 + ["rural"] * 3,
+    })
+    targets = compute_targets(df)
+    assert targets["party_id"]["dem"] == pytest.approx(0.70)
+    assert targets["urban_rural"]["rural"] == pytest.approx(0.30)
+
+
+def test_compute_targets_weighted_drops_nan_var_rows():
+    """Rows with NaN party_id must not contribute weight to the denominator."""
+    df = pd.DataFrame({
+        "party_id": ["dem", "rep", None],
+        "urban_rural": ["urban", "rural", "urban"],
+        "commonweight": [1.0, 1.0, 100.0],
+    })
+    targets = compute_targets(df)
+    assert targets["party_id"]["dem"] == pytest.approx(0.5)
+    assert targets["party_id"]["rep"] == pytest.approx(0.5)
+
+
 def test_rake_weights_matches_marginals():
     df = harmonize_ces(_fixture_ces()).dropna(subset=KEY_VARS)
     targets = compute_targets(df)

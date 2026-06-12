@@ -30,11 +30,26 @@ class BalanceError(Exception):
     pass
 
 
+def _weighted_share(df: pd.DataFrame, var: str, weight_col: str = "commonweight") -> dict:
+    """Share of each value of `var`, weighted by CES post-stratification weight.
+
+    CES raw rows are an opt-in online panel and skew Democratic; commonweight
+    is CES's own correction for that. Falls back to unweighted shares when the
+    weight column is absent (e.g. fixtures without it).
+    """
+    sub = df.dropna(subset=[var])
+    if weight_col not in df.columns:
+        return sub[var].value_counts(normalize=True).to_dict()
+    w = pd.to_numeric(sub[weight_col], errors="coerce").fillna(0.0)
+    totals = w.groupby(sub[var]).sum()
+    return (totals / totals.sum()).to_dict()
+
+
 def compute_targets(harmonized: pd.DataFrame) -> dict:
-    """Census targets for demographics; CES-native distributions for party/urban."""
+    """Census targets for demographics; CES distributions (commonweight-weighted) for party/urban."""
     targets = {k: dict(v) for k, v in CENSUS_TARGETS.items()}
-    targets["party_id"] = harmonized["party_id"].value_counts(normalize=True).to_dict()
-    targets["urban_rural"] = harmonized["urban_rural"].dropna().value_counts(normalize=True).to_dict()
+    targets["party_id"] = _weighted_share(harmonized, "party_id")
+    targets["urban_rural"] = _weighted_share(harmonized, "urban_rural")
     return targets
 
 
