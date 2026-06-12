@@ -1,0 +1,38 @@
+{
+  "checksum": "abc123",
+  "roots": {
+    "bookmark_bar": {
+      "children": [
+        { "date_added": "13300000000000000", "guid": "g1", "id": "10", "name": "ESPN", "type": "url", "url": "https://www.espn.com/" },
+        { "date_added": "13300000000000000", "guid": "g2", "id": "11", "name": "Claude", "type": "url", "url": "https://claude.ai/" },
+        {
+          "date_added": "13300000000000000",
+          "guid": "g3",
+          "id": "12",
+          "name": "Finance",
+          "type": "folder",
+          "children": [
+            { "date_added": "13300000000000000", "guid": "g4", "id": "13", "name": "Mortgage Rates", "type": "url", "url": "https://www.mortgagenewsdaily.com/" }
+          ]
+        }
+      ],
+      "date_added": "13300000000000000",
+      "date_modified": "13300000000000000",
+      "guid": "root1",
+      "id": "1",
+      "name": "Bookmarks bar",
+      "type": "folder"
+    },
+    "other": {
+      "children": [
+        { "date_added": "13300000000000000", "guid": "g5", "id": "14", "name": "Hidden Other", "type": "url", "url": "https://should-not-appear.com/" }
+      ],
+      "guid": "root2",
+      "id": "2",
+      "name": "Other bookmarks",
+      "type": "folder"
+    },
+    "synced": { "children": [], "guid": "root3", "id": "3", "name": "Mobile bookmarks", "type": "folder" }
+  },
+  "version": 1
+}
