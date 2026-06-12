@@ -1,16 +1,16 @@
 {
-  "recorded_at": "2026-06-12T07:29:01.789782",
+  "recorded_at": "2026-06-12T07:58:49.901042",
   "protocol": "synthetic recorded BEFORE real numbers were looked up",
   "results": [
     {
       "topic": "approval",
       "question": "Do you approve of Trump's job performance?",
-      "ces_column": "CC24_312i",
-      "ces_name": "Trump job approval",
+      "ces_column": "CC24_410",
+      "ces_name": "Trump job approval (2024 Trump-vote proxy)",
       "synthetic": {
-        "no": 0.5373,
-        "unsure": 0.0511,
-        "yes": 0.4116
+        "no": 0.5731,
+        "unsure": 0.0347,
+        "yes": 0.3922
       },
       "runs": 10,
       "archetype_count": 140,
@@ -19,12 +19,12 @@
     {
       "topic": "approval",
       "question": "Do you approve of the way Congress is handling its job?",
-      "ces_column": "CC24_311a",
+      "ces_column": "CC24_312b",
       "ces_name": "Congress approval",
       "synthetic": {
-        "no": 0.4273,
-        "unsure": 0.0822,
-        "yes": 0.4906
+        "no": 0.6689,
+        "unsure": 0.1229,
+        "yes": 0.2081
       },
       "runs": 10,
       "archetype_count": 140,
@@ -34,11 +34,11 @@
       "topic": "economy",
       "question": "Is the economy getting better or worse?",
       "ces_column": "CC24_301",
-      "ces_name": "Economy retrospective (better/worse than year ago)",
+      "ces_name": "Economy retrospective (nation's economy past year)",
       "synthetic": {
-        "no": 0.5281,
-        "unsure": 0.1856,
-        "yes": 0.2863
+        "no": 0.4917,
+        "unsure": 0.1898,
+        "yes": 0.3185
       },
       "runs": 10,
       "archetype_count": 140,
@@ -46,13 +46,13 @@
     },
     {
       "topic": "economy",
-      "question": "Are your personal finances better off than a year ago?",
-      "ces_column": "CC24_303",
-      "ces_name": "Personal finances (better/worse than year ago)",
+      "question": "Has your household income increased over the past year?",
+      "ces_column": "CC24_302",
+      "ces_name": "Household income past year (increased/decreased)",
       "synthetic": {
-        "no": 0.0408,
-        "unsure": 0.077,
-        "yes": 0.8822
+        "no": 0.2659,
+        "unsure": 0.53,
+        "yes": 0.2041
       },
       "runs": 10,
       "archetype_count": 140,
@@ -61,12 +61,12 @@
     {
       "topic": "immigration",
       "question": "Do you support increasing border patrol on the US-Mexico border?",
-      "ces_column": "CC24_300_1",
-      "ces_name": "Increase border patrol on US-Mexico border",
+      "ces_column": "CC24_323b",
+      "ces_name": "Increase border patrols on US-Mexico border",
       "synthetic": {
-        "no": 0.1822,
+        "no": 0.2346,
         "unsure": 0.0,
-        "yes": 0.8178
+        "yes": 0.7654
       },
       "runs": 10,
       "archetype_count": 140,
@@ -74,13 +74,13 @@
     },
     {
       "topic": "immigration",
-      "question": "Do you support granting legal status to DREAMers brought to the US as children?",
-      "ces_column": "CC24_300_2",
-      "ces_name": "Grant legal status to DREAMers (brought to US as children)",
+      "question": "Do you support a pathway to citizenship for Dreamers brought to the US as children?",
+      "ces_column": "CC24_323d",
+      "ces_name": "Pathway to citizenship for Dreamers (brought as children)",
       "synthetic": {
-        "no": 0.4316,
+        "no": 0.2324,
         "unsure": 0.0,
-        "yes": 0.5684
+        "yes": 0.7676
       },
       "runs": 10,
       "archetype_count": 140,
@@ -88,13 +88,13 @@
     },
     {
       "topic": "immigration",
-      "question": "Do you support increasing deportation of undocumented immigrants?",
-      "ces_column": "CC24_300_3",
-      "ces_name": "Increase deportation of undocumented immigrants",
+      "question": "Do you support building a border wall?",
+      "ces_column": "CC24_323c",
+      "ces_name": "Build a wall on the US-Mexico border",
       "synthetic": {
-        "no": 0.6541,
+        "no": 0.5358,
         "unsure": 0.0,
-        "yes": 0.3459
+        "yes": 0.4642
       },
       "runs": 10,
       "archetype_count": 140,
@@ -103,12 +103,12 @@
     {
       "topic": "healthcare",
       "question": "Do you support repealing the Affordable Care Act?",
-      "ces_column": "CC24_326a",
-      "ces_name": "Repeal the Affordable Care Act (Obamacare)",
+      "ces_column": "CC24_328d",
+      "ces_name": "Repeal the Affordable Care Act",
       "synthetic": {
-        "no": 0.2979,
+        "no": 0.6436,
         "unsure": 0.0,
-        "yes": 0.7021
+        "yes": 0.3564
       },
       "runs": 10,
       "archetype_count": 140,
@@ -116,69 +116,83 @@
     },
     {
       "topic": "healthcare",
-      "question": "Do you support Medicare for all?",
-      "ces_column": "CC24_326b",
-      "ces_name": "Medicare for All / government health insurance plan",
+      "question": "Do you support Medicaid expansion?",
+      "ces_column": "CC24_328e",
+      "ces_name": "Expand Medicaid",
       "synthetic": {
-        "no": 0.2856,
+        "no": 0.1546,
         "unsure": 0.0,
-        "yes": 0.7144
+        "yes": 0.8454
       },
       "runs": 10,
       "archetype_count": 140,
       "profile_count": 5000
     },
     {
-      "topic": "climate",
-      "question": "Do you support a carbon tax on fossil fuels?",
-      "ces_column": "CC24_415c",
-      "ces_name": "Carbon tax on fossil fuels",
+      "topic": "environment",
+      "question": "Do you support the EPA regulating carbon dioxide emissions?",
+      "ces_column": "CC24_326a",
+      "ces_name": "Give EPA power to regulate CO2 emissions",
       "synthetic": {
-        "no": 0.3671,
-        "unsure": 0.0836,
-        "yes": 0.5493
+        "no": 0.3038,
+        "unsure": 0.0,
+        "yes": 0.6962
       },
       "runs": 10,
       "archetype_count": 140,
       "profile_count": 5000
     },
     {
-      "topic": "climate",
+      "topic": "environment",
       "question": "Do you support requiring renewable energy production?",
-      "ces_column": "CC24_415d",
-      "ces_name": "Require renewable energy production",
+      "ces_column": "CC24_326b",
+      "ces_name": "Require at least 20% renewable electricity",
       "synthetic": {
-        "no": 0.3592,
-        "unsure": 0.1195,
-        "yes": 0.5213
+        "no": 0.2838,
+        "unsure": 0.0,
+        "yes": 0.7162
       },
       "runs": 10,
       "archetype_count": 140,
       "profile_count": 5000
     },
     {
-      "topic": "fiscal",
-      "question": "Do you support raising taxes on income over $400k?",
-      "ces_column": "CC24_308a_4",
-      "ces_name": "Raise taxes on income over $400k",
+      "topic": "guns",
+      "question": "Do you support banning assault rifles?",
+      "ces_column": "CC24_321a",
+      "ces_name": "Ban assault rifles",
       "synthetic": {
-        "no": 0.6435,
+        "no": 0.2912,
         "unsure": 0.0,
-        "yes": 0.3565
+        "yes": 0.7088
       },
       "runs": 10,
       "archetype_count": 140,
       "profile_count": 5000
     },
     {
-      "topic": "economy",
-      "question": "Do you support raising the minimum wage to $15 per hour?",
-      "ces_column": "CC24_308a_2",
-      "ces_name": "Raise federal minimum wage to $15/hour",
+      "topic": "guns",
+      "question": "Do you support background checks on all gun sales?",
+      "ces_column": "CC24_321c",
+      "ces_name": "Require background checks on all gun sales",
       "synthetic": {
-        "no": 0.4634,
+        "no": 0.0384,
         "unsure": 0.0,
-        "yes": 0.5366
+        "yes": 0.9616
+      },
+      "runs": 10,
+      "archetype_count": 140,
+      "profile_count": 5000
+    },
+    {
+      "topic": "abortion",
+      "question": "Do you support allowing abortion as a matter of choice?",
+      "ces_column": "CC24_324a",
+      "ces_name": "Always allow abortion as a matter of choice",
+      "synthetic": {
+        "no": 0.3004,
+        "unsure": 0.0,
+        "yes": 0.6996
       },
       "runs": 10,
       "archetype_count": 140,
@@ -186,13 +200,27 @@
     },
     {
       "topic": "education",
-      "question": "Do you support forgiving student loan debt up to $50k?",
-      "ces_column": "CC24_308a_5",
-      "ces_name": "Forgive student loan debt up to $50k",
+      "question": "Do you support forgiving student loan debt?",
+      "ces_column": "CC24_323f",
+      "ces_name": "Forgive up to $20,000 in student loan debt",
       "synthetic": {
-        "no": 0.7446,
+        "no": 0.373,
         "unsure": 0.0,
-        "yes": 0.2554
+        "yes": 0.627
+      },
+      "runs": 10,
+      "archetype_count": 140,
+      "profile_count": 5000
+    },
+    {
+      "topic": "foreign_policy",
+      "question": "Do you support providing arms to Ukraine?",
+      "ces_column": "CC24_308a_4",
+      "ces_name": "Provide arms to Ukraine",
+      "synthetic": {
+        "no": 0.6296,
+        "unsure": 0.0,
+        "yes": 0.3704
       },
       "runs": 10,
       "archetype_count": 140,

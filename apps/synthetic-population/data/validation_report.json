@@ -1,282 +1,322 @@
 [
   {
     "q": "Do you approve of Trump's job performance?",
-    "col": "CC24_312i",
+    "col": "CC24_410",
     "topic": "approval",
     "syn": {
-      "no": 0.5373,
-      "unsure": 0.0511,
-      "yes": 0.4116
+      "no": 0.5731,
+      "unsure": 0.0347,
+      "yes": 0.3922
     },
     "real": {
       "yes": 0.4,
       "no": 0.57,
       "unsure": 0.03
     },
-    "delta_yes": 0.012,
-    "mae": 0.022,
+    "delta_yes": -0.008,
+    "mae": 0.005,
     "source": "RealClearPolling aggregate (16+ pollsters)",
     "date": "2026-06-05",
     "quality": "high"
   },
   {
-    "q": "Do you support increasing deportation of undocumented immigrants?",
-    "col": "CC24_300_3",
-    "topic": "immigration",
-    "syn": {
-      "no": 0.6541,
-      "unsure": 0.0,
-      "yes": 0.3459
-    },
-    "real": {
-      "yes": 0.38,
-      "no": 0.38,
-      "unsure": 0.24
-    },
-    "delta_yes": -0.034,
-    "mae": 0.183,
-    "source": "AP-NORC (deport-all framing, n=1,260)",
-    "date": "2025-04-21",
-    "quality": "medium"
-  },
-  {
-    "q": "Do you support a carbon tax on fossil fuels?",
-    "col": "CC24_415c",
-    "topic": "climate",
-    "syn": {
-      "no": 0.3671,
-      "unsure": 0.0836,
-      "yes": 0.5493
-    },
-    "real": {
-      "yes": 0.59,
-      "no": 0.22,
-      "unsure": 0.19
-    },
-    "delta_yes": -0.041,
-    "mae": 0.098,
-    "source": "Yale Climate Change in the American Mind, Spring 2026",
-    "date": "2026-04-26",
-    "quality": "medium"
-  },
-  {
-    "q": "Is the economy getting better or worse?",
-    "col": "CC24_301",
-    "topic": "economy",
-    "syn": {
-      "no": 0.5281,
-      "unsure": 0.1856,
-      "yes": 0.2863
-    },
-    "real": {
-      "yes": 0.2,
-      "no": 0.76,
-      "unsure": 0.04
-    },
-    "delta_yes": 0.086,
-    "mae": 0.155,
-    "source": "Gallup Economic Confidence Index (May 2026 wave)",
-    "date": "2026-05-17",
-    "quality": "high"
-  },
-  {
-    "q": "Do you support Medicare for all?",
-    "col": "CC24_326b",
-    "topic": "healthcare",
-    "syn": {
-      "no": 0.2856,
-      "unsure": 0.0,
-      "yes": 0.7144
-    },
-    "real": {
-      "yes": 0.59,
-      "no": 0.27,
-      "unsure": 0.14
-    },
-    "delta_yes": 0.124,
-    "mae": 0.093,
-    "source": "Economist/YouGov (corroborated by Data for Progress Nov 2025: 65%)",
-    "date": "2025-07-01",
-    "quality": "medium"
-  },
-  {
-    "q": "Do you support requiring renewable energy production?",
-    "col": "CC24_415d",
-    "topic": "climate",
-    "syn": {
-      "no": 0.3592,
-      "unsure": 0.1195,
-      "yes": 0.5213
-    },
-    "real": {
-      "yes": 0.65,
-      "no": 0.2,
-      "unsure": 0.15
-    },
-    "delta_yes": -0.129,
-    "mae": 0.106,
-    "source": "Yale CCAM Spring 2026 + Pew March 2026 (both 65%)",
-    "date": "2026-04-26",
-    "quality": "high"
-  },
-  {
-    "q": "Do you support raising the minimum wage to $15 per hour?",
-    "col": "CC24_308a_2",
-    "topic": "economy",
-    "syn": {
-      "no": 0.4634,
-      "unsure": 0.0,
-      "yes": 0.5366
-    },
-    "real": {
-      "yes": 0.69,
-      "no": 0.18,
-      "unsure": 0.13
-    },
-    "delta_yes": -0.153,
-    "mae": 0.189,
-    "source": "Economist/YouGov (n=1,656)",
-    "date": "2025-11-03",
-    "quality": "high"
-  },
-  {
-    "q": "Do you support raising taxes on income over $400k?",
-    "col": "CC24_308a_4",
-    "topic": "fiscal",
-    "syn": {
-      "no": 0.6435,
-      "unsure": 0.0,
-      "yes": 0.3565
-    },
-    "real": {
-      "yes": 0.58,
-      "no": 0.19,
-      "unsure": 0.23
-    },
-    "delta_yes": -0.223,
-    "mae": 0.302,
-    "source": "Pew Research (n=5,086)",
-    "date": "2025-02-02",
-    "quality": "high"
-  },
-  {
-    "q": "Do you support increasing border patrol on the US-Mexico border?",
-    "col": "CC24_300_1",
-    "topic": "immigration",
-    "syn": {
-      "no": 0.1822,
-      "unsure": 0.0,
-      "yes": 0.8178
-    },
-    "real": {
-      "yes": 0.59,
-      "no": 0.36,
-      "unsure": 0.05
-    },
-    "delta_yes": 0.228,
-    "mae": 0.152,
-    "source": "Gallup Annual Immigration Poll (n=1,402)",
-    "date": "2025-06-26",
-    "quality": "medium"
-  },
-  {
-    "q": "Do you support granting legal status to DREAMers brought to the US as children?",
-    "col": "CC24_300_2",
-    "topic": "immigration",
-    "syn": {
-      "no": 0.4316,
-      "unsure": 0.0,
-      "yes": 0.5684
-    },
-    "real": {
-      "yes": 0.85,
-      "no": 0.1,
-      "unsure": 0.05
-    },
-    "delta_yes": -0.282,
-    "mae": 0.221,
-    "source": "Gallup Annual Immigration Poll (n=1,402)",
-    "date": "2025-06-26",
-    "quality": "medium"
-  },
-  {
-    "q": "Do you support forgiving student loan debt up to $50k?",
-    "col": "CC24_308a_5",
-    "topic": "education",
-    "syn": {
-      "no": 0.7446,
-      "unsure": 0.0,
-      "yes": 0.2554
-    },
-    "real": {
-      "yes": 0.55,
-      "no": 0.34,
-      "unsure": 0.11
-    },
-    "delta_yes": -0.295,
-    "mae": 0.27,
-    "source": "Data for Progress Mar 2026 + AP-NORC May 2024 composite",
-    "date": "2026-03-28",
-    "quality": "low"
-  },
-  {
     "q": "Do you support repealing the Affordable Care Act?",
-    "col": "CC24_326a",
+    "col": "CC24_328d",
     "topic": "healthcare",
     "syn": {
-      "no": 0.2979,
+      "no": 0.6436,
       "unsure": 0.0,
-      "yes": 0.7021
+      "yes": 0.3564
     },
     "real": {
       "yes": 0.38,
       "no": 0.61,
       "unsure": 0.01
     },
-    "delta_yes": 0.322,
-    "mae": 0.215,
+    "delta_yes": -0.024,
+    "mae": 0.022,
     "source": "KFF Health Tracking Poll (favorability proxy, n=1,343)",
     "date": "2026-03-02",
     "quality": "medium"
   },
   {
+    "q": "Do you support requiring renewable energy production?",
+    "col": "CC24_326b",
+    "topic": "environment",
+    "syn": {
+      "no": 0.2838,
+      "unsure": 0.0,
+      "yes": 0.7162
+    },
+    "real": {
+      "yes": 0.65,
+      "no": 0.2,
+      "unsure": 0.15
+    },
+    "delta_yes": 0.066,
+    "mae": 0.1,
+    "source": "Yale CCAM Spring 2026 + Pew March 2026 (both 65%)",
+    "date": "2026-04-26",
+    "quality": "high"
+  },
+  {
+    "q": "Do you support forgiving student loan debt?",
+    "col": "CC24_323f",
+    "topic": "education",
+    "syn": {
+      "no": 0.373,
+      "unsure": 0.0,
+      "yes": 0.627
+    },
+    "real": {
+      "yes": 0.55,
+      "no": 0.34,
+      "unsure": 0.11
+    },
+    "delta_yes": 0.077,
+    "mae": 0.073,
+    "source": "Data for Progress Mar 2026 + AP-NORC May 2024 composite",
+    "date": "2026-03-28",
+    "quality": "low"
+  },
+  {
+    "q": "Do you support a pathway to citizenship for Dreamers brought to the US as children?",
+    "col": "CC24_323d",
+    "topic": "immigration",
+    "syn": {
+      "no": 0.2324,
+      "unsure": 0.0,
+      "yes": 0.7676
+    },
+    "real": {
+      "yes": 0.85,
+      "no": 0.1,
+      "unsure": 0.05
+    },
+    "delta_yes": -0.082,
+    "mae": 0.088,
+    "source": "Gallup Annual Immigration Poll (n=1,402)",
+    "date": "2025-06-26",
+    "quality": "medium"
+  },
+  {
+    "q": "Do you support background checks on all gun sales?",
+    "col": "CC24_321c",
+    "topic": "guns",
+    "syn": {
+      "no": 0.0384,
+      "unsure": 0.0,
+      "yes": 0.9616
+    },
+    "real": {
+      "yes": 0.88,
+      "no": 0.08,
+      "unsure": 0.04
+    },
+    "delta_yes": 0.082,
+    "mae": 0.054,
+    "source": "Multi-poll consensus 2017-2023 (Gallup/Pew/Quinnipiac/APM)",
+    "date": "2023-05-18",
+    "quality": "medium"
+  },
+  {
+    "q": "Do you support building a border wall?",
+    "col": "CC24_323c",
+    "topic": "immigration",
+    "syn": {
+      "no": 0.5358,
+      "unsure": 0.0,
+      "yes": 0.4642
+    },
+    "real": {
+      "yes": 0.56,
+      "no": 0.4,
+      "unsure": 0.04
+    },
+    "delta_yes": -0.096,
+    "mae": 0.091,
+    "source": "Pew Research (n=5,044)",
+    "date": "2025-06-08",
+    "quality": "high"
+  },
+  {
+    "q": "Do you support allowing abortion as a matter of choice?",
+    "col": "CC24_324a",
+    "topic": "abortion",
+    "syn": {
+      "no": 0.3004,
+      "unsure": 0.0,
+      "yes": 0.6996
+    },
+    "real": {
+      "yes": 0.6,
+      "no": 0.38,
+      "unsure": 0.02
+    },
+    "delta_yes": 0.1,
+    "mae": 0.066,
+    "source": "Pew Research (n=8,512)",
+    "date": "2026-01-26",
+    "quality": "high"
+  },
+  {
+    "q": "Do you support the EPA regulating carbon dioxide emissions?",
+    "col": "CC24_326a",
+    "topic": "environment",
+    "syn": {
+      "no": 0.3038,
+      "unsure": 0.0,
+      "yes": 0.6962
+    },
+    "real": {
+      "yes": 0.59,
+      "no": 0.22,
+      "unsure": 0.19
+    },
+    "delta_yes": 0.106,
+    "mae": 0.127,
+    "source": "Yale Climate Change in the American Mind, Spring 2026",
+    "date": "2026-04-26",
+    "quality": "low"
+  },
+  {
     "q": "Do you approve of the way Congress is handling its job?",
-    "col": "CC24_311a",
+    "col": "CC24_312b",
     "topic": "approval",
     "syn": {
-      "no": 0.4273,
-      "unsure": 0.0822,
-      "yes": 0.4906
+      "no": 0.6689,
+      "unsure": 0.1229,
+      "yes": 0.2081
     },
     "real": {
       "yes": 0.1,
       "no": 0.86,
       "unsure": 0.04
     },
-    "delta_yes": 0.391,
-    "mae": 0.288,
+    "delta_yes": 0.108,
+    "mae": 0.127,
     "source": "Gallup monthly (n=1,001)",
     "date": "2026-04-15",
     "quality": "high"
   },
   {
-    "q": "Are your personal finances better off than a year ago?",
-    "col": "CC24_303",
+    "q": "Is the economy getting better or worse?",
+    "col": "CC24_301",
     "topic": "economy",
     "syn": {
-      "no": 0.0408,
-      "unsure": 0.077,
-      "yes": 0.8822
+      "no": 0.4917,
+      "unsure": 0.1898,
+      "yes": 0.3185
+    },
+    "real": {
+      "yes": 0.2,
+      "no": 0.76,
+      "unsure": 0.04
+    },
+    "delta_yes": 0.118,
+    "mae": 0.179,
+    "source": "Gallup Economic Confidence Index (May 2026 wave)",
+    "date": "2026-05-17",
+    "quality": "high"
+  },
+  {
+    "q": "Has your household income increased over the past year?",
+    "col": "CC24_302",
+    "topic": "economy",
+    "syn": {
+      "no": 0.2659,
+      "unsure": 0.53,
+      "yes": 0.2041
     },
     "real": {
       "yes": 0.34,
       "no": 0.55,
       "unsure": 0.11
     },
-    "delta_yes": 0.542,
-    "mae": 0.361,
+    "delta_yes": -0.136,
+    "mae": 0.28,
     "source": "Gallup Economy and Personal Finance Survey",
     "date": "2026-04-15",
+    "quality": "medium"
+  },
+  {
+    "q": "Do you support increasing border patrol on the US-Mexico border?",
+    "col": "CC24_323b",
+    "topic": "immigration",
+    "syn": {
+      "no": 0.2346,
+      "unsure": 0.0,
+      "yes": 0.7654
+    },
+    "real": {
+      "yes": 0.59,
+      "no": 0.36,
+      "unsure": 0.05
+    },
+    "delta_yes": 0.175,
+    "mae": 0.117,
+    "source": "Gallup Annual Immigration Poll (n=1,402)",
+    "date": "2025-06-26",
+    "quality": "medium"
+  },
+  {
+    "q": "Do you support providing arms to Ukraine?",
+    "col": "CC24_308a_4",
+    "topic": "foreign_policy",
+    "syn": {
+      "no": 0.6296,
+      "unsure": 0.0,
+      "yes": 0.3704
+    },
+    "real": {
+      "yes": 0.55,
+      "no": 0.22,
+      "unsure": 0.23
+    },
+    "delta_yes": -0.18,
+    "mae": 0.273,
+    "source": "Economist/YouGov (RV)",
+    "date": "2026-04-20",
     "quality": "high"
+  },
+  {
+    "q": "Do you support banning assault rifles?",
+    "col": "CC24_321a",
+    "topic": "guns",
+    "syn": {
+      "no": 0.2912,
+      "unsure": 0.0,
+      "yes": 0.7088
+    },
+    "real": {
+      "yes": 0.52,
+      "no": 0.41,
+      "unsure": 0.07
+    },
+    "delta_yes": 0.189,
+    "mae": 0.126,
+    "source": "Gallup Crime poll (n=1,011)",
+    "date": "2024-10-12",
+    "quality": "high"
+  },
+  {
+    "q": "Do you support Medicaid expansion?",
+    "col": "CC24_328e",
+    "topic": "healthcare",
+    "syn": {
+      "no": 0.1546,
+      "unsure": 0.0,
+      "yes": 0.8454
+    },
+    "real": {
+      "yes": 0.6,
+      "no": 0.23,
+      "unsure": 0.17
+    },
+    "delta_yes": 0.245,
+    "mae": 0.164,
+    "source": "KFF Health Tracking Polls (derived)",
+    "date": "2025-06-08",
+    "quality": "medium"
   }
 ]
