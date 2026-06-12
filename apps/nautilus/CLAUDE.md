@@ -4,7 +4,7 @@
 Spotlight/Raycast-style Windows launcher. Ctrl+Space summons a centered search bar that launches Start Menu apps, jumps to websites (Chrome bookmarks bar + built-ins), opens File Explorer folders, and routes question-shaped queries to a new Claude chat (claude.ai/new?q=...).
 
 ## Tech Stack
-Electron 28, vanilla JS (CommonJS), node:test. Zero runtime dependencies.
+Electron 42, vanilla JS (CommonJS), node:test. Zero runtime dependencies.
 
 ## Quick Start
 ```bash
