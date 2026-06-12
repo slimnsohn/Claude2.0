@@ -44,6 +44,31 @@ no entries in the final 10 min before resolution · quarter-Kelly sizing.
 **Double-or-bust mode** stops the run at 2× equity (won) or 5% (lost); it
 changes the stopping rule, never the sizing.
 
+## Backtest-first validation (reboot-proof)
+
+The machine this runs on reboots often, so edge evidence never depends on a
+continuous burn-in. The pipeline:
+
+1. `python scripts/fetch_history.py --resolved-since <date> --fidelity 1 --max-markets 400`
+   — refresh history (1-minute fidelity is only served for recent markets;
+   older ones fall back to daily automatically).
+2. `python scripts/run_calibration_research.py` — re-derive the S4 whitelist
+   (walk-forward internally; political markets show a reverse
+   favorite-longshot bias, so expect qualified buckets at high deciles).
+3. `python scripts/run_walkforward_gate.py` — the PRIMARY edge gate. Writes
+   `data/walkforward_report.json`; strategies that PASS get the reduced
+   paper gate (50 trades / 2 days) because paper then only validates
+   execution. S2/S3 are excluded (can't be replayed honestly from sampled
+   mids) and keep the full 200-trade / 7-day gate.
+4. `python scripts/run_execution_report.py` — what paper trading is for:
+   maker fill rate, time-to-fill, taker price improvement vs the cost
+   model's assumptions. Accumulates across reboots.
+
+Gate evidence is rebuilt from SQLite on every startup
+(`Orchestrator.refresh_allocator_trades`), so reboots cost nothing but the
+minutes offline. Dashboard: `/api/walkforward`, `/api/execution`, and a
+Backtest column in the strategies panel.
+
 ## Going live (the two-key interlock)
 
 1. Pass the paper gate (dashboard shows LIVE_ELIGIBLE per strategy).
