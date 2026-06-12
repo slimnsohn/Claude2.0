@@ -18,7 +18,7 @@ const { TRAY_ICON_DATA_URL } = require('./assets/tray-icon.js');
 
 const WIN_W = 680;
 const WIN_H = 460;
-const HOTKEYS = ['Shift+Space', 'Ctrl+Shift+Space', 'Ctrl+Alt+Space'];
+const HOTKEYS = ['Alt+Space', 'Ctrl+Alt+Space', 'Ctrl+Shift+Space'];
 const WORKSPACE_DIR = 'C:\\Users\\slims\\Desktop\\Claude 2.0';
 
 const log = createLogger(path.join(__dirname, 'data', 'launcher.log'));
