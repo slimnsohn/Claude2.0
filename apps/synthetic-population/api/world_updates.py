@@ -17,6 +17,13 @@ import requests
 
 from flask import Blueprint, jsonify, request, current_app
 
+from engine.news_scoring import (
+    TOPIC_KEYWORDS, POSITIVE_SIGNALS, NEGATIVE_SIGNALS, PARTY_VALENCE,
+    detect_topics as _detect_topics,
+    detect_direction as _detect_direction,
+    compute_party_shift as _compute_opinion_shift,
+)
+
 world_updates_bp = Blueprint("world_updates", __name__)
 
 
@@ -152,134 +159,6 @@ def _sample_relevant(headlines: list[dict], n: int = 8) -> list[dict]:
         w.pop(chosen)
 
     return selected
-
-
-# ---------------------------------------------------------------------------
-# Topic detection heuristics
-# ---------------------------------------------------------------------------
-
-TOPIC_KEYWORDS = {
-    "economy": [
-        "economy", "economic", "inflation", "recession", "gdp", "unemployment",
-        "jobs report", "wages", "stock market", "housing", "interest rate",
-        "federal reserve", "fed ", "dow", "nasdaq", "s&p", "tariff", "trade",
-        "consumer", "spending", "debt", "deficit", "gas price", "oil price",
-        "retail", "manufacturing",
-    ],
-    "trump_approval": [
-        "trump", "president", "white house", "executive order", "administration",
-        "oval office", "mar-a-lago", "presidential",
-    ],
-    "immigration": [
-        "border", "immigration", "immigrant", "migrant", "asylum", "deportation",
-        "ice ", "customs", "visa", "refugee", "undocumented", "daca",
-    ],
-    "healthcare": [
-        "healthcare", "health care", "insurance", "medicaid", "medicare",
-        "obamacare", "aca ", "hospital", "drug price", "pharmaceutical",
-    ],
-    "climate": [
-        "climate", "environment", "emissions", "renewable", "fossil fuel",
-        "carbon", "epa", "clean energy", "solar", "wind power", "wildfire",
-        "hurricane", "flood", "drought",
-    ],
-    "gun_policy": [
-        "gun", "firearm", "shooting", "second amendment", "nra",
-        "background check", "assault weapon",
-    ],
-    "foreign_policy": [
-        "russia", "ukraine", "china", "nato", "military", "war ",
-        "iran", "north korea", "israel", "gaza", "taiwan", "sanctions",
-        "missile", "troops",
-    ],
-    "social": [
-        "abortion", "roe", "supreme court", "scotus", "transgender",
-        "lgbtq", "marriage equality", "dei", "affirmative action",
-    ],
-    "education": [
-        "school", "education", "student loan", "college", "university",
-        "teacher", "curriculum",
-    ],
-    "crime": [
-        "crime", "police", "law enforcement", "prison", "fentanyl",
-        "drug ", "murder", "violent crime", "theft",
-    ],
-}
-
-POSITIVE_SIGNALS = [
-    "improve", "surge", "gain", "rise", "boost", "record high", "growth",
-    "recover", "pass", "sign into law", "bipartisan", "agreement",
-    "strong", "beat expectations", "optimis", "deal", "success",
-]
-NEGATIVE_SIGNALS = [
-    "crash", "decline", "fall", "drop", "crisis", "scandal", "fail",
-    "worse", "collapse", "layoff", "cut", "slash", "protest",
-    "backlash", "concern", "fear", "warning", "record low", "pessimis",
-    "indict", "investigation", "shutdown", "attack", "threat", "tension",
-]
-
-PARTY_VALENCE = {
-    "economy":         {"positive": "incumbent", "negative": "opposition"},
-    "trump_approval":  {"positive": "rep", "negative": "dem"},
-    "immigration":     {"positive": "rep", "negative": "dem"},
-    "healthcare":      {"positive": "dem", "negative": "dem"},
-    "climate":         {"positive": "dem", "negative": "dem"},
-    "gun_policy":      {"positive": "dem", "negative": "dem"},
-    "foreign_policy":  {"positive": "incumbent", "negative": "opposition"},
-    "social":          {"positive": "mixed", "negative": "mixed"},
-    "education":       {"positive": "dem", "negative": "mixed"},
-    "crime":           {"positive": "rep", "negative": "rep"},
-}
-
-
-def _detect_topics(text: str) -> list[str]:
-    lower = text.lower()
-    found = []
-    for topic, keywords in TOPIC_KEYWORDS.items():
-        if any(kw in lower for kw in keywords):
-            found.append(topic)
-    return found or ["general"]
-
-
-def _detect_direction(text: str) -> str:
-    lower = text.lower()
-    pos = sum(1 for s in POSITIVE_SIGNALS if s in lower)
-    neg = sum(1 for s in NEGATIVE_SIGNALS if s in lower)
-    if pos > neg:
-        return "positive"
-    elif neg > pos:
-        return "negative"
-    return "neutral"
-
-
-def _compute_opinion_shift(topics: list, direction: str) -> dict:
-    incumbent = "rep"  # Trump in office 2025-2026
-    opposition = "dem"
-
-    shifts = {"dem": 0.0, "rep": 0.0, "independent": 0.0}
-
-    for topic in topics:
-        valence = PARTY_VALENCE.get(topic, {"positive": "mixed", "negative": "mixed"})
-        beneficiary = valence.get(direction, "mixed")
-
-        if beneficiary == "incumbent":
-            beneficiary = incumbent
-        elif beneficiary == "opposition":
-            beneficiary = opposition
-
-        magnitude = 0.01  # small per-topic; ~8 headlines = ~5% max shift
-
-        if beneficiary == "rep":
-            shifts["rep"] += magnitude
-            shifts["dem"] -= magnitude * 0.5
-        elif beneficiary == "dem":
-            shifts["dem"] += magnitude
-            shifts["rep"] -= magnitude * 0.5
-
-    for k in shifts:
-        shifts[k] = max(-0.10, min(0.10, shifts[k]))
-
-    return shifts
 
 
 # ---------------------------------------------------------------------------
