@@ -55,27 +55,33 @@ def run_cycle(data_dir, opinion_engine, fetch_fn=None, now: datetime = None) -> 
     run_id = f"CY-{now.strftime('%Y%m%d%H%M%S')}"
 
     # 1. Fetch + sample headlines
-    headlines = (fetch_fn or fetch_headlines)()
+    headlines = (fetch_fn or fetch_headlines)() or []
     sampled = sample_relevant(headlines, n=N_EVENTS_PER_CYCLE) if headlines else []
 
     # 2. Score
     events, method = score_events(sampled) if sampled else ([], "none")
 
-    # 3. Persist world updates (replace previous auto entries, keep manual)
-    wu_path = data_dir / "world_updates.json"
-    existing = json.loads(wu_path.read_text()) if wu_path.exists() else []
-    manual = [u for u in existing if u.get("source") != "auto"]
-    wu_path.write_text(json.dumps(_events_to_updates(events, now, run_id) + manual, indent=2))
-
-    # 4. Decay + apply to population
+    # 3. Decay + apply to population
     profiles = load_registry(data_dir)
     summary = update_population(profiles, events, now, update_id=run_id)
     summary["scoring_method"] = method
     summary["headlines_scanned"] = len(headlines)
 
+    # 4. Persist world updates (replace previous auto entries, keep manual)
+    wu_path = data_dir / "world_updates.json"
+    try:
+        existing = json.loads(wu_path.read_text()) if wu_path.exists() else []
+    except (json.JSONDecodeError, OSError):
+        existing = []
+    manual = [u for u in existing if u.get("source") != "auto"]
+    wu_path.write_text(json.dumps(_events_to_updates(events, now, run_id) + manual, indent=2))
+
     # 5. Aggregate history row
     hist_path = data_dir / "belief_history.json"
-    history = json.loads(hist_path.read_text()) if hist_path.exists() else []
+    try:
+        history = json.loads(hist_path.read_text()) if hist_path.exists() else []
+    except (json.JSONDecodeError, OSError):
+        history = []
     history.append({k: summary[k] for k in
                     ("update_id", "date", "n_events", "exposures", "mean_shift_by_topic")})
     hist_path.write_text(json.dumps(history[-365:], indent=2))

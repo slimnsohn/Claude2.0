@@ -12,8 +12,9 @@ from pathlib import Path
 from flask import Blueprint, jsonify, request, current_app
 
 from engine.news_fetch import (
-    RSS_FEEDS, fetch_headlines as _fetch_headlines,
-    sample_relevant as _sample_relevant, strip_html as _strip_html,
+    fetch_headlines as _fetch_headlines,
+    sample_relevant as _sample_relevant,
+    strip_html as _strip_html,
 )
 from engine.news_scoring import (
     detect_topics as _detect_topics,
