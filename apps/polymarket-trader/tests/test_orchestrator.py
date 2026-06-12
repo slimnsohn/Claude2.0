@@ -208,3 +208,52 @@ class TestDurableAllocatorEvidence:
         orch.flush_allocator_events()  # idempotent: no duplicate rows
         assert len([d for d in store.decisions(limit=10)
                     if d["kind"] == "promotion"]) == 1
+
+
+import asyncio
+
+from pmtrader.datalayer.gamma import Event
+
+
+def mk_negrisk_event(n=3):
+    markets = [mk_market(cid=f"e{i}") for i in range(n)]
+    for m in markets:
+        m.event_id = "ev9"
+    return Event(id="ev9", title="who wins?", neg_risk=True, markets=markets)
+
+
+class TestNegRiskDispatch:
+    def test_on_book_dispatches_on_event_for_negrisk(self, orch, store):
+        ev = mk_negrisk_event()
+        orch.events["ev9"] = ev
+        for m in ev.markets:
+            orch.register_market(m)
+        # all three YES asks sum to 0.90 -> set arb
+        for m in ev.markets:
+            orch.on_book(mk_book(m.token_id_yes, 0.28, 0.30))
+        fills = store.fills()
+        yes_tokens = {m.token_id_yes for m in ev.markets}
+        assert yes_tokens <= {f["token_id"] for f in fills}
+
+    def test_refresh_markets_tracks_overlapping_negrisk_events(self, orch):
+        ev = mk_negrisk_event()
+        orch.register_market(ev.markets[0])  # one outcome already tracked
+
+        class FakeGamma:
+            async def active_markets(self, max_pages=4):
+                return []
+
+            async def events(self, closed=False, max_pages=2):
+                return [ev,
+                        Event(id="ev-other", title="x", neg_risk=True,
+                              markets=[mk_market(cid="zz")]),
+                        Event(id="ev-not-nr", title="y", neg_risk=False,
+                              markets=[mk_market(cid="yy")])]
+
+        orch.gamma = FakeGamma()
+        asyncio.run(orch.refresh_markets())
+        assert "ev9" in orch.events
+        assert "ev-other" not in orch.events       # no tracked overlap
+        assert "ev-not-nr" not in orch.events      # not neg-risk
+        # every outcome of the tracked event is registered for books
+        assert all(m.condition_id in orch.markets for m in ev.markets)

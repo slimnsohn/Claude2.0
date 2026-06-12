@@ -54,6 +54,7 @@ class Orchestrator:
         self.books: dict[str, OrderBook] = {}
         self.markets: dict[str, Market] = {}
         self._token_market: dict[str, Market] = {}
+        self.events: dict[str, object] = {}  # event_id -> neg-risk Event
         self.halted = False
         self.stop_reason: Optional[str] = None
         self._shutdown_done = False
@@ -179,6 +180,7 @@ class Orchestrator:
             return
         now = book.ts
         positions = dict(self.positions)
+        event = self.events.get(market.event_id) if market.event_id else None
         for s in self.strategies:
             ctx = StrategyContext(now=now, cash=self.cash,
                                   budget=self.allocator.budget(s.name),
@@ -186,7 +188,9 @@ class Orchestrator:
             # one buggy strategy must not take down the tick loop (the feed
             # would silently stall while the heartbeat keeps beating)
             try:
-                intents = s.on_books(market, self.books, ctx)
+                intents = list(s.on_books(market, self.books, ctx))
+                if event is not None:
+                    intents += list(s.on_event(event, self.books, ctx))
                 if intents:
                     self.process_intents(intents, now)
             except Exception as exc:  # noqa: BLE001
@@ -309,11 +313,32 @@ class Orchestrator:
         for m in active[: self.cfg.max_tracked_markets]:
             self.register_market(m)
             self.store.upsert_market(m)
+        await self._refresh_events()
         if self.feed is not None:
             tokens = []
             for m in list(self.markets.values()):
                 tokens += [m.token_id_yes, m.token_id_no]
             self.feed.set_assets(tokens)
+
+    async def _refresh_events(self) -> None:
+        """Track neg-risk events that overlap tracked markets and register
+        every outcome, so S1 can price the full set (sum of YES asks < 1)."""
+        try:
+            events = await self.gamma.events(closed=False, max_pages=2)
+        except Exception as exc:  # noqa: BLE001
+            log.warning("event refresh failed: %s", type(exc).__name__)
+            return
+        tracked = set(self.markets)
+        self.events = {}
+        for ev in events:
+            if not ev.neg_risk or not ev.markets:
+                continue
+            if not any(m.condition_id in tracked for m in ev.markets):
+                continue
+            for m in ev.markets:
+                self.register_market(m)
+                self.store.upsert_market(m)
+            self.events[ev.id] = ev
 
     async def check_resolutions(self) -> None:
         if self.gamma is None:
