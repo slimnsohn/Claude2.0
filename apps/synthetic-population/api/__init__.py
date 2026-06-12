@@ -16,3 +16,5 @@ def register_blueprints(app):
     app.register_blueprint(world_updates_bp)
     from api.benchmarks import benchmarks_bp
     app.register_blueprint(benchmarks_bp)
+    from api.polymarket import polymarket_bp
+    app.register_blueprint(polymarket_bp)

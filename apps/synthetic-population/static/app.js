@@ -41,6 +41,7 @@ function render() {
         case "backtest": renderBacktestView(app); break;
         case "benchmark": renderBenchmarkView(app); break;
         case "events": renderEventsView(app); break;
+        case "polymarket": renderPolymarketView(app); break;
         case "sources": renderSourcesView(app); break;
     }
 }
@@ -1937,6 +1938,173 @@ async function loadSourcesData() {
     } catch (e) {
         container.innerHTML = `<p style="color:var(--text2)">Failed to load sources: ${esc(e.message)}</p>`;
     }
+}
+
+// --- View: Polymarket ---
+
+let pmMarkets = [];
+
+function pmFmtVolume(v) {
+    if (v == null || isNaN(v)) return "--";
+    if (v >= 1e6) return "$" + (v / 1e6).toFixed(1) + "M";
+    if (v >= 1e3) return "$" + (v / 1e3).toFixed(0) + "K";
+    return "$" + Math.round(v);
+}
+
+function pmDelta(synthYes, impliedYes) {
+    if (synthYes == null || impliedYes == null) return "";
+    const d = synthYes - impliedYes;
+    const color = Math.abs(d) <= 0.05 ? "var(--text2)" : d > 0 ? "var(--green)" : "var(--red)";
+    return `<span style="color:${color}">&Delta; ${(d >= 0 ? "+" : "")}${(d * 100).toFixed(1)}%</span>`;
+}
+
+function pmAskResultHtml(res, impliedYes) {
+    const s = res.synthetic || {};
+    let html = `
+        Population: Yes <strong style="color:var(--green)">${pct(s.yes)}</strong>
+        &middot; No <strong style="color:var(--red)">${pct(s.no)}</strong>
+        &middot; Unsure <strong>${pct(s.unsure)}</strong>`;
+    if (impliedYes != null) {
+        html += ` &nbsp;|&nbsp; Market implied Yes <strong>${pct(impliedYes)}</strong> ${pmDelta(s.yes, impliedYes)}`;
+    }
+    html += ` <span style="color:var(--text2);font-size:11px">(${esc(res.ces_name || "")}, ${res.runs || "?"} runs)</span>`;
+    return html;
+}
+
+function renderPolymarketView(el) {
+    el.innerHTML = `
+        <h2>Polymarket</h2>
+        <div class="card" style="margin-bottom:16px">
+            <div class="section-title">Population vs. Markets</div>
+            <p style="font-size:13px;color:var(--text2);margin:0">
+                Top open Polymarket markets by 24h volume. <strong>Covered</strong> = the population can answer it
+                from real CES survey data. The population answers what the <strong>public believes/supports</strong> &mdash;
+                not what will happen. Treat it as a public-opinion lens on the market, not a price prediction.
+            </p>
+        </div>
+        <div class="card" style="margin-bottom:16px">
+            <div class="section-title">Ask any Polymarket-style question</div>
+            <div style="display:flex;gap:8px">
+                <input id="pm-ask-input" class="input" style="flex:1" placeholder="e.g. Will Trump's approval be above 45%?">
+                <button id="pm-ask-btn" class="btn btn-primary">Ask Population</button>
+            </div>
+            <div id="pm-ask-result" style="margin-top:8px;font-size:13px"></div>
+        </div>
+        <div style="display:flex;gap:8px;margin-bottom:12px;align-items:center">
+            <button id="pm-refresh" class="btn btn-primary">Refresh Markets</button>
+            <span id="pm-status" style="font-size:12px;color:var(--text2)"></span>
+        </div>
+        <div id="pm-list"><p style="color:var(--text2)">Click "Refresh Markets" to load the top markets.</p></div>
+    `;
+
+    document.getElementById("pm-refresh").addEventListener("click", loadPolymarketMarkets);
+
+    const askBtn = document.getElementById("pm-ask-btn");
+    const askInput = document.getElementById("pm-ask-input");
+    const runFreeformAsk = async () => {
+        const q = askInput.value.trim();
+        if (!q) return;
+        const resultEl = document.getElementById("pm-ask-result");
+        askBtn.disabled = true;
+        resultEl.innerHTML = '<span style="color:var(--text2)">Polling the population...</span>';
+        try {
+            const res = await api("/api/polymarket/ask", { method: "POST", body: { question: q, runs: 10 } });
+            resultEl.innerHTML = pmAskResultHtml(res, null);
+        } catch (e) {
+            resultEl.innerHTML = `<span class="badge badge-pending">no CES coverage</span>
+                <span style="color:var(--text2)">${esc(e.message)} &mdash; the population can only answer questions backed by CES survey items (approval, economy, immigration, guns, abortion, healthcare, climate, Ukraine, student debt).</span>`;
+        }
+        askBtn.disabled = false;
+    };
+    askBtn.addEventListener("click", runFreeformAsk);
+    askInput.addEventListener("keydown", e => { if (e.key === "Enter") runFreeformAsk(); });
+
+    if (pmMarkets.length) renderPmTable();
+}
+
+async function loadPolymarketMarkets() {
+    const btn = document.getElementById("pm-refresh");
+    const status = document.getElementById("pm-status");
+    const container = document.getElementById("pm-list");
+    btn.disabled = true;
+    status.textContent = "Fetching markets...";
+    try {
+        const data = await api("/api/polymarket/trending?limit=20");
+        pmMarkets = data.markets || [];
+        const covered = pmMarkets.filter(m => m.covered).length;
+        const when = data.fetched_at ? formatPollDate(data.fetched_at) : "";
+        status.textContent = `${pmMarkets.length} markets | ${covered} covered` +
+            (data.from_cache ? ` (cached ${when})` : ` (fetched ${when})`);
+        renderPmTable();
+    } catch (e) {
+        if (container) container.innerHTML = `<p style="color:var(--red)">Failed to load markets: ${esc(e.message)}</p>`;
+        status.textContent = "";
+    }
+    btn.disabled = false;
+}
+
+function renderPmTable() {
+    const container = document.getElementById("pm-list");
+    if (!container) return;
+    if (!pmMarkets.length) {
+        container.innerHTML = '<p style="color:var(--text2)">No markets returned.</p>';
+        return;
+    }
+    container.innerHTML = `
+        <table class="data-table">
+            <thead><tr>
+                <th>Market</th>
+                <th style="text-align:right">24h Vol</th>
+                <th style="text-align:center">Implied Yes</th>
+                <th>Coverage</th>
+                <th style="width:110px"></th>
+            </tr></thead>
+            <tbody>
+                ${pmMarkets.map((m, i) => {
+                    const link = m.slug
+                        ? `<a href="https://polymarket.com/market/${encodeURIComponent(m.slug)}" target="_blank" rel="noopener">${esc(truncate(m.question, 80))}</a>`
+                        : esc(truncate(m.question, 80));
+                    const coverage = m.covered
+                        ? `<span class="badge badge-complete">${esc(m.ces_name || m.ces_column || "covered")}</span>`
+                        : `<span class="badge badge-pending">no CES coverage</span>`;
+                    const askBtn = m.covered
+                        ? `<button class="btn btn-sm" data-pm-ask="${i}">Ask population</button>`
+                        : "";
+                    return `<tr>
+                        <td style="max-width:380px">${link}</td>
+                        <td style="text-align:right;white-space:nowrap">${pmFmtVolume(m.volume_24h)}</td>
+                        <td style="text-align:center;font-weight:600">${m.implied_yes != null ? pct(m.implied_yes) : "--"}</td>
+                        <td>${coverage}</td>
+                        <td>${askBtn}</td>
+                    </tr>
+                    <tr id="pm-res-${i}" style="display:none"><td colspan="5" style="font-size:13px;background:var(--surface2)"></td></tr>`;
+                }).join("")}
+            </tbody>
+        </table>
+    `;
+    container.querySelectorAll("[data-pm-ask]").forEach(btn => {
+        btn.addEventListener("click", async () => {
+            const i = parseInt(btn.dataset.pmAsk, 10);
+            const m = pmMarkets[i];
+            if (!m) return;
+            const row = document.getElementById(`pm-res-${i}`);
+            const cell = row ? row.querySelector("td") : null;
+            btn.disabled = true;
+            btn.textContent = "Polling...";
+            if (row && cell) {
+                row.style.display = "";
+                cell.innerHTML = '<span style="color:var(--text2)">Polling the population...</span>';
+            }
+            try {
+                const res = await api("/api/polymarket/ask", { method: "POST", body: { question: m.question, runs: 10 } });
+                if (cell) cell.innerHTML = pmAskResultHtml(res, m.implied_yes);
+            } catch (e) {
+                if (cell) cell.innerHTML = `<span style="color:var(--red)">Error: ${esc(e.message)}</span>`;
+            }
+            btn.disabled = false;
+            btn.textContent = "Ask population";
+        });
+    });
 }
 
 // Load sidebar stats
