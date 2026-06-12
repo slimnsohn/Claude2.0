@@ -7,3 +7,5 @@ __pycache__/
 *.pyc
 .pytest_cache/
 data/raw/
+data/belief_history.json
+data/calibration_history.json
