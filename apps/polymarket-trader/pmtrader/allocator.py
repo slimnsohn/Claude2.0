@@ -6,7 +6,9 @@ Two responsibilities:
    5% floor / 50% cap. Shrinkage stops early noise from whipsawing weights.
 2. Gates: a strategy may deploy real capital only with LIVE_ELIGIBLE status:
    >= 200 paper trades AND bootstrap 95% CI of per-trade EV > 0 AND >= 7
-   days of history. Rolling live performance is monitored; if the rolling
+   days of history. Strategies whose edge already passed the walk-forward
+   backtest gate get reduced thresholds (50 trades / 2 days): paper then
+   validates execution, not edge. Rolling live performance is monitored; if the rolling
    CI upper bound drops below 0 (or drawdown breaches), the strategy is
    demoted back to PAPER with the evidence logged. Nothing self-modifies
    outside these rules.
@@ -30,6 +32,10 @@ class GateStatus(StrEnum):
 class Allocator:
     GATE_MIN_TRADES = 200
     GATE_MIN_DAYS = 7.0
+    # reduced gate for strategies whose edge already passed the walk-forward
+    # backtest: paper then only validates execution, not edge
+    BT_GATE_MIN_TRADES = 50
+    BT_GATE_MIN_DAYS = 2.0
     DECAY_WINDOW_TRADES = 200
     WEIGHT_FLOOR = 0.05
     WEIGHT_CAP = 0.50
@@ -44,6 +50,7 @@ class Allocator:
         self.live_trades: dict[str, list[dict]] = defaultdict(list)
         self.paper_trades: dict[str, list[dict]] = defaultdict(list)
         self.events: list[dict] = []
+        self.backtest_pass: dict[str, bool] = {}
 
     # -- recording ------------------------------------------------------------
     def record_trades(self, strategy: str, trades: list[dict]) -> None:
@@ -51,6 +58,16 @@ class Allocator:
 
     def record_paper_trades(self, strategy: str, trades: list[dict]) -> None:
         self.paper_trades[strategy].extend(trades)
+
+    def hydrate(self, paper: dict[str, list[dict]],
+                live: dict[str, list[dict]]) -> None:
+        """Replace trade history from the durable store (reboot-safe)."""
+        for s in self.strategies:
+            self.paper_trades[s] = list(paper.get(s, []))
+            self.live_trades[s] = list(live.get(s, []))
+
+    def set_backtest_pass(self, passes: dict[str, bool]) -> None:
+        self.backtest_pass = dict(passes)
 
     # -- queries ----------------------------------------------------------------
     def weights(self) -> dict[str, float]:
@@ -132,12 +149,18 @@ class Allocator:
                     self.events.append({"kind": "demotion", "ts": now,
                                         "strategy": s, "evidence": evidence})
 
+    def _gate_thresholds(self, strategy: str) -> tuple[int, float]:
+        if self.backtest_pass.get(strategy):
+            return self.BT_GATE_MIN_TRADES, self.BT_GATE_MIN_DAYS
+        return self.GATE_MIN_TRADES, self.GATE_MIN_DAYS
+
     def _passes_paper_gate(self, strategy: str, now: float) -> bool:
         trades = self.paper_trades[strategy]
-        if len(trades) < self.GATE_MIN_TRADES:
+        min_trades, min_days = self._gate_thresholds(strategy)
+        if len(trades) < min_trades:
             return False
         span_days = (now - min(t["ts"] for t in trades)) / DAY
-        if span_days < self.GATE_MIN_DAYS:
+        if span_days < min_days:
             return False
         lo, _hi = bootstrap_ci([t["pnl"] for t in trades])
         return lo > 0

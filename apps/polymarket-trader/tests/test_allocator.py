@@ -114,3 +114,42 @@ class TestEdgeDecay:
                                          start_ts=NOW - 5 * DAY))
         alloc.update_gates(now=NOW)
         assert alloc.gate("s1") == GateStatus.LIVE_ELIGIBLE
+
+
+class TestHydrationAndBacktestGate:
+    def test_hydrate_replaces_history(self):
+        a = Allocator(["s1"], 1000.0)
+        a.record_paper_trades("s1", trades(+1.0, 5, alt=0.1))
+        a.record_trades("s1", trades(+1.0, 5, alt=0.1))
+        a.hydrate(paper={"s1": trades(+0.5, 3, alt=0.1)}, live={})
+        assert len(a.paper_trades["s1"]) == 3
+        assert a.live_trades["s1"] == []
+
+    def test_hydrate_ignores_unknown_strategies(self):
+        a = Allocator(["s1"], 1000.0)
+        a.hydrate(paper={"sX": trades(+0.5, 3, alt=0.1)}, live={})
+        assert a.paper_trades.get("sX", []) == []
+
+    def test_backtest_pass_lowers_gate_thresholds(self):
+        a = Allocator(["s1"], 1000.0)
+        a.set_backtest_pass({"s1": True})
+        # 60 trades over 3 days: passes only the reduced (50 / 2d) gate
+        a.record_paper_trades("s1", trades(+0.5, 60, alt=0.2,
+                                           start_ts=NOW - 3 * DAY))
+        a.update_gates(now=NOW)
+        assert a.gate("s1") == GateStatus.LIVE_ELIGIBLE
+
+    def test_without_backtest_pass_full_gate_applies(self):
+        a = Allocator(["s1"], 1000.0)
+        a.record_paper_trades("s1", trades(+0.5, 60, alt=0.2,
+                                           start_ts=NOW - 3 * DAY))
+        a.update_gates(now=NOW)
+        assert a.gate("s1") == GateStatus.PAPER
+
+    def test_backtest_fail_keeps_full_gate(self):
+        a = Allocator(["s1"], 1000.0)
+        a.set_backtest_pass({"s1": False})
+        a.record_paper_trades("s1", trades(+0.5, 60, alt=0.2,
+                                           start_ts=NOW - 3 * DAY))
+        a.update_gates(now=NOW)
+        assert a.gate("s1") == GateStatus.PAPER
