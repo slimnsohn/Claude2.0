@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Guide - Synthetic Population Engine</title>
+<link rel="stylesheet" href="/_shared/styles/base.css">
+<link rel="stylesheet" href="/static/styles.css">
+<style>
+  body { padding: 0; }
+  .guide-page { display: flex; min-height: 100vh; }
+  .guide-sidebar {
+    position: fixed; left: 0; top: 0; bottom: 0; width: 220px;
+    background: var(--surface); border-right: 1px solid var(--border);
+    display: flex; flex-direction: column; z-index: 100; overflow-y: auto;
+  }
+  .guide-sidebar-header { padding: 20px 16px 12px; border-bottom: 1px solid var(--border); }
+  .guide-sidebar-header h1 { font-size: 14px; font-weight: 700; margin: 0; color: var(--text); line-height: 1.4; }
+  .guide-sidebar-header .accent { color: var(--accent); }
+  .guide-toc { padding: 12px 8px; flex: 1; }
+  .guide-toc a {
+    display: block; padding: 6px 12px; border-radius: 5px;
+    color: var(--text2); font-size: 12px; font-weight: 500;
+    text-decoration: none; line-height: 1.4; transition: all 0.12s;
+  }
+  .guide-toc a:hover { background: var(--surface2); color: var(--text); }
+  .guide-toc .toc-back {
+    margin-bottom: 12px; padding-bottom: 12px;
+    border-bottom: 1px solid var(--border); color: var(--accent);
+  }
+  .guide-toc .toc-section { margin-top: 4px; }
+  .guide-main { margin-left: 220px; padding: 32px 48px 80px; max-width: 980px; }
+  .guide-body { max-width: 760px; line-height: 1.7; }
+  .guide-body h2 {
+    margin-top: 48px; margin-bottom: 12px;
+    font-size: 18px; font-weight: 700; color: var(--text);
+    border-bottom: 1px solid var(--border); padding-bottom: 8px;
+  }
+  .guide-body h3 { margin-top: 24px; margin-bottom: 8px; font-size: 14px; font-weight: 600; color: var(--text); }
+  .guide-body p { margin: 0 0 14px; color: var(--text); }
+  .guide-body ul, .guide-body ol { margin: 0 0 14px 0; padding-left: 24px; }
+  .guide-body li { margin-bottom: 6px; color: var(--text); }
+  .guide-body code {
+    background: rgba(128,128,128,.14); border-radius: 4px;
+    padding: 2px 6px; font-size: 12px; font-family: 'SFMono-Regular', Consolas, monospace;
+    color: var(--text);
+  }
+  .guide-body pre {
+    background: rgba(128,128,128,.10); border: 1px solid var(--border);
+    border-radius: 6px; padding: 14px 16px; overflow-x: auto; margin: 0 0 16px;
+    font-size: 12px; font-family: 'SFMono-Regular', Consolas, monospace;
+    color: var(--text); line-height: 1.6;
+  }
+  .guide-body pre code { background: none; padding: 0; font-size: inherit; }
+  .arch-diagram {
+    font-family: 'SFMono-Regular', Consolas, monospace; font-size: 11.5px;
+    white-space: pre; background: rgba(128,128,128,.08);
+    border: 1px solid var(--border); padding: 18px 20px;
+    border-radius: 6px; overflow-x: auto; margin: 0 0 16px; line-height: 1.55;
+    color: var(--text);
+  }
+  .stat-chip {
+    display: inline-block; padding: 4px 12px; margin: 4px 6px 4px 0;
+    border-radius: 12px; background: rgba(88,166,255,.12);
+    border: 1px solid rgba(88,166,255,.25); font-size: 12px;
+    color: var(--text); vertical-align: middle;
+  }
+  .stat-chip .chip-label { color: var(--text2); margin-right: 4px; }
+  .stat-chip .chip-value { color: var(--accent); font-weight: 600; }
+  #live-stats { margin-bottom: 24px; min-height: 34px; }
+  #live-stats-offline { font-size: 12px; color: var(--text2); font-style: italic; display: none; }
+  .verdict-pass { color: var(--green); font-weight: 600; }
+  .verdict-drift { color: var(--orange); font-weight: 600; }
+  .verdict-stale { color: var(--text2); font-weight: 600; }
+  .verdict-none { color: var(--text2); }
+  .guide-intro { font-size: 14px; color: var(--text2); margin-bottom: 32px; line-height: 1.6; }
+  .callout {
+    background: rgba(88,166,255,.07); border-left: 3px solid var(--accent);
+    border-radius: 0 6px 6px 0; padding: 12px 16px; margin: 0 0 16px;
+    font-size: 13px; color: var(--text);
+  }
+  .callout-warn {
+    background: rgba(210,153,34,.07); border-left-color: var(--orange);
+  }
+  .data-file-table { width: 100%; border-collapse: collapse; font-size: 12px; margin-bottom: 16px; }
+  .data-file-table th {
+    text-align: left; padding: 6px 12px; border-bottom: 2px solid var(--border);
+    color: var(--text2); font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;
+  }
+  .data-file-table td { padding: 7px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  .data-file-table td:first-child { font-family: 'SFMono-Regular', Consolas, monospace; font-size: 11.5px; color: var(--accent); white-space: nowrap; }
+  .data-file-table tr:hover td { background: var(--surface2); }
+</style>
+</head>
+<body>
+
+<div class="guide-page">
+
+  <!-- Sidebar TOC -->
+  <aside class="guide-sidebar">
+    <div class="guide-sidebar-header">
+      <h1>Synthetic<br>Population<br><span class="accent">Engine</span></h1>
+    </div>
+    <nav class="guide-toc">
+      <a class="toc-back" href="/">&larr; Back to app</a>
+      <a class="toc-section" href="#how-it-works">1. How it works</a>
+      <a class="toc-section" href="#run-a-poll">2. Run a poll</a>
+      <a class="toc-section" href="#news-cycle">3. Update cycle</a>
+      <a class="toc-section" href="#grow-population">4. Grow the population</a>
+      <a class="toc-section" href="#calibration">5. Keep it calibrated</a>
+      <a class="toc-section" href="#other-ops">6. Other operations</a>
+      <a class="toc-section" href="#faq">7. FAQ &amp; limitations</a>
+    </nav>
+  </aside>
+
+  <!-- Main content -->
+  <main class="guide-main">
+    <div class="guide-body">
+
+      <h1 style="font-size:22px;margin-bottom:8px;">User Guide</h1>
+      <p class="guide-intro">
+        The Synthetic Population Engine generates statistically realistic AI individuals from real survey data
+        and polls them on questions. Every persona comes from a real respondent; every opinion comes from
+        real answers. Nothing is invented.
+      </p>
+
+      <!-- Live stats bar -->
+      <div id="live-stats">
+        <span id="live-stats-offline">Server offline — static docs mode.</span>
+      </div>
+
+      <!-- ================================================================ -->
+      <h2 id="how-it-works">1. How it works</h2>
+
+      <p>
+        The engine has three interlocking layers: a <strong>population</strong> sampled from real survey data,
+        a <strong>KNN opinion model</strong> that derives each persona's baseline views from their demographic
+        neighbors in the source survey, and a <strong>belief layer</strong> that lets those views shift in
+        response to real news headlines — bounded so personas evolve without becoming different people.
+      </p>
+
+      <h3>Population layer</h3>
+      <p>
+        The source is the 2024 Cooperative Election Study (CES), which interviewed roughly 60,000 Americans
+        on their demographics and political views. From those 60,000 records, the engine draws a
+        representative sample of 5,000 personas using <em>raking</em> (iterative proportional fitting) —
+        a technique that reweights the draw so the final set matches census targets on sex, race, education,
+        and age, while also respecting CES-native distributions for party identification and urban/rural
+        status. Each persona stores the <code>ces_row_id</code> of the real respondent it was drawn from,
+        so every opinion trace is ultimately grounded in a real person's data.
+      </p>
+
+      <h3>KNN opinion model</h3>
+      <p>
+        When a poll question arrives, the engine keyword-matches it to one of 22 CES survey columns covering
+        topics like Trump/Congress approval, economic outlook, immigration, healthcare, environment, fiscal
+        policy, education spending, and minimum wage. For each persona, it finds the 50 most demographically
+        similar real CES respondents (the K-nearest neighbors) and reads their actual answers to that
+        column. Those answers become a probability distribution over yes / no / unsure. The persona's
+        response is then sampled from that distribution. Questions that don't match any covered column are
+        blocked — the engine never invents an answer from scratch.
+      </p>
+
+      <h3>Belief layer</h3>
+      <p>
+        On top of the KNN baseline, each persona carries a <code>beliefs</code> dictionary: per-topic
+        bounded shifts in the range ±0.15 that tilt the probability distribution before sampling.
+        These shifts accumulate from news cycles and decay back toward zero (the CES baseline) with a
+        14-day half-life, so quiet news periods mean gradual reversion to type.
+      </p>
+
+      <h3>Architecture at a glance</h3>
+      <div class="arch-diagram">
+CES 2024 survey (60,000 real respondents)
+        |
+        | raking: sex × race × education × age targets
+        v
+  5,000 personas  ←─── ces_row_id tracks provenance
+        |
+        |  Poll question
+        v
+  Keyword → CES column match (22 topics)
+        |
+        | KNN: 50 nearest neighbors by demographics
+        v
+  Baseline P(yes / no / unsure)
+        |
+        | + persona belief shift  (bounded ±0.15)
+        v
+  Adjusted distribution  →  sampled answer
+        |
+        ╔══════════════════════════════════════════╗
+        ║          Update cycle (daily)            ║
+        ║  RSS headlines (AP, NPR, BBC, Reuters,   ║
+        ║  Google News)                            ║
+        ║    → LLM scoring (Claude Haiku) or       ║
+        ║      keyword fallback                    ║
+        ║    → per-persona news exposure (outlet   ║
+        ║      family × confirmation bias)         ║
+        ║    → belief shifts accumulate in         ║
+        ║      drift_log, decay 14-day half-life   ║
+        ║                                          ║
+        ║  Calibration gate after every cycle:     ║
+        ║    anchor MAE &gt; 5% → dampen all shifts    ║
+        ╚══════════════════════════════════════════╝</div>
+
+      <!-- ================================================================ -->
+      <h2 id="run-a-poll">2. Walkthrough: run a poll</h2>
+
+      <h3>Enter a question</h3>
+      <p>
+        Open the <strong>Poll</strong> tab. Type a yes/no question in the text field — for example,
+        "Do you support expanding Medicare to cover dental care?" — and click <strong>Run Poll</strong>.
+        Before the poll runs, a <em>CES coverage indicator</em> appears below the input. A green indicator
+        means the engine matched your question to a CES column and will use real survey data. A yellow or
+        red indicator means the match is weak or absent, and the poll will be blocked rather than guess.
+      </p>
+
+      <div class="callout">
+        Why blocking matters: an unanswered question is honest. A fabricated answer dressed up as
+        demographically calibrated data is misleading. If your question is blocked, try rephrasing it
+        toward a covered topic (e.g., "immigration enforcement" rather than a very specific policy
+        detail), or accept that the topic is outside scope.
+      </div>
+
+      <h3>Demographic filters</h3>
+      <p>
+        You can narrow the poll to a subset of the population before running it. Filters are available for
+        state, party identification, race, education level, age range, sex, urban/rural status, and
+        ideology. Stacking multiple filters narrows the cohort further. The Results tab shows the count of
+        personas in the filtered cohort so you always know what N you are working with.
+      </p>
+
+      <h3>Reading the Results tab</h3>
+      <p>
+        After a poll runs, switch to the <strong>Results</strong> tab. The top section shows the overall
+        distribution (yes / no / unsure percentages) with a 95% bootstrap confidence interval computed over
+        all respondents. Below that, breakdowns appear by party, race, and age group — each with its own
+        confidence interval. These breakdowns reveal where the population is cohesive versus divided.
+      </p>
+      <p>
+        Confidence intervals are wide on small subgroups. A ±12% interval on a 40-person subgroup tells
+        you the underlying data is thin; interpret those numbers with caution. The full 5,000-persona
+        population typically yields confidence intervals in the ±2–4% range.
+      </p>
+      <p>
+        Past polls are listed in the Backtest tab, where you can freeze a snapshot and compare results
+        across time to trace opinion drift.
+      </p>
+
+      <!-- ================================================================ -->
+      <h2 id="news-cycle">3. Walkthrough: update the population (news cycle)</h2>
+
+      <h3>What a cycle does, end to end</h3>
+      <p>
+        A news cycle has five stages, all automated:
+      </p>
+      <ol>
+        <li><strong>Fetch headlines</strong> — RSS feeds from AP, NPR, BBC, Reuters, and Google News are
+        scraped for current stories. The engine collects up to 10 headlines per feed.</li>
+
+        <li><strong>Score stories</strong> — if the environment variable <code>ANTHROPIC_API_KEY</code> is
+        set, a single batched call to Claude Haiku tags each headline with relevant topics, direction
+        (positive / negative / neutral), salience (how likely the story reaches a typical news consumer),
+        and outlet-family framing (right-leaning, left-leaning, mainstream). Without the API key the
+        engine falls back to a keyword scorer that covers the same 22 topics but without framing nuance.</li>
+
+        <li><strong>Simulate exposure</strong> — each persona probabilistically encounters stories based
+        on its assigned news source. A persona tagged <code>fox_news</code> gets the right-family framing;
+        <code>msnbc</code>, <code>npr</code>, <code>nyt</code> personas get left-family framing;
+        <code>abc</code> and <code>local_tv</code> personas get mainstream framing. Confirmation bias is
+        modeled: counter-attitudinal news moves partisans only 40% as much as congruent news, and strong
+        partisans are 30% less movable overall.</li>
+
+        <li><strong>Apply belief shifts</strong> — each exposure that reaches a persona nudges its
+        per-topic belief by a small amount. All shifts are bounded to ±0.15 and every change is appended
+        to the persona's <code>drift_log</code> with a timestamp, story id, and magnitude. Beliefs decay
+        toward the CES baseline with a 14-day half-life, so a persona that stops seeing news on a topic
+        will gradually revert.</li>
+
+        <li><strong>Calibrate</strong> — after beliefs are updated, two anchor questions ("Do you approve
+        of Trump's job performance?" and "Is the economy getting better or worse?") are re-polled across
+        the full population and compared to real poll numbers stored in
+        <code>data/benchmarks.json</code>. See Section 5 for what happens next.</li>
+      </ol>
+
+      <h3>Three ways to run a cycle</h3>
+      <ol>
+        <li>
+          <strong>Events tab button</strong> — the "Run Update Cycle" button on the Events tab triggers
+          <code>POST /api/world-updates/cycle</code>. Results appear in the drift chart on the same tab
+          when the call returns. This is the easiest method for manual one-off runs.
+        </li>
+        <li>
+          <strong><code>update.bat</code></strong> — a batch file at the project root. Double-click it or
+          run it from a terminal. Useful for testing outside the browser or calling from a scheduler.
+        </li>
+        <li>
+          <strong><code>python run_update_cycle.py</code></strong> — the underlying Python entry point.
+          Run from the project root with the virtual environment active. Accepts no flags; exits 0 on
+          success, non-zero on error.
+        </li>
+      </ol>
+
+      <h3>Scheduling with Windows Task Scheduler</h3>
+      <p>
+        For daily automated cycles, create a Task Scheduler entry:
+      </p>
+      <ol>
+        <li>Open <strong>Task Scheduler</strong> → <em>Create Basic Task</em>.</li>
+        <li>Name it (e.g., "SynPop Update Cycle"), set trigger to <em>Daily</em> at your preferred time.</li>
+        <li>For the Action, choose <em>Start a program</em>. In the <em>Program/script</em> field, enter
+        the full path to <code>update.bat</code>, for example:<br>
+        <code>C:\Users\slims\Desktop\Claude 2.0\apps\synthetic-population\update.bat</code></li>
+        <li>In <em>Start in</em>, enter the project directory (same folder as <code>update.bat</code>).</li>
+        <li>Click Finish. The task will run once daily, updating beliefs and logging calibration results.</li>
+      </ol>
+
+      <h3>Reading the drift chart and drift_log</h3>
+      <p>
+        The Events tab shows a drift chart plotting aggregate belief movement per cycle across topics.
+        An upward bar on "economy" means the population collectively shifted toward a more positive
+        economic view during that cycle; a downward bar means sentiment worsened. The chart is built
+        from <code>data/belief_history.json</code>.
+      </p>
+      <p>
+        To inspect a single persona's history, open the Population tab, click a persona row to open the
+        detail panel, and scroll to the <strong>Drift Log</strong> section. Each entry shows a timestamp,
+        the story that triggered the shift, the topic, and the magnitude.
+      </p>
+
+      <!-- ================================================================ -->
+      <h2 id="grow-population">4. Walkthrough: increase the population</h2>
+
+      <p>
+        The default population is 5,000 personas. You can rebuild it at any size with:
+      </p>
+      <pre><code>python build_population.py --target-n 5000</code></pre>
+      <p>
+        Replace <code>5000</code> with any target count. Larger populations give tighter confidence
+        intervals but take longer to poll. The CES source has 60,000 respondents, so targets up to around
+        50,000 are reasonable; above that you will exhaust unique source rows.
+      </p>
+
+      <h3>Reading the balance report</h3>
+      <p>
+        After sampling, the builder prints a distribution-vs-target report to the console comparing the
+        achieved proportions against census targets for sex, race, education, and age, plus CES-native
+        targets for party and urban/rural status. A truncated example:
+      </p>
+      <pre><code>  sex          target   achieved   delta
+  Male          0.490    0.491    +0.001  PASS
+  Female        0.510    0.509    -0.001  PASS
+
+  race          target   achieved   delta
+  White         0.596    0.598    +0.002  PASS
+  Black         0.121    0.119    -0.002  PASS
+  Hispanic      0.189    0.192    +0.003  PASS
+  ...
+</code></pre>
+
+      <h3>The ±3% balance gate</h3>
+      <p>
+        If any demographic dimension is more than 3 percentage points off target, the builder aborts
+        without writing the registry. This prevents a silently imbalanced population from polluting future
+        polls. When the gate fires, the console explains which dimension failed and by how much. Adjust
+        <code>--target-n</code> (sometimes a different N clears the gate) or investigate the source data.
+      </p>
+
+      <div class="callout callout-warn">
+        The gate is a safeguard, not a tuning target. If you find yourself repeatedly tweaking N to
+        squeak past the gate, step back and investigate whether the CES source file is complete and
+        correctly formatted.
+      </div>
+
+      <h3>Backups and restore</h3>
+      <p>
+        Before writing a new registry, the builder copies the current
+        <code>data/profiles/registry.json</code> to
+        <code>data/profiles/registry.backup.&lt;timestamp&gt;.json</code>. To restore a previous
+        population, copy the backup file over <code>registry.json</code>:
+      </p>
+      <pre><code>copy data\profiles\registry.backup.20260101_120000.json data\profiles\registry.json</code></pre>
+      <p>
+        The build report for the new population is written to <code>data/profiles/build_report.json</code>
+        and is also shown on the Data Sources tab in the app.
+      </p>
+
+      <!-- ================================================================ -->
+      <h2 id="calibration">5. Walkthrough: keep it calibrated</h2>
+
+      <h3>What calibration is for</h3>
+      <p>
+        Calibration is a diagnostic check, not a tuning mechanism. After each news cycle the engine
+        re-polls the population on two politically salient anchor questions and compares the results to
+        real poll numbers you supply. The goal is to catch runaway drift early — if the synthetic
+        population diverges badly from reality, the system flags it and dampens further shifts rather
+        than silently producing misleading output.
+      </p>
+
+      <h3>Refreshing real numbers</h3>
+      <p>
+        Go to the <strong>Benchmark</strong> tab. You will see the two anchor questions and their current
+        reference values. To update them, look up a recent reputable poll (Gallup, AP-NORC, Pew, etc.)
+        for each question and enter the percentage who answered "approve" / "getting better." The tab
+        records the source name and date so you have a provenance trail. Click <strong>Save</strong>.
+        The next cycle will compare against the new numbers.
+      </p>
+      <p>
+        Benchmark numbers are <em>never</em> scraped automatically. Scraping introduces silent staleness,
+        site-breakage errors, and terms-of-service risk. You do the lookup; the engine does the comparison.
+      </p>
+
+      <h3>Badge meanings</h3>
+      <p>
+        The Events tab shows a calibration badge after each cycle with one of four verdicts:
+      </p>
+      <ul>
+        <li>
+          <span class="verdict-pass">PASS</span> — mean absolute error (MAE) is ≤ 5% on all anchor
+          questions. The population is well-aligned. No action required.
+        </li>
+        <li>
+          <span class="verdict-drift">DRIFT WARNING</span> — at least one anchor question has MAE &gt; 5%.
+          All belief shifts for this cycle are automatically halved ("dampening") and the event is logged
+          in <code>drift_log</code>. The population continues to function but is being pulled back toward
+          reality. If drift warnings persist across several cycles, refresh your benchmark numbers or
+          investigate whether recent news scoring is overcorrecting on a particular topic.
+        </li>
+        <li>
+          <span class="verdict-stale">STALE</span> — your benchmark numbers are more than 30 days old.
+          The engine cannot issue a pass or fail because the comparison target is too old to be meaningful.
+          No dampening occurs, but no pass is claimed either. Open the Benchmark tab and refresh with
+          current poll numbers.
+        </li>
+        <li>
+          <span class="verdict-none">NONE</span> — no cycle has run yet, or calibration history is empty.
+        </li>
+      </ul>
+
+      <h3>Calibration history</h3>
+      <p>
+        Every calibration result is appended to <code>data/calibration_history.json</code> with the
+        cycle timestamp, per-anchor MAEs, the verdict, and whether dampening was applied. This file gives
+        you a longitudinal view of how well the synthetic population tracks reality over time.
+      </p>
+
+      <!-- ================================================================ -->
+      <h2 id="other-ops">6. Other operations</h2>
+
+      <h3>Snapshots and backtesting</h3>
+      <p>
+        The <strong>Backtest</strong> tab lets you freeze a copy of the current population's belief state
+        as a named snapshot. Future polls can be run against a snapshot to compare how opinions have
+        shifted between two points in time. A snapshot preserves the full set of belief vectors but does
+        not duplicate persona profiles — it is lightweight. Snapshots are stored under
+        <code>data/snapshots/</code>.
+      </p>
+
+      <h3>Demographic poll filters</h3>
+      <p>
+        Filters are applied before a poll runs, not after. You can combine: state (one or more), party
+        (Democrat / Republican / Independent / other), race, education tier, age range, sex, ideology,
+        and urban/rural status. The Results tab always shows the filtered N so you know the effective
+        sample size. Filters persist until you clear them.
+      </p>
+
+      <h3>Toggling individual world updates</h3>
+      <p>
+        The Events tab lists every scored headline in the current cycle. Each row has a toggle switch.
+        Turning a story off removes it from the active-shifts calculation without deleting it — useful
+        for excluding an outlier story you believe was scored incorrectly. Toggling is immediate and
+        persisted to <code>data/world_updates.json</code>.
+      </p>
+
+      <h3>Data file map</h3>
+      <table class="data-file-table">
+        <thead>
+          <tr>
+            <th>File</th>
+            <th>Purpose</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>data/profiles/registry.json</td>
+            <td>The active population: all 5,000 persona records including demographics, beliefs, and drift_log.</td>
+          </tr>
+          <tr>
+            <td>data/profiles/build_report.json</td>
+            <td>Balance report from the most recent population build: achieved vs. target distributions.</td>
+          </tr>
+          <tr>
+            <td>data/profiles/registry.backup.*.json</td>
+            <td>Timestamped backups of previous registries, created automatically before each rebuild.</td>
+          </tr>
+          <tr>
+            <td>data/world_updates.json</td>
+            <td>Scored headlines from the current and recent cycles, including active/inactive toggle state.</td>
+          </tr>
+          <tr>
+            <td>data/belief_history.json</td>
+            <td>Per-cycle aggregate belief drift summary used to draw the Events tab drift chart.</td>
+          </tr>
+          <tr>
+            <td>data/calibration_history.json</td>
+            <td>Log of every calibration result: timestamp, per-anchor MAEs, verdict, dampening flag.</td>
+          </tr>
+          <tr>
+            <td>data/benchmarks.json</td>
+            <td>Real-world poll anchor values you enter manually in the Benchmark tab.</td>
+          </tr>
+          <tr>
+            <td>data/raw/ces/ces_2024_common.csv</td>
+            <td>Source CES 2024 survey microdata (60,000 rows). Not modified by the engine — read-only.</td>
+          </tr>
+          <tr>
+            <td>data/snapshots/</td>
+            <td>Named population snapshots for backtesting.</td>
+          </tr>
+          <tr>
+            <td>data/polls/</td>
+            <td>One subdirectory per poll run, containing the question, filters, and per-persona responses.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- ================================================================ -->
+      <h2 id="faq">7. FAQ &amp; limitations</h2>
+
+      <h3>Why aren't abortion and gun control covered?</h3>
+      <p>
+        The 2024 CES common-content questionnaire does not include abortion or gun control items in a form
+        that maps cleanly onto simple yes/no survey columns. The variables that exist are multi-part, use
+        different response scales, or are in the validated module rather than the common content — so the
+        KNN model can't use them without introducing assumptions the engine is designed to avoid. Adding
+        coverage requires either waiting for a CES wave that includes suitable common-content items or
+        integrating a different survey source with compatible formatting.
+      </p>
+
+      <h3>Why is belief drift bounded at ±0.15?</h3>
+      <p>
+        The bound keeps personas grounded in their CES-derived baseline. Without it, a sustained string of
+        one-sided news cycles could push a persona's views so far from their measured starting point that
+        the demographic anchor becomes meaningless — the persona would no longer represent the survey
+        respondent it was drawn from. The ±0.15 cap means the most extreme total shift on any topic is
+        still within the range of plausible opinion movement for a real person, while the 14-day decay
+        ensures that "moved" personas return to baseline when news quiets down.
+      </p>
+
+      <h3>Why real data only? Can I add hypothetical personas?</h3>
+      <p>
+        The engine is designed as a measurement instrument, not a simulation sandbox. Every inference
+        about the synthetic population's opinions derives its validity from the fact that the personas
+        are grounded in real respondents and real answers. Injecting hypothetical personas breaks that
+        chain. If you need to explore a demographic profile not well-represented in the CES, the right
+        approach is to find a real survey source that covers it — not to invent respondents.
+      </p>
+
+      <h3>What does "stale" actually mean, and why not just scrape current numbers?</h3>
+      <p>
+        "Stale" means your benchmark reference values are more than 30 days old. Opinion on salient
+        political topics can shift 5–10 points in a month during high-news periods, so a benchmark from
+        six weeks ago may no longer represent current public opinion. Scraping is not used because (a) poll
+        aggregator sites change their markup without notice, breaking scrapers silently; (b) different
+        polls use different question wording and sampling frames — a human choosing a benchmark is making
+        a methodological judgment a scraper cannot replicate; and (c) you should know which poll you are
+        comparing against so the calibration verdict is interpretable.
+      </p>
+
+      <h3>How many topics does the engine actually cover?</h3>
+      <p>
+        22 CES 2024 common-content columns, grouped by theme: Trump job approval, congressional job
+        approval, economic outlook (overall, personal, national direction), immigration (border security,
+        DACA/DREAMers, deportation policy, legal immigration levels), healthcare (ACA, public option,
+        Medicaid expansion, drug pricing, mental health parity, VA coverage), environment (climate
+        action, clean energy investment), fiscal (tax policy), education spending, and federal minimum
+        wage. Any question whose keywords match one of these topics is eligible for a poll; all others
+        are blocked.
+      </p>
+
+      <h3>What happens if the CES source file is missing?</h3>
+      <p>
+        The opinion engine will not load at startup. Polls will return an error indicating CES data is
+        unavailable. The population can still be browsed and world updates can still be toggled, but no
+        new poll responses can be generated. Place the CES 2024 common-content CSV at
+        <code>data/raw/ces/ces_2024_common.csv</code> and restart the server.
+      </p>
+
+    </div><!-- /guide-body -->
+  </main>
+</div><!-- /guide-page -->
+
+<script>
+  window.CHAT_WIDGET_CONFIG = {
+    appName: "Synthetic Population Engine — Guide",
+    systemPrompt: "You are a helpful assistant for the Synthetic Population Engine. The user is reading the guide page. Help them understand how the system works, how to run polls, how the news update cycle functions, and how calibration works.",
+    welcomeMessage: "Ask me anything about how the Synthetic Population Engine works.",
+    position: "bottom-right",
+  };
+</script>
+<script src="/_skills/llm-chat-widget/dist/chat-widget.js"></script>
+
+<script>
+(function () {
+  function chip(label, value, cls) {
+    return '<span class="stat-chip"><span class="chip-label">' + label + '</span>'
+         + '<span class="chip-value' + (cls ? ' ' + cls : '') + '">' + value + '</span></span>';
+  }
+
+  function verdictClass(v) {
+    if (v === 'pass') return 'verdict-pass';
+    if (v === 'drift_warning' || v === 'drift warning') return 'verdict-drift';
+    if (v === 'stale') return 'verdict-stale';
+    return 'verdict-none';
+  }
+
+  function verdictLabel(v) {
+    if (!v || v === 'none') return 'none';
+    return v.replace('_', ' ').toUpperCase();
+  }
+
+  var container = document.getElementById('live-stats');
+  var offlineMsg = document.getElementById('live-stats-offline');
+
+  Promise.all([
+    fetch('/api/stats').then(function(r){ return r.ok ? r.json() : null; }).catch(function(){ return null; }),
+    fetch('/api/world-updates/calibration-status').then(function(r){ return r.ok ? r.json() : null; }).catch(function(){ return null; }),
+    fetch('/api/world-updates/belief-history').then(function(r){ return r.ok ? r.json() : null; }).catch(function(){ return null; }),
+  ]).then(function(results) {
+    var stats = results[0];
+    var cal = results[1];
+    var history = results[2];
+
+    if (!stats) {
+      offlineMsg.style.display = 'inline';
+      return;
+    }
+
+    var html = '';
+
+    html += chip('Personas', stats.profile_count !== undefined ? stats.profile_count.toLocaleString() : '—');
+    html += chip('Archetypes', stats.archetype_count !== undefined ? stats.archetype_count : '—');
+    html += chip('Polls run', stats.polls_run !== undefined ? stats.polls_run : '—');
+
+    if (cal) {
+      var verdict = cal.verdict || 'none';
+      html += chip('Calibration', verdictLabel(verdict), verdictClass(verdict));
+    }
+
+    if (history && history.length > 0) {
+      var last = history[history.length - 1];
+      var cycleDate = last.timestamp ? last.timestamp.slice(0, 10) : '—';
+      html += chip('Last cycle', cycleDate);
+    }
+
+    container.innerHTML = html;
+  });
+})();
+</script>
+
+</body>
+</html>
