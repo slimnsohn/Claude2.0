@@ -179,3 +179,35 @@ def clear_auto():
     updates = [u for u in updates if u.get("source") != "auto"]
     _save_updates(updates)
     return jsonify({"remaining": len(updates)})
+
+
+@world_updates_bp.route("/api/world-updates/cycle", methods=["POST"])
+def run_update_cycle():
+    """Run the full update cycle: fetch → score → apply beliefs → calibrate."""
+    from engine.update_cycle import run_cycle
+    engine = current_app.config.get("OPINION_ENGINE")
+    data_dir = Path(current_app.config["DATA_DIR"])
+    try:
+        summary = run_cycle(data_dir, engine)
+    except Exception as e:
+        return jsonify({"error": f"Cycle failed: {e}"}), 500
+    return jsonify(summary)
+
+
+@world_updates_bp.route("/api/world-updates/belief-history", methods=["GET"])
+def belief_history():
+    p = Path(current_app.config["DATA_DIR"]) / "belief_history.json"
+    try:
+        return jsonify(json.loads(p.read_text()) if p.exists() else [])
+    except (json.JSONDecodeError, OSError):
+        return jsonify([])
+
+
+@world_updates_bp.route("/api/world-updates/calibration-status", methods=["GET"])
+def calibration_status():
+    p = Path(current_app.config["DATA_DIR"]) / "calibration_history.json"
+    try:
+        history = json.loads(p.read_text()) if p.exists() else []
+    except (json.JSONDecodeError, OSError):
+        history = []
+    return jsonify(history[-1] if history else {"verdict": "none"})
