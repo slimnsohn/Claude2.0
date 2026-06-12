@@ -87,6 +87,15 @@ async def main() -> int:
                         backend=backend, heartbeat_path=ROOT / "data" / "heartbeat",
                         gamma=gamma, coinbase=coinbase, feed=feed)
 
+    wf_path = ROOT / "data" / "walkforward_report.json"
+    if wf_path.exists():
+        wf = json.loads(wf_path.read_text())
+        orch.allocator.set_backtest_pass(
+            {name: bool(r.get("pass"))
+             for name, r in wf.get("strategies", {}).items()})
+        log.info("walk-forward gate loaded: %s",
+                 {n: r.get("pass") for n, r in wf.get("strategies", {}).items()})
+
     app = build_app(orch, store, cfg)
     server = uvicorn.Server(uvicorn.Config(
         app, host=cfg.dashboard.host, port=cfg.dashboard.port,

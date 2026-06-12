@@ -119,3 +119,27 @@ class TestStatic:
         r = client.get("/")
         assert r.status_code == 200
         assert "polymarket" in r.text.lower()
+
+
+class TestBacktestSurfaces:
+    def test_strategies_include_backtest_pass(self, client):
+        client.orch.allocator.set_backtest_pass({"s1_arb": True})
+        rows = client.get("/api/strategies").json()
+        row = next(r for r in rows if r["name"] == "s1_arb")
+        assert row["backtest_pass"] is True
+
+    def test_strategies_backtest_pass_none_when_unknown(self, client):
+        rows = client.get("/api/strategies").json()
+        row = next(r for r in rows if r["name"] == "s1_arb")
+        assert row["backtest_pass"] is None
+
+    def test_walkforward_endpoint_exists(self, client):
+        # 200 if a real report exists on disk, 404 with a hint otherwise
+        r = client.get("/api/walkforward")
+        assert r.status_code in (200, 404)
+        if r.status_code == 404:
+            assert "run_walkforward_gate" in r.json()["error"]
+
+    def test_execution_report_endpoint(self, client):
+        rep = client.get("/api/execution").json()
+        assert "makers" in rep and "takers" in rep

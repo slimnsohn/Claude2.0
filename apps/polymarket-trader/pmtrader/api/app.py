@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import asyncio
+import json
 import time
 from pathlib import Path
 
@@ -11,6 +12,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 STATIC_DIR = Path(__file__).resolve().parent.parent.parent / "static"
+ROOT_DIR = STATIC_DIR.parent
 
 
 class ControlBody(BaseModel):
@@ -64,6 +66,7 @@ def build_app(orch, store, cfg) -> FastAPI:
             rows.append({
                 "name": name,
                 "gate": str(orch.allocator.gate(name)),
+                "backtest_pass": orch.allocator.backtest_pass.get(name),
                 "weight": round(orch.allocator.weights().get(name, 0.0), 4),
                 "budget": round(orch.allocator.budget(name), 2),
                 "n_live_trades": len(live),
@@ -83,6 +86,19 @@ def build_app(orch, store, cfg) -> FastAPI:
     @app.get("/api/events")
     def allocator_events():
         return orch.allocator.events[-100:]
+
+    @app.get("/api/walkforward")
+    def walkforward():
+        p = ROOT_DIR / "data" / "walkforward_report.json"
+        if not p.exists():
+            return JSONResponse(status_code=404, content={
+                "error": "no report — run scripts/run_walkforward_gate.py"})
+        return json.loads(p.read_text())
+
+    @app.get("/api/execution")
+    def execution():
+        from pmtrader.backtest.execution_report import execution_report
+        return execution_report(store)
 
     def check_token(body: ControlBody):
         if not cfg.dashboard.control_token or \

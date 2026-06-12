@@ -99,6 +99,7 @@
   function renderStrategies(rows) {
     renderRows("strategies-table", rows.map(s => [
       ["", s.name], [`gate-${s.gate}`, s.gate],
+      ["", s.backtest_pass === true ? "PASS" : s.backtest_pass === false ? "FAIL" : "—"],
       ["", (s.weight * 100).toFixed(1) + "%"], ["", fmtMoney(s.budget)],
       ["", s.n_paper_trades], ["", s.n_live_trades],
     ]));
