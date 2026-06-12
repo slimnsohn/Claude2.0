@@ -122,10 +122,10 @@ def build_poll_prompt(
     # 4. Media diet
     media_lines: list[str] = []
     news_raw = profile.get("primary_news_source", "")
-    if news_raw:
+    if news_raw and isinstance(news_raw, str):
         media_lines.append(f"- Primary news source: {_format_news_source(news_raw)}")
     social_raw = profile.get("social_media_primary", "")
-    if social_raw:
+    if social_raw and isinstance(social_raw, str):
         media_lines.append(f"- Primary social media: {_format_social_media(social_raw)}")
     if media_lines:
         parts.append("YOUR MEDIA DIET:\n" + "\n".join(media_lines))

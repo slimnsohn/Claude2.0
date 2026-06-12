@@ -114,78 +114,6 @@ def harmonize_pums(raw_df: pd.DataFrame) -> pd.DataFrame:
     return harmonized
 
 
-def add_synthetic_political_vars(df: pd.DataFrame) -> pd.DataFrame:
-    """
-    Since we don't have real CES data yet, add plausible political variables
-    based on demographic correlations. This is a placeholder until real fusion.
-    """
-    import numpy as np
-    print("Step 3: Adding synthetic political variables (placeholder until CES fusion)...")
-    np.random.seed(42)
-    n = len(df)
-
-    # Party ID — correlated with race and education
-    party_probs = []
-    for _, row in df.iterrows():
-        if row.get("race") == "black":
-            probs = [0.40, 0.25, 0.15, 0.08, 0.05, 0.04, 0.03]
-        elif row.get("race") == "hispanic":
-            probs = [0.20, 0.20, 0.15, 0.15, 0.10, 0.10, 0.10]
-        elif row.get("education") == "graduate":
-            probs = [0.20, 0.15, 0.15, 0.15, 0.12, 0.12, 0.11]
-        elif row.get("education") in ("less_than_hs", "hs_diploma"):
-            probs = [0.08, 0.08, 0.10, 0.15, 0.18, 0.20, 0.21]
-        else:
-            probs = [0.14, 0.14, 0.14, 0.16, 0.14, 0.14, 0.14]
-        party_probs.append(probs)
-
-    parties = ["strong_dem", "dem", "lean_dem", "independent", "lean_rep", "rep", "strong_rep"]
-    df["party_id"] = [np.random.choice(parties, p=p) for p in party_probs]
-
-    # Religion — correlated with race and state
-    religion_opts = ["evangelical", "mainline", "catholic", "none", "other"]
-    religion_probs = []
-    for _, row in df.iterrows():
-        if row.get("race") == "hispanic":
-            probs = [0.10, 0.05, 0.50, 0.25, 0.10]
-        elif row.get("race") == "black":
-            probs = [0.35, 0.20, 0.05, 0.25, 0.15]
-        elif row.get("education") == "graduate":
-            probs = [0.10, 0.15, 0.15, 0.45, 0.15]
-        else:
-            probs = [0.25, 0.15, 0.20, 0.30, 0.10]
-        religion_probs.append(probs)
-
-    df["religion_affiliation"] = [np.random.choice(religion_opts, p=p) for p in religion_probs]
-
-    attend_opts = ["weekly", "monthly", "never"]
-    df["religion_attendance"] = np.where(
-        df["religion_affiliation"] == "none", "never",
-        np.random.choice(attend_opts, size=n, p=[0.3, 0.3, 0.4])
-    )
-
-    # Urban/rural — correlated with state
-    urban_opts = ["urban", "suburban", "rural"]
-    df["urban_rural"] = np.random.choice(urban_opts, size=n, p=[0.35, 0.40, 0.25])
-
-    # Income source
-    df["income_source"] = np.where(
-        df["employment_status"] == "not_in_labor_force", "retirement",
-        np.random.choice(["wages", "self_employment"], size=n, p=[0.88, 0.12])
-    )
-
-    # Occupation placeholder
-    occ_opts = ["professional", "service", "sales", "construction", "production", "management", "other"]
-    df["occupation"] = np.random.choice(occ_opts, size=n)
-
-    # Marital-related
-    df["children_count"] = np.random.choice([0, 1, 2, 3], size=n, p=[0.3, 0.25, 0.25, 0.2])
-
-    print(f"  Added party_id, religion, urban_rural, income_source, occupation")
-    print(f"  Party distribution: {df['party_id'].value_counts().to_dict()}")
-    print()
-    return df
-
 
 def fit_and_save_model(df: pd.DataFrame, model_path: str) -> None:
     """Fit SDV model on the prepared data."""
@@ -280,11 +208,8 @@ def main():
     # 2. Harmonize
     harmonized = harmonize_pums(raw_df)
 
-    # 3. Add synthetic political/social variables
-    enriched = add_synthetic_political_vars(harmonized)
-
-    # 4. Fit model
-    fit_and_save_model(enriched, model_path)
+    # 3. Fit model (political variables added via CES integration — see integrate_ces.py)
+    fit_and_save_model(harmonized, model_path)
 
     # 5. Generate first batch
     generate_profiles(model_path, registry_path, count=50)

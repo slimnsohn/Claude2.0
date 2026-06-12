@@ -87,6 +87,63 @@
 .quick-filter { padding: 4px 12px; border-radius: 12px; font-size: 11px; border: 1px solid var(--border); background: var(--surface); color: var(--text2); cursor: pointer; }
 .quick-filter.active { background: var(--accent); color: #000; border-color: var(--accent); }
 
+/* Poll filter badges */
+.filter-badge {
+    display: inline-block;
+    padding: 1px 6px;
+    border-radius: 3px;
+    font-size: 10px;
+    font-weight: 600;
+    background: var(--accent);
+    color: #000;
+    vertical-align: middle;
+    margin-left: 2px;
+}
+
+/* Poll delete button */
+.poll-delete-btn:hover { color: var(--red) !important; background: rgba(255,80,80,0.1); }
+
+/* Column header tooltips */
+th.has-tooltip { position: relative; }
+.col-tooltip {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 200;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 12px;
+    font-weight: 400;
+    color: var(--text2);
+    white-space: nowrap;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+    pointer-events: none;
+    min-width: 160px;
+    text-align: left;
+    line-height: 1.5;
+}
+th.has-tooltip:hover .col-tooltip { display: block; }
+
+/* Pivot table inside tooltip */
+.tooltip-pivot {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 6px;
+    font-size: 11px;
+}
+.tooltip-pivot tr { border-bottom: 1px solid var(--border); }
+.tooltip-pivot tr:last-child { border-bottom: none; }
+.tooltip-pivot td { padding: 3px 0; }
+.tp-label { color: var(--text); font-weight: 500; padding-right: 10px; }
+.tp-count { text-align: right; padding-right: 8px; color: var(--text2); }
+.tp-pct { text-align: right; padding-right: 8px; color: var(--accent); font-weight: 600; }
+.tp-bar { width: 60px; }
+.tp-bar div { height: 8px; border-radius: 4px; background: var(--accent); min-width: 2px; }
+
 /* Progress */
 .progress-text { font-size: 13px; color: var(--text2); padding: 12px 0; }
 

@@ -1,0 +1,160 @@
+[
+  {
+    "id": "WU-20260404082448-00",
+    "text": "Opinion: Humanity's hopes ascended with Artemis II",
+    "description": "NPR's Scott Simon reflects on the successful launch of NASA's Artemis II this week. The four astronauts aboard will travel around the moon.",
+    "date": "2026-04-04",
+    "created_at": "2026-04-04T08:24:48.073439",
+    "topics": [
+      "general"
+    ],
+    "direction": "positive",
+    "shifts": {
+      "dem": 0.0,
+      "rep": 0.0,
+      "independent": 0.0
+    },
+    "active": true,
+    "source": "auto",
+    "feed": "NPR"
+  },
+  {
+    "id": "WU-20260404082448-01",
+    "text": "White House budget proposal silent on civilian federal pay raise - Federal News Network",
+    "description": "White House budget proposal silent on civilian federal pay raise\u00a0\u00a0Federal News NetworkTrump\u2019s new budget proposal is historic \u2014 in one of the worst ways possible\u00a0\u00a0MS NOWThe White House has a war-funding sales pitch the GOP might not buy\u00a0\u00a0Politico\"We're fighting wars\": Trump bets his presidency on th",
+    "date": "2026-04-04",
+    "created_at": "2026-04-04T08:24:48.073498",
+    "topics": [
+      "trump_approval"
+    ],
+    "direction": "neutral",
+    "shifts": {
+      "dem": 0.0,
+      "rep": 0.0,
+      "independent": 0.0
+    },
+    "active": true,
+    "source": "auto",
+    "feed": "Google News"
+  },
+  {
+    "id": "WU-20260404082448-02",
+    "text": "Amber wind warning issued as Storm Dave set to hit parts of UK",
+    "description": "The Met Office said injuries or danger to life could occur as a result of flying debris.",
+    "date": "2026-04-04",
+    "created_at": "2026-04-04T08:24:48.073527",
+    "topics": [
+      "immigration"
+    ],
+    "direction": "negative",
+    "shifts": {
+      "dem": 0.01,
+      "rep": -0.005,
+      "independent": 0.0
+    },
+    "active": true,
+    "source": "auto",
+    "feed": "BBC"
+  },
+  {
+    "id": "WU-20260404082448-03",
+    "text": "Trump requests $152m funding to restore Alcatraz as prison - The Guardian",
+    "description": "Trump requests $152m funding to restore Alcatraz as prison\u00a0\u00a0The GuardianTrump seeks $152m to reopen notorious Alcatraz prison\u00a0\u00a0BBCTrump includes millions in budget request for re-opening Alcatraz as prison\u00a0\u00a0KRON4Trump wants $152 million to rebuild and reopen Alcatraz as a secure prison\u00a0\u00a0CNNTrump See",
+    "date": "2026-04-04",
+    "created_at": "2026-04-04T08:24:48.073572",
+    "topics": [
+      "trump_approval",
+      "crime"
+    ],
+    "direction": "neutral",
+    "shifts": {
+      "dem": 0.0,
+      "rep": 0.0,
+      "independent": 0.0
+    },
+    "active": true,
+    "source": "auto",
+    "feed": "Google News"
+  },
+  {
+    "id": "WU-20260404082448-04",
+    "text": "Trump\u2019s Immigration Policy Sidelines Foreign Doctors Amid Shortage - The New York Times",
+    "description": "Trump\u2019s Immigration Policy Sidelines Foreign Doctors Amid Shortage\u00a0\u00a0The New York TimesA slowdown in US visa processing is wreaking havoc on foreign doctors\u2019 lives\u00a0\u00a0PoliticoProblems emerge in US healthcare sector amid delays in extending visas for foreign doctors\u00a0\u00a0\u0411\u0435\u043b\u0430\u0440\u0443\u0441\u044c \u0441\u0435\u0433\u043e\u0434\u043d\u044fForeign doctors\u2019 vis",
+    "date": "2026-04-04",
+    "created_at": "2026-04-04T08:24:48.073616",
+    "topics": [
+      "economy",
+      "trump_approval",
+      "immigration",
+      "healthcare"
+    ],
+    "direction": "neutral",
+    "shifts": {
+      "dem": 0.0,
+      "rep": 0.0,
+      "independent": 0.0
+    },
+    "active": true,
+    "source": "auto",
+    "feed": "Google News"
+  },
+  {
+    "id": "WU-20260404082448-05",
+    "text": "Two fires break out in Southern California amid Santa Ana winds, triggering evacuations - Los Angeles Times",
+    "description": "Two fires break out in Southern California amid Santa Ana winds, triggering evacuations\u00a0\u00a0Los Angeles TimesPhotos of Springs Fire burning near Moreno Valley, California\u00a0\u00a0The Desert SunA fast-growing wildfire in windy Southern California triggers evacuations\u00a0\u00a0NBC NewsSprings Fire Grows to 4,100 Acres ",
+    "date": "2026-04-04",
+    "created_at": "2026-04-04T08:24:48.073666",
+    "topics": [
+      "climate"
+    ],
+    "direction": "neutral",
+    "shifts": {
+      "dem": 0.0,
+      "rep": 0.0,
+      "independent": 0.0
+    },
+    "active": true,
+    "source": "auto",
+    "feed": "Google News"
+  },
+  {
+    "id": "WU-20260404082448-06",
+    "text": "Buttercream wool and jelly bean eyes: The art of the Easter lamb cake",
+    "description": "The cakes \u2013 usually baked in the shape of a lamb using a special pan \u2013 have a long history in Central Europe, from the German osterlamm, to the Polish baranek wielkanocny, to the Alsatian lammele.",
+    "date": "2026-04-04",
+    "created_at": "2026-04-04T08:24:48.073711",
+    "topics": [
+      "general"
+    ],
+    "direction": "neutral",
+    "shifts": {
+      "dem": 0.0,
+      "rep": 0.0,
+      "independent": 0.0
+    },
+    "active": true,
+    "source": "auto",
+    "feed": "NPR"
+  },
+  {
+    "id": "WU-20260404082448-07",
+    "text": "Iran war enters its 6th week as military searches for downed jet crew member",
+    "description": "The war in Iran enters its 6th week as the search continues for the missing U.S. service member who bailed out of a fighter jet shot down over Iran on Friday.",
+    "date": "2026-04-04",
+    "created_at": "2026-04-04T08:24:48.073741",
+    "topics": [
+      "economy",
+      "immigration",
+      "foreign_policy"
+    ],
+    "direction": "neutral",
+    "shifts": {
+      "dem": 0.0,
+      "rep": 0.0,
+      "independent": 0.0
+    },
+    "active": true,
+    "source": "auto",
+    "feed": "NPR"
+  }
+]

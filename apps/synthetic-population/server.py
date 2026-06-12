@@ -12,6 +12,14 @@ def create_app(data_dir: str = None) -> Flask:
     def index():
         return app.send_static_file("index.html")
 
+    # Initialize opinion engine (loads CES data once, caches in memory)
+    ces_path = app.config["DATA_DIR"] / "raw" / "ces" / "ces_2024_common.csv"
+    if ces_path.exists():
+        from engine.opinion import OpinionEngine
+        app.config["OPINION_ENGINE"] = OpinionEngine(str(ces_path))
+    else:
+        app.config["OPINION_ENGINE"] = None
+
     @app.route("/_shared/<path:filename>")
     def shared_assets(filename):
         shared_dir = Path(__file__).parent.parent.parent / "_shared"

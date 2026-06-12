@@ -1,0 +1,176 @@
+{
+  "run_date": "2026-03-17 13:04:34",
+  "benchmarks": 8,
+  "completed": 8,
+  "mean_absolute_error_yes_pct": 3.31,
+  "results": [
+    {
+      "question": "Do you approve of Trump's job performance?",
+      "source": "Nate Silver aggregate, March 2026",
+      "synthetic": {
+        "yes": 42.82430541674997,
+        "no": 49.99000599640219,
+        "unsure": 7.185688586847894
+      },
+      "real": {
+        "yes": 40.9,
+        "no": 54.7,
+        "unsure": 4.4
+      },
+      "error": {
+        "yes": 1.9243054167499736,
+        "no": -4.709994003597814,
+        "unsure": 2.7856885868478933
+      },
+      "abs_error_yes": 1.9243054167499736,
+      "poll_id": "POLL-20260317130401671648"
+    },
+    {
+      "question": "Do you approve of Trump's handling of tariffs on imported goods?",
+      "source": "Reuters/Ipsos, March 2026",
+      "synthetic": {
+        "yes": 37.86727963222069,
+        "no": 56.606036378173116,
+        "unsure": 5.52668398960624
+      },
+      "real": {
+        "yes": 34.0,
+        "no": 64.0,
+        "unsure": 2.0
+      },
+      "error": {
+        "yes": 3.8672796322206935,
+        "no": -7.3939636218268845,
+        "unsure": 3.52668398960624
+      },
+      "abs_error_yes": 3.8672796322206935,
+      "poll_id": "POLL-20260317130406190291"
+    },
+    {
+      "question": "Do you approve of US military strikes against Iran?",
+      "source": "Reuters/Ipsos, Feb-Mar 2026",
+      "synthetic": {
+        "yes": 40.065960423745786,
+        "no": 50.25984409354392,
+        "unsure": 9.674195482710376
+      },
+      "real": {
+        "yes": 27.0,
+        "no": 43.0,
+        "unsure": 30.0
+      },
+      "error": {
+        "yes": 13.065960423745786,
+        "no": 7.259844093543919,
+        "unsure": -20.325804517289626
+      },
+      "abs_error_yes": 13.065960423745786,
+      "poll_id": "POLL-20260317130410616776"
+    },
+    {
+      "question": "Are you satisfied with the direction the country is going?",
+      "source": "Gallup, early 2026",
+      "synthetic": {
+        "yes": 25.694583250049984,
+        "no": 60.243853687787364,
+        "unsure": 14.061563062162714
+      },
+      "real": {
+        "yes": 24.0,
+        "no": 74.0,
+        "unsure": 2.0
+      },
+      "error": {
+        "yes": 1.694583250049984,
+        "no": -13.756146312212636,
+        "unsure": 12.061563062162714
+      },
+      "abs_error_yes": 1.694583250049984,
+      "poll_id": "POLL-20260317130415035753"
+    },
+    {
+      "question": "Do you favor a strong military presence at the US-Mexico border?",
+      "source": "Pew Research, Feb 2026",
+      "synthetic": {
+        "yes": 60.25384769138523,
+        "no": 36.98780731561066,
+        "unsure": 2.758344993004199
+      },
+      "real": {
+        "yes": 62.0,
+        "no": 38.0,
+        "unsure": 0.0
+      },
+      "error": {
+        "yes": -1.746152308614768,
+        "no": -1.0121926843893405,
+        "unsure": 2.758344993004199
+      },
+      "abs_error_yes": 1.746152308614768,
+      "poll_id": "POLL-20260317130419464828"
+    },
+    {
+      "question": "Do you support suspending all applications for asylum?",
+      "source": "Pew Research, Feb 2026",
+      "synthetic": {
+        "yes": 34.25944433339998,
+        "no": 56.356186288227086,
+        "unsure": 9.384369378372979
+      },
+      "real": {
+        "yes": 34.0,
+        "no": 66.0,
+        "unsure": 0.0
+      },
+      "error": {
+        "yes": 0.2594443333999834,
+        "no": -9.643813711772914,
+        "unsure": 9.384369378372979
+      },
+      "abs_error_yes": 0.2594443333999834,
+      "poll_id": "POLL-20260317130423829674"
+    },
+    {
+      "question": "Are current economic conditions in the country good?",
+      "source": "Gallup Economic Confidence, early 2026 (good vs poor, rest fair)",
+      "synthetic": {
+        "yes": 24.335398760743562,
+        "no": 59.094543274035594,
+        "unsure": 16.57005796522088
+      },
+      "real": {
+        "yes": 28.0,
+        "no": 47.0,
+        "unsure": 25.0
+      },
+      "error": {
+        "yes": -3.664601239256438,
+        "no": 12.094543274035594,
+        "unsure": -8.42994203477912
+      },
+      "abs_error_yes": 3.664601239256438,
+      "poll_id": "POLL-20260317130428244385"
+    },
+    {
+      "question": "Do you think the economy is getting better?",
+      "source": "Gallup, early 2026 (better vs worse)",
+      "synthetic": {
+        "yes": 28.7227663401959,
+        "no": 55.526683989606276,
+        "unsure": 15.750549670197891
+      },
+      "real": {
+        "yes": 29.0,
+        "no": 68.0,
+        "unsure": 3.0
+      },
+      "error": {
+        "yes": -0.2772336598041001,
+        "no": -12.473316010393724,
+        "unsure": 12.750549670197891
+      },
+      "abs_error_yes": 0.2772336598041001,
+      "poll_id": "POLL-20260317130432625817"
+    }
+  ]
+}

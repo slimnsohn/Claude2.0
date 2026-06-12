@@ -39,6 +39,7 @@ function render() {
         case "results": renderResultsView(app); break;
         case "population": renderPopulationView(app); break;
         case "backtest": renderBacktestView(app); break;
+        case "benchmark": renderBenchmarkView(app); break;
         case "events": renderEventsView(app); break;
         case "sources": renderSourcesView(app); break;
     }
@@ -68,6 +69,20 @@ function pct(val) {
     return (val * 100).toFixed(1) + "%";
 }
 
+function formatPollDate(dateStr) {
+    if (!dateStr) return "";
+    try {
+        const d = new Date(dateStr);
+        const month = (d.getMonth() + 1).toString().padStart(2, "0");
+        const day = d.getDate().toString().padStart(2, "0");
+        const hours = d.getHours();
+        const mins = d.getMinutes().toString().padStart(2, "0");
+        const ampm = hours >= 12 ? "pm" : "am";
+        const h = hours % 12 || 12;
+        return `${month}/${day} ${h}:${mins}${ampm}`;
+    } catch { return dateStr.slice(0, 10); }
+}
+
 function extractName(profile) {
     if (profile.backstory) {
         const first = profile.backstory.split(/[\s,]/)[0];
@@ -84,6 +99,47 @@ function renderPollView(el) {
         <div class="card">
             <div class="section-title">Ask a Question</div>
             <textarea id="poll-question" class="textarea" placeholder="Ask your population anything..."></textarea>
+            <div id="poll-filter-toggle" style="margin-top:8px;cursor:pointer;font-size:12px;color:var(--accent);user-select:none">&#9654; Filter population</div>
+            <div id="poll-filters" style="display:none;margin-top:8px;padding:10px 12px;background:var(--surface2);border-radius:6px">
+                <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+                    <select id="pf-state" class="select" style="max-width:130px"><option value="">All States</option></select>
+                    <select id="pf-party" class="select" style="max-width:140px">
+                        <option value="">All Parties</option>
+                        <option value="dem">Democrats</option>
+                        <option value="rep">Republicans</option>
+                        <option value="independent">Independent</option>
+                        <option value="strong_dem">Strong Dem</option>
+                        <option value="lean_dem">Lean Dem</option>
+                        <option value="strong_rep">Strong Rep</option>
+                        <option value="lean_rep">Lean Rep</option>
+                    </select>
+                    <select id="pf-race" class="select" style="max-width:120px">
+                        <option value="">All Races</option>
+                        <option value="white">White</option>
+                        <option value="black">Black</option>
+                        <option value="hispanic">Hispanic</option>
+                        <option value="asian">Asian</option>
+                    </select>
+                    <select id="pf-education" class="select" style="max-width:140px">
+                        <option value="">All Education</option>
+                        <option value="less_than_hs">Less than HS</option>
+                        <option value="hs_diploma">HS Diploma</option>
+                        <option value="some_college">Some College</option>
+                        <option value="bachelors">Bachelors</option>
+                        <option value="graduate">Graduate</option>
+                    </select>
+                    <select id="pf-age" class="select" style="max-width:110px">
+                        <option value="">All Ages</option>
+                        <option value="18-24">18-24</option>
+                        <option value="25-34">25-34</option>
+                        <option value="35-44">35-44</option>
+                        <option value="45-54">45-54</option>
+                        <option value="55-64">55-64</option>
+                        <option value="65+">65+</option>
+                    </select>
+                </div>
+                <div id="pf-match-count" style="font-size:11px;color:var(--text2);margin-top:6px"></div>
+            </div>
             <div style="display:flex;gap:12px;align-items:center;margin-top:12px">
                 <select id="poll-snapshot" class="select" style="max-width:250px">
                     <option value="live">Current Population (live)</option>
@@ -110,6 +166,35 @@ function renderPollView(el) {
         });
     }).catch(() => {});
 
+    // Populate state dropdown from profiles
+    api("/api/profiles").then(profiles => {
+        const sel = document.getElementById("pf-state");
+        if (!sel || !profiles) return;
+        const states = [...new Set(profiles.map(p => p.state).filter(Boolean))].sort();
+        states.forEach(s => {
+            const opt = document.createElement("option");
+            opt.value = s;
+            opt.textContent = s;
+            sel.appendChild(opt);
+        });
+        // Store profiles for filter preview counts
+        window._pollFilterProfiles = profiles;
+    }).catch(() => {});
+
+    // Filter toggle
+    document.getElementById("poll-filter-toggle").addEventListener("click", () => {
+        const panel = document.getElementById("poll-filters");
+        const toggle = document.getElementById("poll-filter-toggle");
+        const open = panel.style.display !== "none";
+        panel.style.display = open ? "none" : "block";
+        toggle.innerHTML = open ? "&#9654; Filter population" : "&#9660; Filter population";
+    });
+
+    // Filter change → update match count preview
+    ["pf-state", "pf-party", "pf-race", "pf-education", "pf-age"].forEach(id => {
+        document.getElementById(id)?.addEventListener("change", updatePollFilterCount);
+    });
+
     // Load recent polls
     loadRecentPolls();
 
@@ -122,16 +207,20 @@ function renderPollView(el) {
         const progress = document.getElementById("poll-progress");
         const btn = document.getElementById("poll-run-btn");
 
+        // Collect active filters
+        const filters = getPollFilters();
+
         btn.disabled = true;
         progress.style.display = "block";
         progress.textContent = "Creating poll...";
 
         try {
-            const body = { question, snapshot_id: snapshotId || "live" };
+            const body = { question, snapshot_id: snapshotId || "live", filters };
             const result = await api("/api/polls", { method: "POST", body });
             const pollId = result.poll_id;
+            const filterDesc = Object.entries(filters).filter(([,v]) => v).map(([k,v]) => `${k}=${v}`).join(", ");
             progress.innerHTML = `
-                Poll created: <strong>${esc(pollId)}</strong> — ${result.archetype_count || "?"} archetypes.<br>
+                Poll created: <strong>${esc(pollId)}</strong> — ${result.archetype_count || "?"} archetypes, ${result.profile_count || "?"} profiles${filterDesc ? ` (filtered: ${esc(filterDesc)})` : ""}.<br>
                 <span style="color:var(--text2)">Status: pending — prompts ready for Claude-in-Chrome automation.</span><br>
                 <button class="btn btn-sm" style="margin-top:8px" id="view-poll-btn">View Poll</button>
             `;
@@ -141,10 +230,48 @@ function renderPollView(el) {
             });
             loadRecentPolls();
         } catch (e) {
-            progress.textContent = `Error: ${e.message}`;
+            if (e.message && e.message.includes("No CES survey data")) {
+                progress.innerHTML = `<span style="color:var(--orange)">This question isn't covered by CES survey data.</span><br><span style="font-size:12px;color:var(--text2)">Covered topics: Trump/Congress approval, economy, immigration, healthcare, environment, taxes, minimum wage, student loans, spending cuts.</span>`;
+            } else {
+                progress.textContent = `Error: ${e.message}`;
+            }
             btn.disabled = false;
         }
     });
+}
+
+function getPollFilters() {
+    return {
+        state: document.getElementById("pf-state")?.value || "",
+        party_id: document.getElementById("pf-party")?.value || "",
+        race: document.getElementById("pf-race")?.value || "",
+        education: document.getElementById("pf-education")?.value || "",
+        age_bracket: document.getElementById("pf-age")?.value || "",
+    };
+}
+
+function updatePollFilterCount() {
+    const countEl = document.getElementById("pf-match-count");
+    if (!countEl) return;
+    const profiles = window._pollFilterProfiles || [];
+    const f = getPollFilters();
+    const hasFilter = Object.values(f).some(v => v);
+    if (!hasFilter) {
+        countEl.textContent = "";
+        return;
+    }
+    let matched = profiles;
+    if (f.state) matched = matched.filter(p => p.state === f.state);
+    if (f.race) matched = matched.filter(p => p.race === f.race);
+    if (f.education) matched = matched.filter(p => p.education === f.education);
+    if (f.age_bracket) matched = matched.filter(p => p.age_bracket === f.age_bracket);
+    if (f.party_id) {
+        if (f.party_id === "dem") matched = matched.filter(p => ["strong_dem", "dem", "lean_dem"].includes(p.party_id));
+        else if (f.party_id === "rep") matched = matched.filter(p => ["strong_rep", "rep", "lean_rep"].includes(p.party_id));
+        else matched = matched.filter(p => p.party_id === f.party_id);
+    }
+    const color = matched.length === 0 ? "var(--red)" : "var(--text2)";
+    countEl.innerHTML = `<span style="color:${color}"><strong>${matched.length}</strong> of ${profiles.length} profiles match</span>`;
 }
 
 async function loadRecentPolls() {
@@ -152,7 +279,7 @@ async function loadRecentPolls() {
     if (!container) return;
     try {
         const polls = await api("/api/polls");
-        const recent = (polls || []).slice(0, 10);
+        const recent = (polls || []).reverse().slice(0, 10);
         if (recent.length === 0) {
             container.innerHTML = '<p style="color:var(--text2);font-size:13px">No polls yet. Ask your first question above.</p>';
             return;
@@ -163,27 +290,71 @@ async function loadRecentPolls() {
                     <tr>
                         <th>Question</th>
                         <th>Date</th>
-                        <th>Snapshot</th>
-                        <th>Result</th>
                         <th>Status</th>
+                        <th style="text-align:center">Yes</th>
+                        <th style="text-align:center">No</th>
+                        <th style="text-align:center">Unsure</th>
+                        <th style="width:32px"></th>
+                        <th style="width:32px"></th>
                     </tr>
                 </thead>
                 <tbody>
-                    ${recent.map(p => `
+                    ${recent.map(p => {
+                        const d = p.distribution || {};
+                        const hasResults = d.yes != null;
+                        const fBadges = Object.entries(p.filters || {}).filter(([,v]) => v).map(([k,v]) => `<span class="filter-badge">${esc(v)}</span>`).join("");
+                        return `
                         <tr data-poll-id="${esc(String(p.poll_id))}" style="cursor:pointer">
-                            <td>${esc(truncate(p.question, 60))}</td>
-                            <td>${esc(p.date || "")}</td>
-                            <td>${snapshotBadge(p.snapshot_id)}</td>
-                            <td>${esc(p.headline_result || "--")}</td>
+                            <td>${esc(truncate(p.question, 50))}${fBadges ? " " + fBadges : ""}</td>
+                            <td style="white-space:nowrap">${esc(formatPollDate(p.date))}</td>
                             <td>${statusBadge(p.status)}</td>
-                        </tr>
-                    `).join("")}
+                            <td style="text-align:center;font-weight:600;color:var(--green)">${hasResults ? pct(d.yes) : "--"}</td>
+                            <td style="text-align:center;font-weight:600;color:var(--red)">${hasResults ? pct(d.no) : "--"}</td>
+                            <td style="text-align:center;color:var(--text2)">${hasResults ? pct(d.unsure || 0) : "--"}</td>
+                            <td style="text-align:center"><button class="poll-rerun-btn" data-rerun-question="${esc(p.question)}" data-rerun-filters='${JSON.stringify(p.filters || {}).replace(/'/g, "&#39;")}' title="Rerun with current population" style="background:none;border:none;cursor:pointer;color:var(--accent);font-size:14px;padding:2px 6px;border-radius:4px">&#8635;</button></td>
+                            <td style="text-align:center"><button class="poll-delete-btn" data-delete-id="${esc(String(p.poll_id))}" title="Delete poll" style="background:none;border:none;cursor:pointer;color:var(--text2);font-size:16px;padding:2px 6px;border-radius:4px">&times;</button></td>
+                        </tr>`;
+                    }).join("")}
                 </tbody>
             </table>
         `;
         container.querySelectorAll("tr[data-poll-id]").forEach(row => {
-            row.addEventListener("click", () => {
+            row.addEventListener("click", (e) => {
+                if (e.target.closest(".poll-delete-btn") || e.target.closest(".poll-rerun-btn")) return;
                 navigate("results", { pollId: row.dataset.pollId });
+            });
+        });
+        container.querySelectorAll(".poll-rerun-btn").forEach(btn => {
+            btn.addEventListener("click", async (e) => {
+                e.stopPropagation();
+                const question = btn.dataset.rerunQuestion;
+                const filters = JSON.parse(btn.dataset.rerunFilters || "{}");
+                btn.disabled = true;
+                btn.textContent = "...";
+                try {
+                    const created = await api("/api/polls", { method: "POST", body: { question, snapshot_id: "live", filters } });
+                    await api(`/api/polls/${created.poll_id}/auto-complete`, { method: "POST" });
+                    loadRecentPolls();
+                    loadStats();
+                    navigate("results", { pollId: created.poll_id });
+                } catch (err) {
+                    console.error("Rerun failed:", err);
+                    btn.textContent = "\u21BB";
+                    btn.disabled = false;
+                }
+            });
+        });
+        container.querySelectorAll(".poll-delete-btn").forEach(btn => {
+            btn.addEventListener("click", async (e) => {
+                e.stopPropagation();
+                const id = btn.dataset.deleteId;
+                try {
+                    await api(`/api/polls/${id}`, { method: "DELETE" });
+                    loadRecentPolls();
+                    loadStats();
+                } catch (err) {
+                    console.error("Delete failed:", err);
+                }
             });
         });
     } catch (e) {
@@ -677,6 +848,53 @@ async function fetchPopulation() {
     }
 }
 
+function buildColumnTooltips(data, cols) {
+    const total = data.length;
+    const tips = {};
+
+    // Count values per column
+    for (const col of cols) {
+        const k = col.key;
+        if (k === "name") {
+            tips[k] = `<strong>${total}</strong> profiles shown`;
+            continue;
+        }
+
+        const counts = {};
+        for (const row of data) {
+            const v = row[k] || "unknown";
+            counts[v] = (counts[v] || 0) + 1;
+        }
+
+        // Columns with breakdown pivot tables
+        const pivotCols = ["race", "party_id", "education", "sex", "age", "urban_rural"];
+        if (pivotCols.includes(k)) {
+            // For age, recount by age_bracket for a cleaner breakdown
+            let pivotCounts = counts;
+            if (k === "age") {
+                pivotCounts = {};
+                for (const row of data) {
+                    const v = row["age_bracket"] || "unknown";
+                    pivotCounts[v] = (pivotCounts[v] || 0) + 1;
+                }
+            }
+            const sorted = Object.entries(pivotCounts).sort((a, b) => b[1] - a[1]);
+            let html = `<strong>${total}</strong> profiles<table class="tooltip-pivot">`;
+            for (const [val, count] of sorted) {
+                const pctVal = ((count / total) * 100).toFixed(1);
+                const barW = ((count / total) * 100).toFixed(0);
+                html += `<tr><td class="tp-label">${esc(val)}</td><td class="tp-count">${count}</td><td class="tp-pct">${pctVal}%</td><td class="tp-bar"><div style="width:${barW}%"></div></td></tr>`;
+            }
+            html += `</table>`;
+            tips[k] = html;
+        } else {
+            const unique = Object.keys(counts).length;
+            tips[k] = `<strong>${total}</strong> profiles<br>${unique} unique values`;
+        }
+    }
+    return tips;
+}
+
 function renderPopulationTable() {
     const container = document.getElementById("pop-table");
     if (!container) return;
@@ -719,11 +937,14 @@ function renderPopulationTable() {
         return populationSort.dir === "asc" ? " &#9650;" : " &#9660;";
     };
 
+    // Build column tooltips from current data
+    const colTooltips = buildColumnTooltips(data, cols);
+
     container.innerHTML = `
         <table class="data-table">
             <thead>
                 <tr>
-                    ${cols.map(c => `<th data-sort="${c.key}">${c.label}${arrow(c.key)}</th>`).join("")}
+                    ${cols.map(c => `<th data-sort="${c.key}" class="has-tooltip">${c.label}${arrow(c.key)}<div class="col-tooltip">${colTooltips[c.key] || ""}</div></th>`).join("")}
                 </tr>
             </thead>
             <tbody>
@@ -1013,11 +1234,219 @@ function updateSnapshotDropdowns(snapshots) {
     });
 }
 
+// --- View: Benchmark ---
+
+function renderBenchmarkView(el) {
+    el.innerHTML = `
+        <h2>Benchmark</h2>
+        <p style="font-size:13px;color:var(--text2);margin-bottom:16px">Compare your synthetic population against real polls. Click "Run" to test any question, or "Run All" to benchmark everything.</p>
+        <div style="display:flex;gap:8px;margin-bottom:16px">
+            <button id="bm-run-all" class="btn btn-primary">Run All Benchmarks</button>
+            <span id="bm-status" style="font-size:12px;color:var(--text2);align-self:center"></span>
+        </div>
+        <div id="bm-summary" style="margin-bottom:16px"></div>
+        <div id="bm-list">Loading...</div>
+        <div class="card" style="margin-top:16px">
+            <div class="section-title">Custom Comparison</div>
+            <p style="font-size:12px;color:var(--text2);margin-bottom:8px">Enter a real poll result to compare against your population.</p>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end">
+                <div style="flex:1;min-width:200px">
+                    <label style="font-size:11px;color:var(--text2);display:block;margin-bottom:4px">Question</label>
+                    <input id="bm-custom-q" class="input" placeholder="e.g. Do you approve of...">
+                </div>
+                <div style="width:80px">
+                    <label style="font-size:11px;color:var(--text2);display:block;margin-bottom:4px">Real Yes%</label>
+                    <input id="bm-custom-yes" class="input" type="number" min="0" max="100" placeholder="47">
+                </div>
+                <div style="width:80px">
+                    <label style="font-size:11px;color:var(--text2);display:block;margin-bottom:4px">Real No%</label>
+                    <input id="bm-custom-no" class="input" type="number" min="0" max="100" placeholder="49">
+                </div>
+                <div style="width:100px">
+                    <label style="font-size:11px;color:var(--text2);display:block;margin-bottom:4px">Source</label>
+                    <input id="bm-custom-src" class="input" placeholder="Gallup">
+                </div>
+                <button id="bm-custom-run" class="btn btn-primary">Compare</button>
+            </div>
+            <div id="bm-custom-result" style="margin-top:8px"></div>
+        </div>
+    `;
+
+    loadBenchmarks();
+
+    document.getElementById("bm-run-all").addEventListener("click", runAllBenchmarks);
+
+    document.getElementById("bm-custom-run").addEventListener("click", async () => {
+        const q = document.getElementById("bm-custom-q").value.trim();
+        const yesVal = parseFloat(document.getElementById("bm-custom-yes").value);
+        const noVal = parseFloat(document.getElementById("bm-custom-no").value);
+        const src = document.getElementById("bm-custom-src").value.trim();
+        if (!q || isNaN(yesVal) || isNaN(noVal)) return;
+        const unsureVal = Math.max(0, 100 - yesVal - noVal);
+        const resultEl = document.getElementById("bm-custom-result");
+        resultEl.innerHTML = '<span style="color:var(--text2)">Running comparison...</span>';
+        try {
+            const cmp = await api("/api/benchmarks/compare", { method: "POST", body: {
+                question: q,
+                real_results: { yes: yesVal / 100, no: noVal / 100, unsure: unsureVal / 100 },
+                source: src,
+                runs: 10,
+            }});
+            resultEl.innerHTML = renderComparisonInline(cmp);
+            loadBenchmarks();
+        } catch (e) {
+            resultEl.innerHTML = `<span style="color:var(--red)">Error: ${esc(e.message)}</span>`;
+        }
+    });
+}
+
+function renderComparisonInline(cmp) {
+    const r = cmp.real, s = cmp.synthetic, e = cmp.errors;
+    const errColor = v => Math.abs(v) <= 0.03 ? "var(--green)" : Math.abs(v) <= 0.08 ? "var(--orange)" : "var(--red)";
+    const fmtE = v => (v >= 0 ? "+" : "") + (v * 100).toFixed(1) + "%";
+    return `
+        <div style="display:flex;gap:24px;font-size:13px;padding:8px 0">
+            <div>Yes: <strong style="color:var(--green)">${pct(s.yes)}</strong> vs real ${pct(r.yes)} <span style="color:${errColor(e.yes)}">(${fmtE(e.yes)})</span></div>
+            <div>No: <strong style="color:var(--red)">${pct(s.no)}</strong> vs real ${pct(r.no)} <span style="color:${errColor(e.no)}">(${fmtE(e.no)})</span></div>
+            <div>Unsure: <strong>${pct(s.unsure)}</strong> vs real ${pct(r.unsure || 0)} <span style="color:${errColor(e.unsure)}">(${fmtE(e.unsure)})</span></div>
+            <div>MAE: <strong style="color:${cmp.mae <= 0.05 ? "var(--green)" : cmp.mae <= 0.10 ? "var(--orange)" : "var(--red)"}">${(cmp.mae * 100).toFixed(1)}%</strong></div>
+        </div>
+    `;
+}
+
+async function loadBenchmarks() {
+    const container = document.getElementById("bm-list");
+    if (!container) return;
+    try {
+        const benchmarks = await api("/api/benchmarks");
+        if (!benchmarks || benchmarks.length === 0) {
+            container.innerHTML = '<p style="color:var(--text2)">No benchmarks loaded.</p>';
+            return;
+        }
+        container.innerHTML = `
+            <table class="data-table">
+                <thead><tr>
+                    <th>Question</th>
+                    <th>Source</th>
+                    <th style="text-align:center">Real Yes</th>
+                    <th style="text-align:center">Real No</th>
+                    <th style="text-align:center">Synth Yes</th>
+                    <th style="text-align:center">Synth No</th>
+                    <th style="text-align:center">Error</th>
+                    <th style="width:60px"></th>
+                </tr></thead>
+                <tbody>
+                    ${benchmarks.map((b, i) => {
+                        const r = b.real_results || {};
+                        const cmp = b.last_comparison || {};
+                        const s = cmp.synthetic || {};
+                        const hasSynth = s.yes != null;
+                        const mae = cmp.mae;
+                        const maeColor = mae != null ? (mae <= 0.05 ? "var(--green)" : mae <= 0.10 ? "var(--orange)" : "var(--red)") : "var(--text2)";
+                        return `<tr>
+                            <td style="max-width:280px">${esc(truncate(b.question, 55))}</td>
+                            <td style="font-size:11px;color:var(--text2);white-space:nowrap">${esc(b.source || "")}</td>
+                            <td style="text-align:center;font-weight:600;color:var(--green)">${pct(r.yes)}</td>
+                            <td style="text-align:center;font-weight:600;color:var(--red)">${pct(r.no)}</td>
+                            <td style="text-align:center;${hasSynth ? "font-weight:600;color:var(--green)" : "color:var(--text2)"}">${hasSynth ? pct(s.yes) : "--"}</td>
+                            <td style="text-align:center;${hasSynth ? "font-weight:600;color:var(--red)" : "color:var(--text2)"}">${hasSynth ? pct(s.no) : "--"}</td>
+                            <td style="text-align:center;font-weight:600;color:${maeColor}">${mae != null ? (mae * 100).toFixed(1) + "%" : "--"}</td>
+                            <td><button class="btn btn-sm" data-bm-run="${i}" data-bm-q="${esc(b.question)}" data-bm-real='${JSON.stringify(r).replace(/'/g, "&#39;")}' data-bm-src="${esc(b.source || "")}" data-bm-date="${esc(b.date || "")}" data-bm-cat="${esc(b.category || "")}">Run</button></td>
+                        </tr>`;
+                    }).join("")}
+                </tbody>
+            </table>
+        `;
+        container.querySelectorAll("[data-bm-run]").forEach(btn => {
+            btn.addEventListener("click", async () => {
+                btn.disabled = true;
+                btn.textContent = "...";
+                try {
+                    await api("/api/benchmarks/compare", { method: "POST", body: {
+                        question: btn.dataset.bmQ,
+                        real_results: JSON.parse(btn.dataset.bmReal),
+                        source: btn.dataset.bmSrc,
+                        date: btn.dataset.bmDate,
+                        category: btn.dataset.bmCat,
+                        runs: 10,
+                    }});
+                    loadBenchmarks();
+                } catch (e) {
+                    console.error("Benchmark run failed:", e);
+                }
+                btn.disabled = false;
+                btn.textContent = "Run";
+            });
+        });
+    } catch (e) {
+        container.innerHTML = `<p style="color:var(--text2)">Failed to load: ${esc(e.message)}</p>`;
+    }
+}
+
+async function runAllBenchmarks() {
+    const btn = document.getElementById("bm-run-all");
+    const status = document.getElementById("bm-status");
+    btn.disabled = true;
+    try {
+        const benchmarks = await api("/api/benchmarks");
+        let done = 0;
+        for (const b of benchmarks) {
+            if (!b.real_results) continue;
+            status.textContent = `Running ${++done} of ${benchmarks.length}...`;
+            await api("/api/benchmarks/compare", { method: "POST", body: {
+                question: b.question,
+                real_results: b.real_results,
+                source: b.source || "",
+                date: b.date || "",
+                category: b.category || "",
+                runs: 10,
+            }});
+        }
+        // Show summary
+        const updated = await api("/api/benchmarks");
+        const maes = updated.filter(b => b.last_comparison?.mae != null).map(b => b.last_comparison.mae);
+        const avgMae = maes.length ? maes.reduce((a, b) => a + b, 0) / maes.length : 0;
+        const summaryEl = document.getElementById("bm-summary");
+        if (summaryEl && maes.length) {
+            const color = avgMae <= 0.05 ? "var(--green)" : avgMae <= 0.10 ? "var(--orange)" : "var(--red)";
+            summaryEl.innerHTML = `
+                <div style="padding:12px 16px;background:var(--surface2);border-radius:6px;font-size:13px">
+                    Avg error across <strong>${maes.length}</strong> benchmarks: <strong style="color:${color}">${(avgMae * 100).toFixed(1)}%</strong>
+                    &nbsp;|&nbsp; Best: ${(Math.min(...maes) * 100).toFixed(1)}% &nbsp;|&nbsp; Worst: ${(Math.max(...maes) * 100).toFixed(1)}%
+                </div>
+            `;
+        }
+        status.textContent = `Done — ${done} benchmarks completed`;
+        loadBenchmarks();
+    } catch (e) {
+        status.textContent = `Error: ${e.message}`;
+    }
+    btn.disabled = false;
+}
+
 // --- View 5: Events ---
 
 function renderEventsView(el) {
     el.innerHTML = `
         <h2>Events</h2>
+        <div class="card">
+            <div class="section-title">World Context</div>
+            <p style="font-size:12px;color:var(--text2);margin-bottom:8px">Fetch real headlines from public news feeds (AP, NPR, BBC, Reuters). The population absorbs this info and their poll responses shift accordingly.</p>
+            <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
+                <button id="wu-fetch" class="btn btn-primary">Refresh World Context</button>
+                <button id="wu-clear" class="btn btn-sm">Clear Auto</button>
+                <span id="wu-status" style="font-size:12px;color:var(--text2)"></span>
+            </div>
+            <div id="wu-shifts" style="margin-bottom:8px"></div>
+            <div id="wu-list"></div>
+            <details style="margin-top:12px">
+                <summary style="font-size:12px;color:var(--text2);cursor:pointer">Add manual update</summary>
+                <div style="margin-top:8px">
+                    <textarea id="wu-text" class="textarea" style="min-height:60px" placeholder="Paste any news or info..."></textarea>
+                    <button id="wu-manual" class="btn btn-sm" style="margin-top:4px">Add</button>
+                </div>
+            </details>
+        </div>
         <div class="card">
             <div class="section-title">Add Event</div>
             <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px">
@@ -1120,7 +1549,121 @@ function renderEventsView(el) {
         }
     });
 
+    // World Context handlers
+    document.getElementById("wu-fetch").addEventListener("click", async () => {
+        const btn = document.getElementById("wu-fetch");
+        const status = document.getElementById("wu-status");
+        btn.disabled = true;
+        btn.textContent = "Fetching headlines...";
+        status.textContent = "";
+        try {
+            const result = await api("/api/world-updates/fetch", { method: "POST" });
+            status.innerHTML = `Scanned <strong>${result.headlines_scanned}</strong> headlines, ingested <strong>${result.fetched}</strong> updates`;
+            loadWorldUpdates();
+        } catch (e) {
+            status.textContent = `Error: ${e.message}`;
+        }
+        btn.disabled = false;
+        btn.textContent = "Refresh World Context";
+    });
+    document.getElementById("wu-clear").addEventListener("click", async () => {
+        await api("/api/world-updates/clear-auto", { method: "POST" });
+        loadWorldUpdates();
+    });
+    document.getElementById("wu-manual")?.addEventListener("click", async () => {
+        const text = document.getElementById("wu-text").value.trim();
+        if (!text) return;
+        await api("/api/world-updates", { method: "POST", body: { text } });
+        document.getElementById("wu-text").value = "";
+        loadWorldUpdates();
+    });
+    loadWorldUpdates();
+
     loadEventList();
+}
+
+async function loadWorldUpdates() {
+    const container = document.getElementById("wu-list");
+    const shiftsEl = document.getElementById("wu-shifts");
+    if (!container) return;
+    try {
+        const [updates, activeShifts] = await Promise.all([
+            api("/api/world-updates"),
+            api("/api/world-updates/active-shifts"),
+        ]);
+
+        // Show aggregate shift summary
+        if (shiftsEl && activeShifts.active_count > 0) {
+            const s = activeShifts.shifts;
+            const fmtS = v => v > 0 ? `+${(v*100).toFixed(1)}%` : `${(v*100).toFixed(1)}%`;
+            const colorS = v => v > 0 ? "var(--green)" : v < 0 ? "var(--red)" : "var(--text2)";
+            shiftsEl.innerHTML = `
+                <div style="display:flex;gap:16px;font-size:13px;padding:8px 12px;background:var(--surface2);border-radius:6px">
+                    <span style="color:var(--text2)">${activeShifts.active_count} active updates shifting polls:</span>
+                    <span>Dem <strong style="color:${colorS(s.dem)}">${fmtS(s.dem)}</strong></span>
+                    <span>Rep <strong style="color:${colorS(s.rep)}">${fmtS(s.rep)}</strong></span>
+                    <span>Ind <strong style="color:${colorS(s.independent)}">${fmtS(s.independent)}</strong></span>
+                </div>
+            `;
+        } else if (shiftsEl) {
+            shiftsEl.innerHTML = "";
+        }
+
+        if (!updates || updates.length === 0) {
+            container.innerHTML = '<p style="color:var(--text2);font-size:12px">No world context loaded. Click "Refresh World Context" to fetch current headlines.</p>';
+            return;
+        }
+        container.innerHTML = `
+            <table class="data-table">
+                <thead><tr>
+                    <th>Headline</th>
+                    <th>Source</th>
+                    <th>Topics</th>
+                    <th>Dir</th>
+                    <th style="text-align:center">Dem</th>
+                    <th style="text-align:center">Rep</th>
+                    <th style="text-align:center">Ind</th>
+                    <th style="width:60px"></th>
+                </tr></thead>
+                <tbody>
+                    ${updates.map(u => {
+                        const s = u.shifts || {};
+                        const fmtShift = v => v > 0 ? `<span style="color:var(--green)">+${(v*100).toFixed(1)}%</span>` : v < 0 ? `<span style="color:var(--red)">${(v*100).toFixed(1)}%</span>` : `<span style="color:var(--text2)">0</span>`;
+                        const dirBadge = u.direction === "positive" ? "badge-complete" : u.direction === "negative" ? "badge-pending" : "badge-backtest";
+                        const activeStyle = u.active === false ? "opacity:0.4" : "";
+                        const srcLabel = u.feed || (u.source === "manual" ? "manual" : "");
+                        return `<tr style="${activeStyle}">
+                            <td style="max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(u.text)}${u.description ? "\n\n" + esc(u.description) : ""}">${esc(truncate(u.text, 55))}</td>
+                            <td style="font-size:11px;color:var(--text2);white-space:nowrap">${esc(srcLabel)}</td>
+                            <td>${(u.topics||[]).map(t => `<span class="badge badge-live" style="margin-right:2px">${esc(t)}</span>`).join("")}</td>
+                            <td><span class="badge ${dirBadge}">${esc(u.direction)}</span></td>
+                            <td style="text-align:center">${fmtShift(s.dem || 0)}</td>
+                            <td style="text-align:center">${fmtShift(s.rep || 0)}</td>
+                            <td style="text-align:center">${fmtShift(s.independent || 0)}</td>
+                            <td style="white-space:nowrap">
+                                <button class="btn btn-sm" data-toggle-wu="${esc(u.id)}" title="${u.active !== false ? "Disable" : "Enable"}">${u.active !== false ? "On" : "Off"}</button>
+                                <button class="poll-delete-btn" data-delete-wu="${esc(u.id)}" title="Delete" style="background:none;border:none;cursor:pointer;color:var(--text2);font-size:16px;padding:2px 6px">&times;</button>
+                            </td>
+                        </tr>`;
+                    }).join("")}
+                </tbody>
+            </table>
+        `;
+        container.querySelectorAll("[data-toggle-wu]").forEach(btn => {
+            btn.addEventListener("click", async () => {
+                await api(`/api/world-updates/${btn.dataset.toggleWu}/toggle`, { method: "POST" });
+                loadWorldUpdates();
+            });
+        });
+        container.querySelectorAll("[data-delete-wu]").forEach(btn => {
+            btn.addEventListener("click", async () => {
+                await api(`/api/world-updates/${btn.dataset.deleteWu}`, { method: "DELETE" });
+                loadWorldUpdates();
+            });
+        });
+    } catch (e) {
+        container.innerHTML = `<p style="color:var(--text2)">Failed to load: ${esc(e.message)}</p>`;
+    }
 }
 
 async function loadEventList() {

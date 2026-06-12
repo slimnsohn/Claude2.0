@@ -12,3 +12,7 @@ def register_blueprints(app):
     app.register_blueprint(polls_bp)
     from api.sources import sources_bp
     app.register_blueprint(sources_bp)
+    from api.world_updates import world_updates_bp
+    app.register_blueprint(world_updates_bp)
+    from api.benchmarks import benchmarks_bp
+    app.register_blueprint(benchmarks_bp)
