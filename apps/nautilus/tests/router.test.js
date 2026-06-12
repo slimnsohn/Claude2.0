@@ -131,6 +131,34 @@ test('prefix only counts as the first word — colon later in query is plain tex
   assert.strictEqual(enterAction.type, 'claude'); // 3 words, no strong match
 });
 
+// ---- calculator ----
+
+test('route: =expression puts the calc result first as enterAction', () => {
+  const { results, enterAction } = route('=2+2', ITEMS);
+  assert.strictEqual(results[0].type, 'calc');
+  assert.strictEqual(results[0].title, '= 4');
+  assert.strictEqual(enterAction.type, 'calc');
+  assert.strictEqual(results[results.length - 1].type, 'claude');
+});
+
+test('route: bare math is auto-detected and calc row comes first', () => {
+  const { results, enterAction } = route('15*8.5', ITEMS);
+  assert.strictEqual(results[0].type, 'calc');
+  assert.strictEqual(results[0].title, '= 127.5');
+  assert.strictEqual(enterAction.type, 'calc');
+});
+
+test('route: incomplete =expression still shows a placeholder calc row', () => {
+  const { results } = route('=2+', ITEMS);
+  assert.strictEqual(results[0].type, 'calc');
+  assert.strictEqual(results[0].target, '');
+});
+
+test('route: plain queries get no calc row', () => {
+  const { results } = route('chrome', ITEMS);
+  assert.strictEqual(results.find((r) => r.type === 'calc'), undefined);
+});
+
 test('route caps ranked results (Claude row still present)', () => {
   const many = Array.from({ length: 30 }, (_, i) => ({
     id: `s${i}`, type: 'site', title: `Chrome Site ${i}`, subtitle: '', target: `https://x${i}.com`,

@@ -82,6 +82,7 @@ html, body {
 .badge.site   { color: var(--green, #3ecf8e);  background: color-mix(in srgb, var(--green, #3ecf8e) 16%, transparent); }
 .badge.folder { color: var(--orange, #ffaa44); background: color-mix(in srgb, var(--orange, #ffaa44) 16%, transparent); }
 .badge.claude { color: var(--purple, #b88cff); background: color-mix(in srgb, var(--purple, #b88cff) 16%, transparent); }
+.badge.calc   { color: #4dc4ff; background: color-mix(in srgb, #4dc4ff 16%, transparent); }
 
 .title {
   color: var(--text, #e8e8f0);

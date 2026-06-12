@@ -1,6 +1,7 @@
 'use strict';
 
 const { rankItems } = require('./score.js');
+const { isCalcQuery, calcItem } = require('./calc.js');
 
 // Substring tier or better counts as a "strong" match (see score.js tiers).
 const STRONG_MATCH = 600;
@@ -50,6 +51,14 @@ function parsePrefix(raw) {
 function route(rawQuery, items) {
   const raw = String(rawQuery || '').trim();
   if (!raw) return { results: [], enterAction: null };
+
+  if (isCalcQuery(raw)) {
+    const calc = calcItem(raw);
+    // explicit "=" → just the answer; bare math may still match items ("2048")
+    const ranked = raw.startsWith('=') ? [] : rankItems(raw, items).slice(0, MAX_RESULTS);
+    const results = [calc, ...ranked, askClaudeItem(raw)];
+    return { results, enterAction: results[0] };
+  }
 
   const { filter, rest } = parsePrefix(raw);
 

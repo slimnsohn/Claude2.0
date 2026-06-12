@@ -8,7 +8,7 @@ let results = [];
 let selectedIndex = 0;
 let errorTimer = null;
 
-const BADGE_LABEL = { app: 'APP', site: 'SITE', folder: 'FOLDER', claude: 'CLAUDE' };
+const BADGE_LABEL = { app: 'APP', site: 'SITE', folder: 'FOLDER', claude: 'CLAUDE', calc: 'CALC' };
 
 function faviconUrl(target) {
   try {
@@ -79,6 +79,7 @@ async function search(value) {
 
 async function launch(item) {
   if (!item) return;
+  if (item.type === 'calc' && !item.target) return; // mid-typing — ignore Enter
   const result = await window.nautilus.launch(item);
   if (!result.ok) flashError(`Couldn't launch ${item.title}: ${result.error}`);
 }

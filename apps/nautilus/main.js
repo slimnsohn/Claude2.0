@@ -3,7 +3,7 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const {
-  app, BrowserWindow, Tray, Menu, globalShortcut, ipcMain, screen, shell, nativeImage,
+  app, BrowserWindow, Tray, Menu, globalShortcut, ipcMain, screen, shell, nativeImage, clipboard,
 } = require('electron');
 
 const { route } = require('./src/core/router.js');
@@ -245,7 +245,7 @@ if (!app.requestSingleInstanceLock()) {
   });
 
   ipcMain.handle('launch', async (event, item) => {
-    const result = await launchItem(item, { shell });
+    const result = await launchItem(item, { shell, clipboard });
     if (result.ok) hideWindow();
     else log.error(`Launch failed for ${item.title}: ${result.error}`);
     return result;
