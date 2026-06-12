@@ -11,7 +11,7 @@ from datetime import datetime
 import numpy as np
 import pandas as pd
 
-from generator.ces_harmonize import harmonize_ces
+from generator.ces_harmonize import harmonize_ces, CURRENT_YEAR
 
 KEY_VARS = ["sex", "race_h", "education", "age_bracket", "party_id", "urban_rural"]
 
@@ -83,7 +83,7 @@ FIPS_TO_ABBR = {1: "AL", 2: "AK", 4: "AZ", 5: "AR", 6: "CA", 8: "CO", 9: "CT", 1
                 40: "OK", 41: "OR", 42: "PA", 44: "RI", 45: "SC", 46: "SD", 47: "TN",
                 48: "TX", 49: "UT", 50: "VT", 51: "VA", 53: "WA", 54: "WV", 55: "WI", 56: "WY"}
 NEWS_BY_PARTY = {
-    "strong_rep": ["fox_news", "newsmax", "local_tv", "fox_news"],
+    "strong_rep": ["fox_news", "newsmax", "local_tv", "fox_news"],  # duplicates weight the choice (fox_news 2x for strong_rep)
     "rep": ["fox_news", "local_tv", "newsmax", "abc_news"],
     "lean_rep": ["fox_news", "local_tv", "cnn", "abc_news"],
     "independent": ["local_tv", "cnn", "abc_news", "nbc_news"],
@@ -113,7 +113,7 @@ def respondent_to_profile(row, batch_id: str, rng: random.Random) -> dict:
     from generator.backstory import generate_backstory
     from generator.plausibility import fix_profile
 
-    age_val = 2026 - _safe_int(row.get("birthyr"), 1980)
+    age_val = CURRENT_YEAR - _safe_int(row.get("birthyr"), 1980)
     inc_bracket = INCOME_BRACKET.get(_safe_int(row.get("faminc_new"), 5), "50-75k")
     lo, hi = INCOME_RANGE[inc_bracket]
     party = row.get("party_id") or "independent"
