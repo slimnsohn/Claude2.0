@@ -13,11 +13,12 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
+import pandas as pd
+
 sys.path.insert(0, str(Path(__file__).parent))
 
+from generator.archetypes import ArchetypeBuilder
 from generator.population_builder import BalanceError, build_population
-
-BATCH_ID = "ces-balanced-v2-5k"
 
 
 def main():
@@ -25,6 +26,8 @@ def main():
     ap.add_argument("--target-n", type=int, default=5000)
     ap.add_argument("--seed", type=int, default=42)
     args = ap.parse_args()
+
+    batch_id = f"ces-balanced-v2-{args.target_n}"
 
     base = Path(__file__).parent
     ces_path = base / "data" / "raw" / "ces" / "ces_2024_common.csv"
@@ -35,17 +38,18 @@ def main():
         return 1
 
     try:
-        profiles, report = build_population(str(ces_path), args.target_n, BATCH_ID, args.seed)
+        profiles, report = build_population(str(ces_path), args.target_n, batch_id, args.seed)
     except BalanceError as e:
         print(f"ABORT: {e}\nRegistry NOT modified.")
         return 1
 
     # Archetypes
-    import pandas as pd
-    from generator.archetypes import ArchetypeBuilder
     df = pd.DataFrame(profiles)
     builder = ArchetypeBuilder(min_cell_size=3)
     df = builder.build(df)
+    if list(df["profile_id"]) != [p["profile_id"] for p in profiles]:
+        print("ABORT: archetype builder reordered rows; registry NOT modified.")
+        return 1
     for i in range(len(profiles)):
         profiles[i]["archetype_id"] = df.iloc[i]["archetype_id"]
 
@@ -59,7 +63,7 @@ def main():
     registry_path.write_text(json.dumps(profiles, indent=2, default=str))
     (base / "data" / "profiles" / "build_report.json").write_text(
         json.dumps({"built_at": datetime.now().isoformat(), "target_n": args.target_n,
-                    "seed": args.seed, "batch_id": BATCH_ID,
+                    "seed": args.seed, "batch_id": batch_id,
                     "archetypes": int(df["archetype_id"].nunique()), **report}, indent=2))
 
     print(f"\nSaved {len(profiles)} profiles, {df['archetype_id'].nunique()} archetypes")
