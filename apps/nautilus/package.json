@@ -1,0 +1,16 @@
+{
+  "name": "nautilus",
+  "version": "1.0.0",
+  "description": "Spotlight-style launcher for Windows — apps, sites, folders, Ask Claude",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "devDependencies": {
+    "electron": "^42.4.0"
+  }
+}
