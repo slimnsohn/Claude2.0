@@ -93,3 +93,49 @@ test('route: folder and site matches launch like apps', () => {
   assert.strictEqual(route('downloads', ITEMS).enterAction.id, 'dl');
   assert.strictEqual(route('gmail', ITEMS).enterAction.id, 'gmail');
 });
+
+// ---- prefix overrides: first word ending in a colon forces a type ----
+
+test('folder: prefix restricts results to folders and skips question logic', () => {
+  const { results, enterAction } = route('folder: down', ITEMS);
+  assert.strictEqual(enterAction.id, 'dl');
+  assert.ok(results.filter((r) => r.type !== 'claude').every((r) => r.type === 'folder'));
+});
+
+test('site: and website: prefixes restrict to sites', () => {
+  assert.strictEqual(route('site:gma', ITEMS).enterAction.id, 'gmail');
+  assert.strictEqual(route('website: gmail', ITEMS).enterAction.id, 'gmail');
+});
+
+test('app: prefix restricts to apps', () => {
+  const { results, enterAction } = route('app:c', ITEMS);
+  assert.ok(['chrome', 'cursor'].includes(enterAction.id));
+  assert.ok(results.filter((r) => r.type !== 'claude').every((r) => r.type === 'app'));
+});
+
+test('claude: prefix forces Ask Claude even for app-looking queries', () => {
+  const { results, enterAction } = route('claude: open chrome', ITEMS);
+  assert.strictEqual(results.length, 1);
+  assert.strictEqual(enterAction.type, 'claude');
+  assert.ok(enterAction.target.includes(encodeURIComponent('open chrome')));
+});
+
+test('type prefix with empty remainder lists all items of that type', () => {
+  const { results, enterAction } = route('folder:', ITEMS);
+  assert.strictEqual(enterAction.type, 'folder');
+  assert.ok(results.filter((r) => r.type !== 'claude').every((r) => r.type === 'folder'));
+});
+
+test('prefix only counts as the first word — colon later in query is plain text', () => {
+  const { enterAction } = route('my folder: stuff', ITEMS);
+  assert.strictEqual(enterAction.type, 'claude'); // 3 words, no strong match
+});
+
+test('route caps ranked results (Claude row still present)', () => {
+  const many = Array.from({ length: 30 }, (_, i) => ({
+    id: `s${i}`, type: 'site', title: `Chrome Site ${i}`, subtitle: '', target: `https://x${i}.com`,
+  }));
+  const { results } = route('chrome', many);
+  assert.ok(results.length <= 13, `expected <=13, got ${results.length}`);
+  assert.strictEqual(results.filter((r) => r.type === 'claude').length, 1);
+});

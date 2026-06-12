@@ -23,7 +23,9 @@ npm test         # unit tests (node --test tests/)
 
 ## Key Behaviors
 - Routing: strong match (score ≥600) → launch; question-shaped → Ask Claude; Ask Claude row always present.
-- Hotkey: Ctrl+Space, fallbacks Ctrl+Shift+Space → Ctrl+Alt+Space; tray tooltip shows active hotkey.
+- Prefix overrides (first word only): `folder:` `site:`/`website:` `app:` restrict type; `claude:` forces Ask Claude.
+- Hotkey: Shift+Space, fallbacks Ctrl+Shift+Space → Ctrl+Alt+Space; tray tooltip shows active hotkey.
+- Icons: apps/folders via app.getFileIcon (cached); sites via Google favicon service (badge fallback).
 - Tray-resident; window hides on Esc/blur; quit only via tray Exit.
 
 ## Skills & Protocols

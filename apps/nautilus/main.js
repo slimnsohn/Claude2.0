@@ -18,7 +18,8 @@ const { TRAY_ICON_DATA_URL } = require('./assets/tray-icon.js');
 
 const WIN_W = 680;
 const WIN_H = 460;
-const HOTKEYS = ['Ctrl+Space', 'Ctrl+Shift+Space', 'Ctrl+Alt+Space'];
+const HOTKEYS = ['Shift+Space', 'Ctrl+Shift+Space', 'Ctrl+Alt+Space'];
+const WORKSPACE_DIR = 'C:\\Users\\slims\\Desktop\\Claude 2.0';
 
 const log = createLogger(path.join(__dirname, 'data', 'launcher.log'));
 
@@ -71,7 +72,7 @@ if (!app.requestSingleInstanceLock()) {
         return null;
       }
     }).filter(Boolean);
-    roots.push('C:\\Users\\slims\\Desktop\\Claude 2.0');
+    roots.push(WORKSPACE_DIR);
     return roots;
   }
 
@@ -89,7 +90,8 @@ if (!app.requestSingleInstanceLock()) {
     try {
       // Chrome rewrites Bookmarks via temp-file rename; watch the directory.
       const watcher = fs.watch(path.dirname(bookmarksPath), (event, filename) => {
-        if (filename === 'Bookmarks') onChange();
+        // filename can be null on Windows; err toward rescanning (debounced).
+        if (!filename || filename === 'Bookmarks') onChange();
       });
       return () => watcher.close();
     } catch (err) {
@@ -218,8 +220,29 @@ if (!app.requestSingleInstanceLock()) {
     indexer.stop();
   });
 
+  // ---------- icons ----------
+  const iconCache = new Map(); // target -> data URL ('' = extraction failed)
+  async function attachIcons(results) {
+    return Promise.all(results.map(async (item) => {
+      if (item.type !== 'app' && item.type !== 'folder') return item;
+      if (!iconCache.has(item.target)) {
+        try {
+          const img = await app.getFileIcon(item.target, { size: 'normal' });
+          iconCache.set(item.target, img.isEmpty() ? '' : img.toDataURL());
+        } catch {
+          iconCache.set(item.target, '');
+        }
+      }
+      const icon = iconCache.get(item.target);
+      return icon ? { ...item, icon } : item;
+    }));
+  }
+
   // ---------- IPC ----------
-  ipcMain.handle('search', (event, query) => route(query, indexer.getItems()));
+  ipcMain.handle('search', async (event, query) => {
+    const { results, enterAction } = route(query, indexer.getItems());
+    return { results: await attachIcons(results), enterAction };
+  });
 
   ipcMain.handle('launch', async (event, item) => {
     const result = await launchItem(item, { shell });

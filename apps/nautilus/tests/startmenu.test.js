@@ -56,3 +56,13 @@ test('missing root is skipped without throwing', () => {
   const items = scanStartMenu(['C:\\does\\not\\exist', USER_SM], { listDirSync: fakeFs });
   assert.ok(items.length > 0);
 });
+
+test('recursion is depth-capped so cyclic/junction trees cannot blow the stack', () => {
+  // listDirSync that reports an infinitely deep tree (simulates a symlink loop)
+  const infiniteFs = (dir) => [
+    { name: 'Loop', isDirectory: true },
+    { name: 'App.lnk', isDirectory: false },
+  ];
+  const items = scanStartMenu(['C:\\sm'], { listDirSync: infiniteFs });
+  assert.ok(items.length >= 1, 'still finds shortcuts at reachable depths');
+});

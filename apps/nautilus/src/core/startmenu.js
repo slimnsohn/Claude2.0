@@ -2,7 +2,12 @@
 
 const path = require('node:path');
 
-function scanDir(root, dir, listDirSync, out) {
+// Start Menus are shallow; the cap only exists so a junction/symlink loop
+// can't recurse forever.
+const MAX_DEPTH = 8;
+
+function scanDir(root, dir, depth, listDirSync, out) {
+  if (depth > MAX_DEPTH) return;
   let entries;
   try {
     entries = listDirSync(dir);
@@ -12,7 +17,7 @@ function scanDir(root, dir, listDirSync, out) {
   for (const entry of entries) {
     const full = path.join(dir, entry.name);
     if (entry.isDirectory) {
-      scanDir(root, full, listDirSync, out);
+      scanDir(root, full, depth + 1, listDirSync, out);
     } else if (/\.lnk$/i.test(entry.name)) {
       out.push({
         id: `app:${full}`,
@@ -28,7 +33,7 @@ function scanDir(root, dir, listDirSync, out) {
 function scanStartMenu(roots, { listDirSync }) {
   const out = [];
   for (const root of roots) {
-    scanDir(root, root, listDirSync, out);
+    scanDir(root, root, 0, listDirSync, out);
   }
   // User + system Start Menus often hold the same shortcut; first root wins.
   const seen = new Set();

@@ -10,15 +10,34 @@ let errorTimer = null;
 
 const BADGE_LABEL = { app: 'APP', site: 'SITE', folder: 'FOLDER', claude: 'CLAUDE' };
 
+function faviconUrl(target) {
+  try {
+    return `https://www.google.com/s2/favicons?domain=${new URL(target).hostname}&sz=32`;
+  } catch {
+    return null;
+  }
+}
+
+function iconOrBadge(item) {
+  const badge = document.createElement('span');
+  badge.className = `badge ${item.type}`;
+  badge.textContent = BADGE_LABEL[item.type] || '?';
+
+  const src = item.icon || (item.type === 'site' ? faviconUrl(item.target) : null);
+  if (!src) return badge;
+
+  const img = document.createElement('img');
+  img.className = 'icon';
+  img.src = src;
+  img.addEventListener('error', () => img.replaceWith(badge));
+  return img;
+}
+
 function render() {
   resultsEl.replaceChildren(
     ...results.map((item, i) => {
       const li = document.createElement('li');
       if (i === selectedIndex) li.classList.add('selected');
-
-      const badge = document.createElement('span');
-      badge.className = `badge ${item.type}`;
-      badge.textContent = BADGE_LABEL[item.type] || '?';
 
       const title = document.createElement('span');
       title.className = 'title';
@@ -28,7 +47,7 @@ function render() {
       subtitle.className = 'subtitle';
       subtitle.textContent = item.subtitle || '';
 
-      li.append(badge, title, subtitle);
+      li.append(iconOrBadge(item), title, subtitle);
       li.addEventListener('mousemove', () => {
         if (selectedIndex !== i) { selectedIndex = i; render(); }
       });
@@ -47,8 +66,12 @@ function flashError(message) {
   errorTimer = setTimeout(() => { errorEl.hidden = true; }, 2500);
 }
 
+let searchSeq = 0;
+
 async function search(value) {
+  const seq = ++searchSeq;
   const response = await window.nautilus.search(value);
+  if (seq !== searchSeq) return; // a newer query is in flight — drop stale results
   results = response.results;
   selectedIndex = 0;
   render();
