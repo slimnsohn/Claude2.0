@@ -19,6 +19,7 @@ from pmtrader.core.bankroll import Bankroll, RunVerdict
 from pmtrader.core.models import (
     Fill, Intent, Market, OrderBook, OrderStatus, Position, Side,
 )
+from pmtrader.datalayer.trades import closed_trades
 from pmtrader.execution.paper import PaperExecution
 from pmtrader.execution.router import ExecutionRouter
 from pmtrader.risk import Approved, PortfolioSnapshot, RiskManager, Veto
@@ -57,6 +58,7 @@ class Orchestrator:
         self.stop_reason: Optional[str] = None
         self._shutdown_done = False
         self._strategy_errors: dict[str, int] = {}
+        self._alloc_events_flushed = 0
 
         backend.on_fill_callbacks.append(self._on_fill)
 
@@ -225,6 +227,27 @@ class Orchestrator:
             self.store.insert_decision(now, "orchestrator", "startup_reconcile",
                                        {"expired_stale_orders": len(stale)})
 
+    def refresh_allocator_trades(self) -> None:
+        """Rebuild gate evidence from the durable store. Reboot-safe: the
+        in-memory allocator never accumulates state the DB doesn't hold.
+        Trades from before a strategy's last demotion don't count toward
+        re-promotion (fresh-record rule)."""
+        trades = closed_trades(self.store)
+        paper, live = dict(trades["paper"]), dict(trades["live"])
+        for s in self.allocator.strategies:
+            cutoff = self.store.last_decision_ts("demotion", s)
+            if cutoff is not None:
+                paper[s] = [t for t in paper.get(s, []) if t["ts"] > cutoff]
+        self.allocator.hydrate(paper, live)
+
+    def flush_allocator_events(self) -> None:
+        events = self.allocator.events
+        for ev in events[self._alloc_events_flushed:]:
+            self.store.insert_decision(
+                ev.get("ts", time.time()), ev.get("strategy", "allocator"),
+                ev["kind"], ev)
+        self._alloc_events_flushed = len(events)
+
     # -- housekeeping ----------------------------------------------------------------------
     def heartbeat(self) -> None:
         if self.heartbeat_path:
@@ -318,6 +341,7 @@ class Orchestrator:
         log.info("orchestrator starting in %s mode, bankroll %.2f",
                  self.cfg.mode, self.cfg.bankroll)
         self.startup_reconcile(time.time())
+        self.refresh_allocator_trades()
         if self.feed is not None:
             self.feed.cache.on_book = self.on_book
             self.feed.cache.on_trade = self.on_trade
@@ -325,7 +349,11 @@ class Orchestrator:
         await self.refresh_markets()
         await self.update_crypto_spot()
 
-        last_refresh = last_spot = last_resolution = last_reweight = time.time()
+        last_refresh = last_spot = last_resolution = time.time()
+        ckpt = self.store.get_checkpoint("last_reweight")
+        last_reweight = float(ckpt) if ckpt else time.time()
+        if ckpt is None:
+            self.store.set_checkpoint("last_reweight", str(last_reweight))
         try:
             while not (self.halted and self.stop_reason
                        and self.stop_reason.startswith("bankroll")):
@@ -333,6 +361,7 @@ class Orchestrator:
                 self.heartbeat()
                 self.snapshot_equity(now)
                 self.allocator.update_gates(now)
+                self.flush_allocator_events()
                 if now - last_spot > 60:
                     await self.update_crypto_spot()
                     last_spot = now
@@ -341,10 +370,13 @@ class Orchestrator:
                     last_refresh = now
                 if now - last_resolution > 600:
                     await self.check_resolutions()
+                    self.refresh_allocator_trades()
                     last_resolution = now
                 if now - last_reweight > 7 * 86_400:
                     self.allocator.reweight(now)
                     last_reweight = now
+                    self.store.set_checkpoint("last_reweight", str(now))
+                    self.flush_allocator_events()
                 await asyncio.sleep(self.cfg.poll_seconds)
         finally:
             self.shutdown()

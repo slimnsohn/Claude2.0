@@ -177,3 +177,34 @@ class TestStrategyIsolation:
         assert len(store.fills()) == 2
         kinds = [d["kind"] for d in store.decisions(limit=20)]
         assert "strategy_error" in kinds
+
+
+class TestDurableAllocatorEvidence:
+    def test_refresh_hydrates_paper_trades_from_store(self, orch, store):
+        store.upsert_market(mk_market())  # refresh_markets does this in prod
+        plant_arb(orch)  # produces 2 BUY fills via paper backend
+        store.set_resolution("m1", winning_token_id="m1-yes", resolved_ts=500.0)
+        orch.refresh_allocator_trades()
+        trades = orch.allocator.paper_trades["s1_arb"]
+        assert len(trades) == 2  # yes leg (won) + no leg (lost)
+        assert sum(t["pnl"] for t in trades) > 0  # arb locked > 0 net
+
+    def test_refresh_respects_demotion_cutoff(self, orch, store):
+        store.upsert_market(mk_market())
+        plant_arb(orch)
+        store.set_resolution("m1", winning_token_id="m1-yes", resolved_ts=500.0)
+        store.insert_decision(600.0, "s1_arb", "demotion", {})
+        orch.refresh_allocator_trades()
+        assert orch.allocator.paper_trades["s1_arb"] == []
+
+    def test_allocator_events_flushed_to_store(self, orch, store):
+        orch.allocator.events.append(
+            {"kind": "promotion", "ts": 1.0, "strategy": "s1_arb",
+             "evidence": "test"})
+        orch.flush_allocator_events()
+        rows = [d for d in store.decisions(limit=10)
+                if d["kind"] == "promotion"]
+        assert len(rows) == 1 and rows[0]["strategy"] == "s1_arb"
+        orch.flush_allocator_events()  # idempotent: no duplicate rows
+        assert len([d for d in store.decisions(limit=10)
+                    if d["kind"] == "promotion"]) == 1
