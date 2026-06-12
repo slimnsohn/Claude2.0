@@ -10,6 +10,7 @@ Python, pandas, SDV, scipy, scikit-learn
 ```bash
 start.bat
 ```
+`update.bat` — run one belief update cycle (news → beliefs → calibration)
 
 ## Project Structure
 <!-- Key directories and their purpose -->
