@@ -1574,6 +1574,8 @@ function renderEventsView(el) {
         loadWorldUpdates();
     });
     document.getElementById("wu-cycle").addEventListener("click", async () => {
+        const btn = document.getElementById("wu-cycle");
+        btn.disabled = true;
         const status = document.getElementById("wu-status");
         status.textContent = "Running update cycle (fetch -> score -> apply -> calibrate)...";
         try {
@@ -1586,6 +1588,8 @@ function renderEventsView(el) {
             loadDriftChart();
         } catch (e) {
             status.textContent = `Cycle failed: ${e.message}`;
+        } finally {
+            btn.disabled = false;
         }
     });
 
@@ -1594,6 +1598,7 @@ function renderEventsView(el) {
         if (!el) return;
         try {
             const c = await api("/api/world-updates/calibration-status");
+            if (!c || !c.verdict) { el.innerHTML = ""; return; }
             const cls = { pass: "badge-live", drift_warning: "badge-warn", stale: "badge" };
             const label = { pass: "calibration: pass", drift_warning: "calibration: drift warning",
                             stale: "calibration: stale - refresh benchmarks", none: "calibration: never run" };
@@ -1607,12 +1612,12 @@ function renderEventsView(el) {
         try {
             const hist = await api("/api/world-updates/belief-history");
             if (!hist.length) { el.innerHTML = ""; return; }
-            const topics = [...new Set(hist.flatMap(h => Object.keys(h.mean_shift_by_topic || {})))];
             const latest = hist[hist.length - 1].mean_shift_by_topic || {};
-            el.innerHTML = `<div class="section-title" style="font-size:12px">Population belief drift (mean shift, ${hist.length} cycles)</div>` +
+            const topics = Object.keys(latest);
+            el.innerHTML = `<div class="section-title" style="font-size:12px">Population belief drift (mean shift, last cycle of ${hist.length})</div>` +
                 topics.map(t => {
                     const v = latest[t] || 0;
-                    const w = Math.min(100, Math.abs(v) * 800);
+                    const w = v === 0 ? 0 : Math.max(2, Math.min(100, Math.abs(v) * 800));
                     const color = v >= 0 ? "var(--accent, #4a9eff)" : "#e06c5a";
                     return `<div style="display:flex;align-items:center;gap:6px;font-size:11px">
                         <span style="width:110px;color:var(--text2)">${esc(t)}</span>
@@ -1664,7 +1669,7 @@ async function loadWorldUpdates() {
         }
 
         if (!updates || updates.length === 0) {
-            container.innerHTML = '<p style="color:var(--text2);font-size:12px">No world context loaded. Click "Refresh World Context" to fetch current headlines.</p>';
+            container.innerHTML = '<p style="color:var(--text2);font-size:12px">No world context loaded. Click "Run Update Cycle" to fetch and apply current headlines.</p>';
             return;
         }
         container.innerHTML = `
