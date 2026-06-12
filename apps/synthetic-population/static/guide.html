@@ -120,8 +120,10 @@
       <h1 style="font-size:22px;margin-bottom:8px;">User Guide</h1>
       <p class="guide-intro">
         The Synthetic Population Engine generates statistically realistic AI individuals from real survey data
-        and polls them on questions. Every persona comes from a real respondent; every opinion comes from
-        real answers. Nothing is invented.
+        and polls them on questions. Demographics, politics, religion, and income bracket come from a real CES
+        respondent. Secondary lifestyle fields (marital status, occupation, household size, commute) are
+        plausibility-filled at build time based on that respondent's demographic profile. Every opinion is
+        grounded in real survey answers.
       </p>
 
       <!-- Live stats bar -->
@@ -153,12 +155,13 @@
       <h3>KNN opinion model</h3>
       <p>
         When a poll question arrives, the engine keyword-matches it to one of 22 CES survey columns covering
-        topics like Trump/Congress approval, economic outlook, immigration, healthcare, environment, fiscal
-        policy, education spending, and minimum wage. For each persona, it finds the 50 most demographically
-        similar real CES respondents (the K-nearest neighbors) and reads their actual answers to that
-        column. Those answers become a probability distribution over yes / no / unsure. The persona's
-        response is then sampled from that distribution. Questions that don't match any covered column are
-        blocked — the engine never invents an answer from scratch.
+        Trump/Congress approval, economic outlook, immigration enforcement, healthcare programs, environment
+        and climate, fiscal and tax policy, education spending, and minimum wage. For each persona, it finds
+        the 50 most demographically similar real CES respondents (the K-nearest neighbors) and reads their
+        actual answers to that column. Those answers become a probability distribution over yes / no / unsure.
+        The LLM direction used in belief scoring is a signed strength from -1 to +1; the keyword fallback
+        uses ±0.5 or 0. Questions that don't match any covered column are blocked — the engine never invents
+        an answer from scratch.
       </p>
 
       <h3>Belief layer</h3>
@@ -210,42 +213,44 @@ CES 2024 survey (60,000 real respondents)
       <h3>Enter a question</h3>
       <p>
         Open the <strong>Poll</strong> tab. Type a yes/no question in the text field — for example,
-        "Do you support expanding Medicare to cover dental care?" — and click <strong>Run Poll</strong>.
-        Before the poll runs, a <em>CES coverage indicator</em> appears below the input. A green indicator
-        means the engine matched your question to a CES column and will use real survey data. A yellow or
-        red indicator means the match is weak or absent, and the poll will be blocked rather than guess.
+        "Do you approve of Trump's job performance?" or "Do you support Medicare for all?" — and click
+        <strong>Run Poll</strong>. Coverage is checked when the poll runs. If the question matches a
+        CES column the poll proceeds; if it does not match, you will see a message reading "This question
+        isn't covered by CES survey data" after you click. There is no pre-run indicator.
       </p>
 
       <div class="callout">
         Why blocking matters: an unanswered question is honest. A fabricated answer dressed up as
         demographically calibrated data is misleading. If your question is blocked, try rephrasing it
-        toward a covered topic (e.g., "immigration enforcement" rather than a very specific policy
-        detail), or accept that the topic is outside scope.
+        toward a covered topic. Good examples that pass the matcher: "Do you approve of Trump's job
+        performance?", "Is the economy getting better or worse?", "Do you support increasing border
+        patrol on the US-Mexico border?", "Do you support Medicare for all?"
       </div>
 
       <h3>Demographic filters</h3>
       <p>
         You can narrow the poll to a subset of the population before running it. Filters are available for
-        state, party identification, race, education level, age range, sex, urban/rural status, and
-        ideology. Stacking multiple filters narrows the cohort further. The Results tab shows the count of
-        personas in the filtered cohort so you always know what N you are working with.
+        state, party identification, race, education level, and age bracket — each accepts a single value.
+        Stacking multiple filters narrows the cohort further. A live count below the filter panel shows how
+        many profiles match the current selection before you run.
       </p>
 
       <h3>Reading the Results tab</h3>
       <p>
         After a poll runs, switch to the <strong>Results</strong> tab. The top section shows the overall
         distribution (yes / no / unsure percentages) with a 95% bootstrap confidence interval computed over
-        all respondents. Below that, breakdowns appear by party, race, and age group — each with its own
-        confidence interval. These breakdowns reveal where the population is cohesive versus divided.
+        archetype-level responses — one representative per archetype, weighted by archetype size. Below that,
+        demographic breakdowns appear by party, race, age group, and education; these show distributions only
+        and do not carry their own per-group confidence intervals.
       </p>
       <p>
-        Confidence intervals are wide on small subgroups. A ±12% interval on a 40-person subgroup tells
+        Confidence intervals are wide on small cohorts. A ±12% interval on a 40-persona filtered poll tells
         you the underlying data is thin; interpret those numbers with caution. The full 5,000-persona
         population typically yields confidence intervals in the ±2–4% range.
       </p>
       <p>
-        Past polls are listed in the Backtest tab, where you can freeze a snapshot and compare results
-        across time to trace opinion drift.
+        Past polls are listed on the <strong>Poll</strong> tab under "Recent Polls". The <strong>Backtest</strong>
+        tab is for running polls against named population snapshots.
       </p>
 
       <!-- ================================================================ -->
@@ -261,9 +266,11 @@ CES 2024 survey (60,000 real respondents)
 
         <li><strong>Score stories</strong> — if the environment variable <code>ANTHROPIC_API_KEY</code> is
         set, a single batched call to Claude Haiku tags each headline with relevant topics, direction
-        (positive / negative / neutral), salience (how likely the story reaches a typical news consumer),
+        (a signed strength from -1 to +1), salience (how likely the story reaches a typical news consumer),
         and outlet-family framing (right-leaning, left-leaning, mainstream). Without the API key the
-        engine falls back to a keyword scorer that covers the same 22 topics but without framing nuance.</li>
+        engine falls back to a keyword scorer covering 10 belief topics (economy, trump_approval,
+        immigration, healthcare, climate, fiscal, education, crime, foreign_policy, social) using
+        ±0.5 or 0 direction values, without framing nuance.</li>
 
         <li><strong>Simulate exposure</strong> — each persona probabilistically encounters stories based
         on its assigned news source. A persona tagged <code>fox_news</code> gets the right-family framing;
@@ -274,13 +281,14 @@ CES 2024 survey (60,000 real respondents)
 
         <li><strong>Apply belief shifts</strong> — each exposure that reaches a persona nudges its
         per-topic belief by a small amount. All shifts are bounded to ±0.15 and every change is appended
-        to the persona's <code>drift_log</code> with a timestamp, story id, and magnitude. Beliefs decay
-        toward the CES baseline with a 14-day half-life, so a persona that stops seeing news on a topic
-        will gradually revert.</li>
+        to the persona's <code>drift_log</code> with a date, topic, delta, update_id (the cycle id), and
+        shift_after. Beliefs decay toward the CES baseline with a 14-day half-life, so a persona that
+        stops seeing news on a topic will gradually revert. A persona's drift_log is viewable in the
+        Population view profile panel (raw JSON).</li>
 
         <li><strong>Calibrate</strong> — after beliefs are updated, two anchor questions ("Do you approve
-        of Trump's job performance?" and "Is the economy getting better or worse?") are re-polled across
-        the full population and compared to real poll numbers stored in
+        of Trump's job performance?" and "Is the economy getting better or worse?") are re-polled via
+        archetype-representative weighting and compared to real poll numbers stored in
         <code>data/benchmarks.json</code>. See Section 5 for what happens next.</li>
       </ol>
 
@@ -325,8 +333,8 @@ CES 2024 survey (60,000 real respondents)
       </p>
       <p>
         To inspect a single persona's history, open the Population tab, click a persona row to open the
-        detail panel, and scroll to the <strong>Drift Log</strong> section. Each entry shows a timestamp,
-        the story that triggered the shift, the topic, and the magnitude.
+        detail panel, and scroll to the <strong>Drift Log</strong> section. Each entry records a date,
+        the topic affected, the delta magnitude, the update_id (cycle id), and the shift_after value.
       </p>
 
       <!-- ================================================================ -->
@@ -348,15 +356,13 @@ CES 2024 survey (60,000 real respondents)
         achieved proportions against census targets for sex, race, education, and age, plus CES-native
         targets for party and urban/rural status. A truncated example:
       </p>
-      <pre><code>  sex          target   achieved   delta
-  Male          0.490    0.491    +0.001  PASS
-  Female        0.510    0.509    -0.001  PASS
-
-  race          target   achieved   delta
-  White         0.596    0.598    +0.002  PASS
-  Black         0.121    0.119    -0.002  PASS
-  Hispanic      0.189    0.192    +0.003  PASS
+      <pre><code>race_h:
+  white                  58.0%  target= 58.0%  OK
+  black                  12.0%  target= 12.0%  OK
+  hispanic               19.1%  target= 19.0%  OK
   ...
+
+Max marginal gap: 2.2%
 </code></pre>
 
       <h3>The ±3% balance gate</h3>
@@ -380,7 +386,7 @@ CES 2024 survey (60,000 real respondents)
         <code>data/profiles/registry.backup.&lt;timestamp&gt;.json</code>. To restore a previous
         population, copy the backup file over <code>registry.json</code>:
       </p>
-      <pre><code>copy data\profiles\registry.backup.20260101_120000.json data\profiles\registry.json</code></pre>
+      <pre><code>copy data\profiles\registry.backup.20260612000436.json data\profiles\registry.json</code></pre>
       <p>
         The build report for the new population is written to <code>data/profiles/build_report.json</code>
         and is also shown on the Data Sources tab in the app.
@@ -400,11 +406,18 @@ CES 2024 survey (60,000 real respondents)
 
       <h3>Refreshing real numbers</h3>
       <p>
-        Go to the <strong>Benchmark</strong> tab. You will see the two anchor questions and their current
-        reference values. To update them, look up a recent reputable poll (Gallup, AP-NORC, Pew, etc.)
-        for each question and enter the percentage who answered "approve" / "getting better." The tab
-        records the source name and date so you have a provenance trail. Click <strong>Save</strong>.
-        The next cycle will compare against the new numbers.
+        The <strong>Benchmark</strong> tab has a <strong>Compare</strong> button for each question. Clicking
+        it runs the synthetic poll against the real results you supply and saves a <code>last_comparison</code>
+        record — useful for diagnostics. For a new question the comparison is saved with the real results you
+        entered; for an existing question only <code>last_comparison</code> is updated —
+        <em>the stored <code>real_results</code> and <code>date</code> are not changed</em>.
+      </p>
+      <p>
+        To truly refresh the anchor numbers that drive calibration, you must edit
+        <code>data/benchmarks.json</code> directly: find the entry for the question and update its
+        <code>real_results</code> object and <code>date</code> field (format: <code>YYYY-MM-DD</code>),
+        then save the file. The next cycle will compare against those new values. A future UI improvement
+        to support in-app anchor editing is planned.
       </p>
       <p>
         Benchmark numbers are <em>never</em> scraped automatically. Scraping introduces silent staleness,
@@ -450,19 +463,19 @@ CES 2024 survey (60,000 real respondents)
 
       <h3>Snapshots and backtesting</h3>
       <p>
-        The <strong>Backtest</strong> tab lets you freeze a copy of the current population's belief state
-        as a named snapshot. Future polls can be run against a snapshot to compare how opinions have
-        shifted between two points in time. A snapshot preserves the full set of belief vectors but does
-        not duplicate persona profiles — it is lightweight. Snapshots are stored under
+        The <strong>Backtest</strong> tab lets you freeze a copy of the current population as a named
+        snapshot. Future polls can be run against a snapshot to compare how opinions have shifted between
+        two points in time. A snapshot stores a full copy of all persona profiles (demographics, beliefs,
+        and drift_log) at the moment it is created. Snapshots are stored under
         <code>data/snapshots/</code>.
       </p>
 
       <h3>Demographic poll filters</h3>
       <p>
-        Filters are applied before a poll runs, not after. You can combine: state (one or more), party
-        (Democrat / Republican / Independent / other), race, education tier, age range, sex, ideology,
-        and urban/rural status. The Results tab always shows the filtered N so you know the effective
-        sample size. Filters persist until you clear them.
+        Filters are applied before a poll runs, not after. You can combine: state, party (Democrat /
+        Republican / Independent), race, education tier, and age bracket. Each filter accepts a single
+        value. The filter panel shows a live match count so you know the effective sample size before
+        you run.
       </p>
 
       <h3>Toggling individual world updates</h3>
@@ -520,7 +533,7 @@ CES 2024 survey (60,000 real respondents)
           </tr>
           <tr>
             <td>data/polls/</td>
-            <td>One subdirectory per poll run, containing the question, filters, and per-persona responses.</td>
+            <td>One subdirectory per poll run, containing the question, filters, prompts, and per-archetype responses (one JSON file per archetype).</td>
           </tr>
         </tbody>
       </table>
@@ -530,12 +543,10 @@ CES 2024 survey (60,000 real respondents)
 
       <h3>Why aren't abortion and gun control covered?</h3>
       <p>
-        The 2024 CES common-content questionnaire does not include abortion or gun control items in a form
-        that maps cleanly onto simple yes/no survey columns. The variables that exist are multi-part, use
-        different response scales, or are in the validated module rather than the common content — so the
-        KNN model can't use them without introducing assumptions the engine is designed to avoid. Adding
-        coverage requires either waiting for a CES wave that includes suitable common-content items or
-        integrating a different survey source with compatible formatting.
+        The 2024 CES actually contains binary support/oppose grids for both topics: abortion items
+        CC24_321a–f and gun policy items CC24_330a–l. They have not yet been added to the engine's
+        column registry (<code>engine/ces_columns.py</code>), so polls on these topics are blocked for
+        now. Adding them is a planned extension.
       </p>
 
       <h3>Why is belief drift bounded at ±0.15?</h3>
@@ -570,14 +581,24 @@ CES 2024 survey (60,000 real respondents)
 
       <h3>How many topics does the engine actually cover?</h3>
       <p>
-        22 CES 2024 common-content columns, grouped by theme: Trump job approval, congressional job
-        approval, economic outlook (overall, personal, national direction), immigration (border security,
-        DACA/DREAMers, deportation policy, legal immigration levels), healthcare (ACA, public option,
-        Medicaid expansion, drug pricing, mental health parity, VA coverage), environment (climate
-        action, clean energy investment), fiscal (tax policy), education spending, and federal minimum
-        wage. Any question whose keywords match one of these topics is eligible for a poll; all others
-        are blocked.
+        22 CES 2024 common-content columns, grouped by theme:
       </p>
+      <ul>
+        <li><strong>Approval</strong>: Trump job approval (CC24_312i), Congress approval (CC24_311a)</li>
+        <li><strong>Economy</strong>: economy retrospective (CC24_301), current economic conditions (CC24_302),
+            personal finances (CC24_303), minimum wage $15/hour (CC24_308a_2)</li>
+        <li><strong>Immigration</strong>: increase border patrol (CC24_300_1), grant legal status to DREAMers
+            (CC24_300_2), increase deportations (CC24_300_3), identify-and-deport (CC24_300_4)</li>
+        <li><strong>Healthcare</strong>: repeal ACA (CC24_326a), Medicare for All (CC24_326b), Medicaid
+            expansion (CC24_326c), drug importation from Canada (CC24_326d), employer mandate (CC24_326e),
+            individual mandate (CC24_326f)</li>
+        <li><strong>Environment</strong>: carbon tax (CC24_415c), renewable energy mandate (CC24_415d),
+            regulate CO2 as pollutant (CC24_308a_3)</li>
+        <li><strong>Fiscal</strong>: cut federal spending 5% (CC24_308a_1), raise taxes on income over
+            $400k (CC24_308a_4)</li>
+        <li><strong>Education</strong>: forgive student loan debt up to $50k (CC24_308a_5)</li>
+      </ul>
+      <p>Any question whose keywords match one of these columns is eligible for a poll; all others are blocked.</p>
 
       <h3>What happens if the CES source file is missing?</h3>
       <p>
@@ -650,7 +671,7 @@ CES 2024 survey (60,000 real respondents)
 
     if (history && history.length > 0) {
       var last = history[history.length - 1];
-      var cycleDate = last.timestamp ? last.timestamp.slice(0, 10) : '—';
+      var cycleDate = last.date ? last.date.slice(0, 10) : '—';
       html += chip('Last cycle', cycleDate);
     }
 
