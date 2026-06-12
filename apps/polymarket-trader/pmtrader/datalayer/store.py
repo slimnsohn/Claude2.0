@@ -171,6 +171,12 @@ class Store:
                 "SELECT DISTINCT token_id FROM price_history").fetchall()
         return [r["token_id"] for r in rows]
 
+    def price_history_span(self) -> tuple[Optional[float], Optional[float]]:
+        with self._lock:
+            row = self._conn.execute(
+                "SELECT MIN(ts) AS lo, MAX(ts) AS hi FROM price_history").fetchone()
+        return (row["lo"], row["hi"])
+
     # -- intents / orders / fills ----------------------------------------------
     def insert_intent(self, i: Intent, ts: float) -> int:
         with self._lock:
@@ -203,6 +209,11 @@ class Store:
         with self._lock:
             rows = self._conn.execute(
                 f"SELECT payload FROM orders WHERE status IN ({marks})", statuses).fetchall()
+        return [Order.model_validate_json(r["payload"]) for r in rows]
+
+    def all_orders(self) -> list[Order]:
+        with self._lock:
+            rows = self._conn.execute("SELECT payload FROM orders").fetchall()
         return [Order.model_validate_json(r["payload"]) for r in rows]
 
     def insert_fill(self, f: Fill) -> None:
@@ -263,6 +274,13 @@ class Store:
             d["payload"] = json.loads(d["payload"])
             out.append(d)
         return out
+
+    def last_decision_ts(self, kind: str, strategy: str) -> Optional[float]:
+        with self._lock:
+            row = self._conn.execute(
+                "SELECT MAX(ts) AS ts FROM decisions WHERE kind=? AND strategy=?",
+                (kind, strategy)).fetchone()
+        return row["ts"] if row and row["ts"] is not None else None
 
     # -- checkpoints ---------------------------------------------------------
     def get_checkpoint(self, key: str) -> Optional[str]:

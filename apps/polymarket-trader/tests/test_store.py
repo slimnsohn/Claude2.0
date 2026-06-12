@@ -91,6 +91,32 @@ class TestStore:
         assert res == [{"condition_id": "c1", "winning_token_id": "ty1", "resolved_ts": 999.0}]
 
 
+class TestNewHelpers:
+    def test_all_orders_roundtrip(self, store):
+        from pmtrader.core.models import Intent, Order, OrderStatus, Side
+        intent = Intent(strategy="s1_arb", token_id="tokA", side=Side.BUY,
+                        price=0.5, size=10.0, expected_edge=0.01, reasoning="t")
+        store.upsert_order(Order(id="paper-x-1", intent=intent,
+                                 status=OrderStatus.FILLED,
+                                 created_ts=1.0, updated_ts=2.0))
+        orders = store.all_orders()
+        assert len(orders) == 1 and orders[0].id == "paper-x-1"
+        assert orders[0].intent.strategy == "s1_arb"
+
+    def test_last_decision_ts(self, store):
+        assert store.last_decision_ts("demotion", "s1_arb") is None
+        store.insert_decision(100.0, "s1_arb", "demotion", {})
+        store.insert_decision(200.0, "s1_arb", "demotion", {})
+        store.insert_decision(300.0, "s2_mm", "demotion", {})
+        assert store.last_decision_ts("demotion", "s1_arb") == 200.0
+
+    def test_price_history_span(self, store):
+        assert store.price_history_span() == (None, None)
+        store.insert_price_history("tokA", [(10.0, 0.5), (30.0, 0.6)])
+        store.insert_price_history("tokB", [(20.0, 0.4)])
+        assert store.price_history_span() == (10.0, 30.0)
+
+
 class TestArchive:
     def test_write_and_read_back(self, tmp_path):
         a = Archive(tmp_path / "arch")
