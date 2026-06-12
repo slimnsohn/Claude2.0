@@ -54,9 +54,16 @@ def test_run_calibration_verdicts(tmp_path):
     profiles = [{"profile_id": "p1", "drift_log": [], "beliefs": {}}]
 
     def good_poll(question, profs):
-        return {"yes": 0.46, "no": 0.50, "unsure": 0.04}
+        if "approve" in question.lower():
+            return {"yes": 0.46, "no": 0.50, "unsure": 0.04}
+        return {"yes": 0.34, "no": 0.58, "unsure": 0.08}
 
     def bad_poll(question, profs):
+        return {"yes": 0.70, "no": 0.27, "unsure": 0.03}
+
+    def half_bad_poll(question, profs):
+        if "approve" in question.lower():
+            return {"yes": 0.46, "no": 0.50, "unsure": 0.04}
         return {"yes": 0.70, "no": 0.27, "unsure": 0.03}
 
     res = run_calibration(d, profiles, poll_fn=good_poll, now=NOW, run_id="CY-1")
@@ -65,6 +72,10 @@ def test_run_calibration_verdicts(tmp_path):
     res = run_calibration(d, profiles, poll_fn=bad_poll, now=NOW, run_id="CY-2")
     assert res["verdict"] == "drift_warning"
     assert res["dampened"] is True
+
+    # any-semantics: one bad anchor is enough to trigger drift_warning
+    res = run_calibration(d, profiles, poll_fn=half_bad_poll, now=NOW, run_id="CY-2b")
+    assert res["verdict"] == "drift_warning"
 
     d2 = tmp_path / "stale"
     d2.mkdir()
@@ -77,7 +88,11 @@ def test_run_calibration_verdicts(tmp_path):
 def test_history_appended(tmp_path):
     d = _bench_file(tmp_path, (NOW - timedelta(days=5)).strftime("%Y-%m-%d"))
     profiles = [{"profile_id": "p1", "drift_log": [], "beliefs": {}}]
-    run_calibration(d, profiles, poll_fn=lambda q, p: {"yes": 0.46, "no": 0.50, "unsure": 0.04},
-                    now=NOW, run_id="CY-1")
+    def good_poll(question, profs):
+        if "approve" in question.lower():
+            return {"yes": 0.46, "no": 0.50, "unsure": 0.04}
+        return {"yes": 0.34, "no": 0.58, "unsure": 0.08}
+
+    run_calibration(d, profiles, poll_fn=good_poll, now=NOW, run_id="CY-1")
     hist = json.loads((d / "calibration_history.json").read_text())
     assert isinstance(hist, list) and hist[-1]["run_id"] == "CY-1"

@@ -129,7 +129,7 @@ def run_calibration(data_dir, profiles: list, poll_fn, now: datetime = None,
         result["verdict"] = "stale"
     else:
         result["anchors"] = evaluate_anchors(anchors, poll_fn, profiles)
-        if all(a["mae"] > MAE_THRESHOLD for a in result["anchors"]):
+        if any(a["mae"] > MAE_THRESHOLD for a in result["anchors"]):
             dampen_beliefs(profiles, DAMPENING_FACTOR, now, run_id)
             result["dampened"] = True
             result["anchors_after"] = evaluate_anchors(anchors, poll_fn, profiles)
