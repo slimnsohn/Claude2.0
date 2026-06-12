@@ -742,7 +742,9 @@ Max marginal gap: 2.2%
       <p>
         The <strong>Polymarket</strong> tab puts the synthetic population side by side with real
         prediction markets. Click <strong>Refresh Markets</strong> and it fetches the top ~20 open
-        markets by 24-hour volume from Polymarket's public Gamma API (no API key required). Each market
+        markets by 24-hour volume from Polymarket's public Gamma API (no API key required).
+        Sports futures and crypto markets are filtered out automatically &mdash; they price event
+        outcomes, not public sentiment, so there is no opinion for the population to answer. Each market
         row shows the market's <strong>implied YES%</strong> (the current price of the Yes outcome),
         its 24h volume, and a <strong>coverage badge</strong>: green means the population can answer the
         market's question from real CES data; grey means no CES coverage. Coverage uses a stricter

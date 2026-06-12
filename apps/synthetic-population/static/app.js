@@ -1977,7 +1977,8 @@ function renderPolymarketView(el) {
         <div class="card" style="margin-bottom:16px">
             <div class="section-title">Population vs. Markets</div>
             <p style="font-size:13px;color:var(--text2);margin:0">
-                Top open Polymarket markets by 24h volume. <strong>Covered</strong> = the population can answer it
+                Top open Polymarket markets by 24h volume &mdash; sports futures and crypto markets are
+                filtered out (no public-opinion angle). <strong>Covered</strong> = the population can answer it
                 from real CES survey data. The population answers what the <strong>public believes/supports</strong> &mdash;
                 not what will happen. Treat it as a public-opinion lens on the market, not a price prediction.
             </p>

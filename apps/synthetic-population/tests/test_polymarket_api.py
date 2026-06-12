@@ -27,11 +27,11 @@ def client(app):
 # sometimes strings — mirrors the real API's quirks).
 FAKE_MARKETS = [
     {
-        "question": "Will Bitcoin hit $200k by December 31?",
+        "question": "Will it rain in New York City on July 4?",
         "id": "111",
-        "slug": "bitcoin-200k",
+        "slug": "nyc-rain-july-4",
         "volume24hr": "50000.5",
-        "endDate": "2026-12-31T00:00:00Z",
+        "endDate": "2026-07-04T00:00:00Z",
         "outcomes": '["Yes", "No"]',
         "outcomePrices": '["0.12", "0.88"]',
     },
@@ -78,7 +78,7 @@ def test_trending_success_envelope_sorting_and_coverage(client, tmp_path, monkey
     assert markets[0]["volume_24h"] == 250000.0
     assert markets[1]["volume_24h"] == 50000.5  # string number parsed
 
-    # CES coverage: Trump approval covered, Bitcoin not
+    # CES coverage: Trump approval covered, weather not
     trump = markets[0]
     assert trump["covered"] is True
     assert trump["ces_column"] == "CC24_410"
@@ -86,11 +86,11 @@ def test_trending_success_envelope_sorting_and_coverage(client, tmp_path, monkey
     assert trump["ces_topic"] == "approval"
     assert trump["implied_yes"] == 0.45
 
-    btc = markets[1]
-    assert btc["covered"] is False
-    assert btc["ces_column"] is None
-    assert btc["implied_yes"] == 0.12
-    assert btc["slug"] == "bitcoin-200k"
+    rain = markets[1]
+    assert rain["covered"] is False
+    assert rain["ces_column"] is None
+    assert rain["implied_yes"] == 0.12
+    assert rain["slug"] == "nyc-rain-july-4"
 
     # Cache file written
     cache = json.loads((tmp_path / "polymarket_cache.json").read_text())
@@ -129,6 +129,55 @@ def test_trending_min_score_excludes_single_generic_keyword(client, monkeypatch)
     assert strong["covered"] is True
     assert strong["ces_column"] == "CC24_410"
     assert strong["match_score"] == 13
+
+
+def test_trending_filters_sports_and_crypto(client, monkeypatch):
+    """Sports futures and crypto markets are excluded from the trending feed —
+    they have no public-opinion angle the population can answer."""
+    payload = [
+        # excluded by category field
+        {"question": "Will the Lakers make the playoffs?", "id": "601",
+         "slug": "lakers-playoffs", "volume24hr": 900000.0, "category": "Sports",
+         "outcomes": '["Yes", "No"]', "outcomePrices": '["0.6", "0.4"]'},
+        # excluded by question keyword (no category field)
+        {"question": "Will Czechia win the 2026 FIFA World Cup?", "id": "602",
+         "slug": "czechia-world-cup", "volume24hr": 800000.0,
+         "outcomes": '["Yes", "No"]', "outcomePrices": '["0.01", "0.99"]'},
+        {"question": "Will Bitcoin hit $200k by December 31?", "id": "603",
+         "slug": "bitcoin-200k", "volume24hr": 700000.0,
+         "outcomes": '["Yes", "No"]', "outcomePrices": '["0.12", "0.88"]'},
+        # excluded by slug keyword only
+        {"question": "Will the price double this year?", "id": "604",
+         "slug": "ethereum-price-double", "volume24hr": 600000.0,
+         "outcomes": '["Yes", "No"]', "outcomePrices": '["0.2", "0.8"]'},
+        # excluded: esports
+        {"question": "Counter-Strike: FUT Esports vs G2 (BO3)", "id": "607",
+         "slug": "cs-fut-g2", "volume24hr": 500000.0,
+         "outcomes": '["Yes", "No"]', "outcomePrices": '["0.5", "0.5"]'},
+        # excluded: match-day future with no league keyword
+        {"question": "Will Canada win on 2026-06-12?", "id": "608",
+         "slug": "canada-2026-06-12", "volume24hr": 400000.0,
+         "outcomes": '["Yes", "No"]', "outcomePrices": '["0.7", "0.3"]'},
+        # kept: politics
+        {"question": "Will Trump's approval rating be above 45%?", "id": "605",
+         "slug": "trump-approval", "volume24hr": 100.0,
+         "outcomes": '["Yes", "No"]', "outcomePrices": '["0.45", "0.55"]'},
+        # kept: "ethics" must NOT trip the \beth\b crypto pattern
+        {"question": "Will the House pass new ethics rules?", "id": "606",
+         "slug": "house-ethics-rules", "volume24hr": 50.0,
+         "outcomes": '["Yes", "No"]', "outcomePrices": '["0.3", "0.7"]'},
+        # kept: an election "win" is not a match-day future
+        {"question": "Will the GOP win the 2026 midterms?", "id": "609",
+         "slug": "gop-midterms", "volume24hr": 25.0,
+         "outcomes": '["Yes", "No"]', "outcomePrices": '["0.5", "0.5"]'},
+    ]
+    _mock_gamma(monkeypatch, payload=payload)
+    resp = client.get("/api/polymarket/trending")
+    assert resp.status_code == 200
+    body = resp.get_json()
+    ids = [m["market_id"] for m in body["markets"]]
+    assert ids == ["605", "606", "609"]  # volume order, sports/crypto/esports gone
+    assert body["excluded_count"] == 6
 
 
 def test_trending_rows_include_match_score(client, monkeypatch):

@@ -10,6 +10,7 @@ not what will happen — it is a public-opinion lens, not a price predictor.
 """
 
 import json
+import re
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -39,6 +40,44 @@ DEFAULT_RUNS = 10
 # /ask keeps the loose default because the user explicitly asked and the
 # response shows ces_name, so they can see what was actually answered.
 TRENDING_MIN_MATCH_SCORE = 10
+
+# Sports futures and crypto markets are excluded from the trending feed:
+# they price event outcomes, not public sentiment — there is no opinion
+# the population could answer. Matched on Gamma's category field plus
+# word-bounded keywords in the question/slug (\b so "ethics" never trips "eth").
+EXCLUDED_CATEGORIES = {"sports", "crypto"}
+
+_EXCLUDE_PATTERNS = re.compile(
+    r"\b("
+    # sports leagues, events, futures phrasing
+    r"nba|nfl|mlb|nhl|ufc|mls|ncaa|fifa|uefa|pga|atp|wta|f1|formula 1|"
+    r"grand prix|super bowl|world cup|world series|stanley cup|"
+    r"premier league|champions league|la liga|serie a|bundesliga|ligue 1|"
+    r"wimbledon|march madness|final four|heisman|olympics?|playoffs?|"
+    r"grand slam|tour championship|ryder cup|"
+    # esports
+    r"esports|counter-strike|cs2|csgo|league of legends|lol|dota|valorant|"
+    r"overwatch|iem|bo3|bo5|"
+    # crypto assets and venues
+    r"bitcoin|btc|ethereum|eth|solana|dogecoin|doge|xrp|cardano|ripple|"
+    r"crypto(?:currency)?|stablecoin|memecoin|altcoin|nft|binance|coinbase|"
+    r"satoshi"
+    r")\b"
+)
+
+# Match-day futures ("Will Canada win on 2026-06-12?") are single-game sports
+# markets whose question text carries no league keyword.
+_MATCH_DAY_PATTERN = re.compile(r"\bwin (?:on|in) \d{4}-\d{2}-\d{2}\b")
+
+
+def _is_excluded(m: dict, question: str) -> bool:
+    """True when the market is a sports future or crypto market."""
+    category = str(m.get("category") or "").strip().lower()
+    if category in EXCLUDED_CATEGORIES:
+        return True
+    text = f"{question} {m.get('slug') or ''}".lower()
+    return (_EXCLUDE_PATTERNS.search(text) is not None
+            or _MATCH_DAY_PATTERN.search(text) is not None)
 
 
 def _data_dir() -> Path:
@@ -152,9 +191,13 @@ def trending():
 
     if raw is not None:
         markets = []
+        excluded_count = 0
         for m in raw if isinstance(raw, list) else []:
             try:
                 parsed = _parse_market(m)
+                if parsed and _is_excluded(m, parsed["question"]):
+                    excluded_count += 1
+                    continue
             except Exception:
                 continue  # skip malformed markets
             if parsed:
@@ -163,12 +206,14 @@ def trending():
         fetched_at = datetime.now(timezone.utc).isoformat()
         try:
             _cache_path().write_text(json.dumps(
-                {"fetched_at": fetched_at, "markets": markets}, indent=2))
+                {"fetched_at": fetched_at, "markets": markets,
+                 "excluded_count": excluded_count}, indent=2))
         except OSError:
             pass  # cache write failure should not break the response
         return jsonify({
             "fetched_at": fetched_at,
             "from_cache": False,
+            "excluded_count": excluded_count,
             "markets": markets[:limit],
         })
 
