@@ -21,7 +21,7 @@ def engine_fixture(tmp_path):
 
     CC24_301  (economy retro, BELIEF_SIGN=+1): 40 yes(1), 40 no(5), 20 unsure(3)
               → baseline yes_p ≈ 0.40, firmly interior
-    CC24_308a_2 (min-wage, BELIEF_SIGN=0):      50 support(1), 50 oppose(2)
+    CC24_308a_4 (Ukraine arms, BELIEF_SIGN=0):  50 selected(1), 50 not(2)
     """
     import numpy as np
 
@@ -38,13 +38,13 @@ def engine_fixture(tmp_path):
     # CC24_301: 40 rows=1 (yes), 40 rows=5 (no), 20 rows=3 (unsure)
     cc301 = [1] * 40 + [5] * 40 + [3] * 20
 
-    # CC24_308a_2: 50 support(1), 50 oppose(2)
-    cc308a2 = [1] * 50 + [2] * 50
+    # CC24_308a_4: 50 selected(1), 50 not selected(2)
+    cc308a4 = [1] * 50 + [2] * 50
 
     df = pd.DataFrame({
         "pid7": pid7, "educ": educ, "birthyr": birthyr,
         "gender4": gender4, "race": race, "urbancity": urbancity,
-        "CC24_301": cc301, "CC24_308a_2": cc308a2,
+        "CC24_301": cc301, "CC24_308a_4": cc308a4,
     })
 
     csv_path = tmp_path / "fixture_ces.csv"
@@ -138,12 +138,13 @@ def test_belief_shift_applied_per_persona(engine_fixture):
 
 
 def test_belief_ignored_when_sign_zero(engine_fixture):
-    """Min-wage column has BELIEF_SIGN 0 — beliefs must not move it."""
+    """Ukraine-arms column has BELIEF_SIGN 0 (ambiguous partisan polarity) —
+    beliefs must not move it."""
     base = {"party_id": "independent", "education": "bachelors",
             "age_bracket": "35-44", "race": "white", "urban_rural": "suburban"}
-    bel = {**base, "beliefs": {"economy": {"shift": 0.15, "exposures": 9,
-                                           "last_updated": "2026-06-11T09:00:00"}}}
-    q = "Do you support raising the minimum wage to $15?"
+    bel = {**base, "beliefs": {"foreign_policy": {"shift": 0.15, "exposures": 9,
+                                                  "last_updated": "2026-06-11T09:00:00"}}}
+    q = "Do you support providing arms to Ukraine?"
     assert engine_fixture.get_distribution(q, bel)["yes"] == \
            engine_fixture.get_distribution(q, base)["yes"]
 

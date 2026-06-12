@@ -28,30 +28,48 @@ OUTLET_FAMILY = {
 }
 
 # Deliberate design decision: belief topics WITHOUT a CES mapping (crime,
-# foreign_policy, social) still accumulate and decay — they feed the population
-# drift chart and are ready for future CES column coverage (e.g. CC24_330 gun
-# grid, CC24_321 abortion grid) but do not influence opinion probabilities today.
+# fiscal) still accumulate and decay — they feed the population drift chart
+# and are ready for future CES column coverage but do not influence opinion
+# probabilities today.
 # CES column topic → belief taxonomy topic
 CES_TOPIC_TO_BELIEF = {
     "approval": "trump_approval", "economy": "economy", "immigration": "immigration",
     "healthcare": "healthcare", "environment": "climate", "fiscal": "fiscal",
-    "education": "education",
+    "education": "education", "guns": "social", "abortion": "social",
+    "foreign_policy": "foreign_policy",
 }
 
 # Per-CES-column sign: how a positive topic shift maps onto the column's yes-probability.
 # Conventions documented in engine/news_scoring.py. 0 = beliefs don't apply.
 BELIEF_SIGN = {
-    "CC24_312i": +1, "CC24_311a": +1,                      # approval: + favors admin
-    "CC24_301": +1, "CC24_302": +1, "CC24_303": +1,        # economy: + = doing well
-    "CC24_300_1": +1, "CC24_300_3": +1, "CC24_300_4": +1,  # enforcement items
-    "CC24_300_2": -1,                                      # DREAMers: pro-immigrant
-    "CC24_326a": -1,                                       # repeal ACA vs pro-program mood
-    "CC24_326b": +1, "CC24_326c": +1, "CC24_326d": +1, "CC24_326e": +1, "CC24_326f": +1,
-    "CC24_415c": +1, "CC24_415d": +1, "CC24_308a_3": +1,   # climate action
-    "CC24_308a_1": -1,                                     # cut spending vs progressive mood
-    "CC24_308a_4": +1,                                     # tax >$400k
-    "CC24_308a_2": 0,                                      # min wage: no clean mapping
-    "CC24_308a_5": +1,                                     # student debt relief
+    # approval: + favors the administration
+    "CC24_410": +1,    # Trump-vote proxy: pro-Trump mood raises "yes" (Trump vote)
+    "CC24_312a": -1,   # Biden approval moves opposite a pro-Trump mood
+    "CC24_312b": +1,   # Congress approval (rep-controlled): + favors admin
+    "CC24_312i": -1,   # Harris approval moves opposite a pro-Trump mood
+    # economy: + = economy doing well
+    "CC24_301": +1, "CC24_302": +1,
+    "CC24_303": -1,    # "prices increased" yes = bad-economy answer
+    # immigration: + = pro-enforcement mood
+    "CC24_323b": +1, "CC24_323c": +1,                      # border patrol, wall
+    "CC24_323a": -1, "CC24_323d": -1,                      # legal status, Dreamers
+    # healthcare: + = pro-public-program mood
+    "CC24_328e": +1,                                       # expand Medicaid
+    "CC24_328d": -1, "CC24_328c": -1,                      # repeal ACA, work requirement
+    # climate: + = pro-climate-action mood
+    "CC24_326a": +1, "CC24_326b": +1, "CC24_326e": +1,
+    "CC24_326d": -1,                                       # more fossil fuel production
+    # social: + = favors incumbent/conservative mood
+    "CC24_321a": -1,                                       # assault-rifle ban
+    "CC24_321b": +1,                                       # easier concealed carry
+    "CC24_321c": -1,                                       # background checks: 90%+ bipartisan, but pro-regulation
+    "CC24_324a": -1, "CC24_324d": -1,                      # abortion choice / access
+    "CC24_324c": +1,                                       # abortion illegal always
+    # education: + = pro-debt-relief mood
+    "CC24_323f": +1,                                       # forgive $20k student debt
+    # foreign_policy: + = favors incumbent — Ukraine-aid items have no clean
+    # partisan polarity under that convention, so beliefs don't apply (0)
+    "CC24_308a_4": 0, "CC24_308a_1": 0,
 }
 
 _PARTY_GROUP = {

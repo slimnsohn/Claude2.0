@@ -4,8 +4,22 @@ Each entry defines a CES survey question: what it measures, how to
 interpret its coded values as yes/no/unsure, and what free-text
 question keywords map to it.
 
-Value codings verified against CES 2024 codebook + cross-tab validation
-with pid7 (party ID) to confirm partisan direction is correct.
+Value codings verified against the CES 2024 codebook (Harvard Dataverse
+doi:10.7910/DVN/X11EP6 guide + questionnaires) AND empirically against
+data/raw/ces/ces_2024_common.csv (60K rows) via verify_ces_mappings.py:
+every column's raw distribution and pid7 (party ID) cross-tab was checked
+to confirm the partisan direction matches the item's known polarity.
+
+Grid items:
+  CC24_312  job approval grid (a=Biden, b=Congress, c=Supreme Court, i=Harris)
+  CC24_321  guns (1=Support 2=Oppose)
+  CC24_323  immigration (1=Support 2=Oppose; 323f = student debt forgiveness,
+            misnumbered into the 323 grid in the released data)
+  CC24_324  abortion (1=Support 2=Oppose)
+  CC24_326  environment (1=Support 2=Oppose)
+  CC24_328  housing/healthcare (1=Support 2=Oppose)
+  CC24_308a Ukraine multi-select (1=selected, 2=not selected)
+  CC24_410  2024 presidential vote (1=Harris, 2=Trump, 3-6=other, 8/9=did not vote)
 """
 
 
@@ -18,43 +32,53 @@ def _binary_support(val):
     return "unsure"
 
 
-def _approval_4pt(val):
-    """1=Strongly disapprove, 2=Somewhat disapprove, 3=Somewhat approve, 4=Strongly approve, 5=Not sure.
-    CES coding verified: strong dems cluster at 1, strong reps at 4."""
+def _approval_4pt_correct(val):
+    """CC24_312 grid: 1=Strongly approve, 2=Somewhat approve,
+    3=Somewhat disapprove, 4=Strongly disapprove, 5=Not sure.
+
+    Verified empirically: on CC24_312a (Biden) 81% of Democrats answer 1-2
+    and 87% of Republicans answer 4 — approve codes are LOW, not high.
+    """
+    if val in (1, 2):
+        return "yes"
     if val in (3, 4):
-        return "yes"
-    if val in (1, 2):
         return "no"
     return "unsure"
 
 
-def _economy_retro(val):
-    """1=Much better, 2=Somewhat better, 3=About the same, 4=Somewhat worse, 5=Much worse."""
-    if val in (1, 2):
-        return "yes"
-    if val in (4, 5):
-        return "no"
-    if val == 3:
-        return "unsure"
-    return "unsure"
-
-
-def _economy_current(val):
-    """1=Excellent, 2=Good, 3=Fair, 4=Poor, 5=Very poor."""
+def _retro_5pt(val):
+    """Past-year retrospective: 1=Much better/Increased a lot ...
+    3=Stayed about the same ... 5=Much worse/Decreased a lot
+    (CC24_301 also has 6=Not sure). 1,2=yes; 4,5=no; else unsure."""
     if val in (1, 2):
         return "yes"
     if val in (4, 5):
         return "no"
-    if val == 3:
-        return "unsure"
     return "unsure"
 
 
-def _carbon_env(val):
-    """1=Support, 2=Oppose (some have 3-5 as unsure/skip)."""
+def _multiselect_selected(val):
+    """Multi-select grid item: 1=selected, 2=not selected (no unsure code)."""
     if val == 1:
         return "yes"
     if val == 2:
+        return "no"
+    return "unsure"
+
+
+def _trump_vote_proxy(val):
+    """PROXY: 2024 Trump vote as stand-in for Trump approval; documented
+    limitation. CES 2024 has NO direct Trump job-approval item (Trump was
+    not in office at fielding), so the 2024 presidential vote (CC24_410)
+    is used: 2=Trump vote -> yes, 1=Harris vote -> no,
+    other candidate / did not vote / not sure -> unsure.
+
+    Coding verified empirically: code 1 is 20951 dem vs 749 rep, code 2 is
+    15836 rep vs 592 dem; ~93% of Republican voters chose code 2.
+    """
+    if val == 2:
+        return "yes"
+    if val == 1:
         return "no"
     return "unsure"
 
@@ -65,162 +89,195 @@ def _carbon_env(val):
 
 CES_COLUMNS = {
     # --- Approval ---
-    "CC24_312i": {
-        "name": "Trump job approval",
+    "CC24_410": {
+        # PROXY: 2024 Trump vote as stand-in for Trump approval; documented
+        # limitation (no direct CES 2024 Trump-approval item exists).
+        "name": "Trump job approval (2024 Trump-vote proxy)",
         "topic": "approval",
-        "keywords": ["trump", "approve", "approval", "job performance", "president"],
-        "interpret": _approval_4pt,
+        "keywords": ["trump", "approve", "approval", "job performance",
+                     "president"],
+        "interpret": _trump_vote_proxy,
     },
-    "CC24_311a": {
+    "CC24_312a": {
+        "name": "Biden job approval (historical)",
+        "topic": "approval",
+        "keywords": ["biden"],
+        "interpret": _approval_4pt_correct,
+    },
+    "CC24_312b": {
         "name": "Congress approval",
         "topic": "approval",
-        "keywords": ["congress", "congressional approval", "legislature"],
-        "interpret": _approval_4pt,
+        "keywords": ["congress", "congressional approval"],
+        "interpret": _approval_4pt_correct,
+    },
+    "CC24_312i": {
+        "name": "Harris approval (historical)",
+        "topic": "approval",
+        "keywords": ["harris", "vice president"],
+        "interpret": _approval_4pt_correct,
     },
 
     # --- Economy ---
     "CC24_301": {
-        "name": "Economy retrospective (better/worse than year ago)",
+        "name": "Economy retrospective (nation's economy past year)",
         "topic": "economy",
         "keywords": ["economy", "economic", "getting better", "getting worse",
                      "recession", "gdp", "conditions", "direction",
                      "right track", "wrong track", "right direction",
                      "country is going", "tariff", "trade"],
-        "interpret": _economy_retro,
+        "interpret": _retro_5pt,
     },
     "CC24_302": {
-        "name": "Current economic conditions",
-        "topic": "economy",
-        "keywords": ["current economy", "economic conditions", "state of the economy"],
-        "interpret": _economy_current,
-    },
-    "CC24_303": {
-        "name": "Personal finances (better/worse than year ago)",
+        "name": "Household income past year (increased/decreased)",
         "topic": "economy",
         "keywords": ["personal finance", "your finances", "household income",
-                     "your economic", "cost of living", "afford"],
-        "interpret": _economy_retro,
+                     "better off"],
+        "interpret": _retro_5pt,
+    },
+    "CC24_303": {
+        "name": "Prices of everyday goods past year (increased/decreased)",
+        "topic": "economy",
+        # yes = prices increased (codes 1,2) — for questions like
+        # "have prices / cost of living gone up?"
+        "keywords": ["prices", "inflation", "cost of living", "afford"],
+        "interpret": _retro_5pt,
     },
 
-    # --- Immigration ---
-    "CC24_300_1": {
-        "name": "Increase border patrol on US-Mexico border",
+    # --- Immigration (CC24_323 grid, 1=Support 2=Oppose) ---
+    "CC24_323a": {
+        "name": "Grant legal status to tax-paying immigrants without felonies",
         "topic": "immigration",
-        "keywords": ["border", "border patrol", "border security", "border wall"],
+        "keywords": ["legal status", "path to citizenship", "undocumented"],
         "interpret": _binary_support,
     },
-    "CC24_300_2": {
-        "name": "Grant legal status to DREAMers (brought to US as children)",
+    "CC24_323b": {
+        "name": "Increase border patrols on US-Mexico border",
         "topic": "immigration",
-        "keywords": ["dreamer", "legal status", "path to citizenship",
-                     "citizenship for", "undocumented", "daca"],
+        "keywords": ["border", "border patrol", "border security"],
         "interpret": _binary_support,
     },
-    "CC24_300_3": {
-        "name": "Increase deportation of undocumented immigrants",
+    "CC24_323c": {
+        "name": "Build a wall on the US-Mexico border",
         "topic": "immigration",
-        "keywords": ["deportation", "deport", "remove undocumented",
-                     "illegal immigrant"],
+        "keywords": ["wall", "border wall"],
         "interpret": _binary_support,
     },
-    "CC24_300_4": {
-        "name": "Identify and deport undocumented immigrants",
+    "CC24_323d": {
+        "name": "Pathway to citizenship for Dreamers (brought as children)",
         "topic": "immigration",
-        "keywords": ["identify and deport", "round up", "mass deportation"],
+        "keywords": ["dreamer", "daca", "brought to the us as children"],
         "interpret": _binary_support,
     },
 
-    # --- Healthcare ---
-    "CC24_326a": {
-        "name": "Repeal the Affordable Care Act (Obamacare)",
+    # --- Healthcare (CC24_328 grid, 1=Support 2=Oppose) ---
+    # NOTE: CES 2024 has NO Medicare-for-All item — that coverage is dropped.
+    "CC24_328c": {
+        "name": "Medicaid work requirement",
+        "topic": "healthcare",
+        "keywords": ["medicaid work requirement", "work requirement"],
+        "interpret": _binary_support,
+    },
+    "CC24_328d": {
+        "name": "Repeal the Affordable Care Act",
         "topic": "healthcare",
         "keywords": ["repeal", "obamacare", "affordable care act", "aca"],
         "interpret": _binary_support,
     },
-    "CC24_326b": {
-        "name": "Medicare for All / government health insurance plan",
-        "topic": "healthcare",
-        "keywords": ["medicare for all", "universal health", "single payer",
-                     "government health", "public option"],
-        "interpret": _binary_support,
-    },
-    "CC24_326c": {
-        "name": "Expand Medicaid in all states",
+    "CC24_328e": {
+        "name": "Expand Medicaid",
         "topic": "healthcare",
         "keywords": ["expand medicaid", "medicaid expansion"],
         "interpret": _binary_support,
     },
+
+    # --- Environment (CC24_326 grid, 1=Support 2=Oppose) ---
+    "CC24_326a": {
+        "name": "Give EPA power to regulate CO2 emissions",
+        "topic": "environment",
+        "keywords": ["regulate co2", "epa", "carbon regulation", "climate"],
+        "interpret": _binary_support,
+    },
+    "CC24_326b": {
+        "name": "Require at least 20% renewable electricity",
+        "topic": "environment",
+        "keywords": ["renewable", "clean energy", "solar", "wind"],
+        "interpret": _binary_support,
+    },
     "CC24_326d": {
-        "name": "Allow drug importation from Canada",
-        "topic": "healthcare",
-        "keywords": ["drug import", "prescription drug", "drug price",
-                     "pharmaceutical", "canada"],
+        "name": "Increase fossil fuel production",
+        "topic": "environment",
+        "keywords": ["fossil fuel production", "drilling", "oil and gas"],
         "interpret": _binary_support,
     },
     "CC24_326e": {
-        "name": "Require employers to provide health insurance",
-        "topic": "healthcare",
-        "keywords": ["employer mandate", "employer health", "employer insurance"],
-        "interpret": _binary_support,
-    },
-    "CC24_326f": {
-        "name": "Individual mandate (require health insurance purchase)",
-        "topic": "healthcare",
-        "keywords": ["individual mandate", "require insurance", "health insurance mandate"],
+        "name": "Halt new federal oil and gas leases",
+        "topic": "environment",
+        "keywords": ["oil and gas leases", "federal lands"],
         "interpret": _binary_support,
     },
 
-    # --- Environment ---
-    "CC24_415c": {
-        "name": "Carbon tax on fossil fuels",
-        "topic": "environment",
-        "keywords": ["carbon tax", "carbon", "fossil fuel", "climate change",
-                     "climate", "environment", "emissions", "global warming"],
-        "interpret": _carbon_env,
+    # --- Guns (CC24_321 grid, 1=Support 2=Oppose) ---
+    "CC24_321a": {
+        "name": "Ban assault rifles",
+        "topic": "guns",
+        "keywords": ["assault weapon", "assault rifle", "ban"],
+        "interpret": _binary_support,
     },
-    "CC24_415d": {
-        "name": "Require renewable energy production",
-        "topic": "environment",
-        "keywords": ["renewable", "clean energy", "solar", "wind",
-                     "green energy", "renewable mandate"],
-        "interpret": _carbon_env,
+    "CC24_321b": {
+        "name": "Make it easier to obtain concealed-carry permits",
+        "topic": "guns",
+        "keywords": ["concealed carry"],
+        "interpret": _binary_support,
+    },
+    "CC24_321c": {
+        "name": "Require background checks on all gun sales",
+        "topic": "guns",
+        "keywords": ["background check"],
+        "interpret": _binary_support,
     },
 
-    # --- Policy grid (CC24_308a) — binary support/oppose ---
-    "CC24_308a_1": {
-        "name": "Cut federal spending by 5%",
-        "topic": "fiscal",
-        "keywords": ["cut spending", "reduce spending", "federal budget",
-                     "government spending", "austerity"],
+    # --- Abortion (CC24_324 grid, 1=Support 2=Oppose) ---
+    "CC24_324a": {
+        "name": "Always allow abortion as a matter of choice",
+        "topic": "abortion",
+        "keywords": ["abortion", "matter of choice", "roe"],
         "interpret": _binary_support,
     },
-    "CC24_308a_2": {
-        "name": "Raise federal minimum wage to $15/hour",
-        "topic": "economy",
-        "keywords": ["minimum wage", "raise wage", "$15", "living wage"],
+    "CC24_324c": {
+        "name": "Make abortion illegal in all circumstances",
+        "topic": "abortion",
+        "keywords": ["abortion illegal", "ban abortion"],
         "interpret": _binary_support,
     },
-    "CC24_308a_3": {
-        "name": "Regulate CO2 as a pollutant",
-        "topic": "environment",
-        "keywords": ["regulate co2", "co2 pollutant", "epa regulate",
-                     "carbon regulation"],
+    "CC24_324d": {
+        "name": "Expand abortion access",
+        "topic": "abortion",
+        "keywords": ["abortion access"],
         "interpret": _binary_support,
     },
-    "CC24_308a_4": {
-        "name": "Raise taxes on income over $400k",
-        "topic": "fiscal",
-        "keywords": ["raise taxes", "tax the rich", "wealth tax", "income tax",
-                     "tax increase", "higher taxes", "taxes on income over",
-                     "tax cut"],
-        "interpret": _binary_support,
-    },
-    "CC24_308a_5": {
-        "name": "Forgive student loan debt up to $50k",
+
+    # --- Education ---
+    "CC24_323f": {
+        # Misnumbered into the 323 immigration grid in the released data;
+        # codebook confirms this is the student-debt forgiveness item.
+        "name": "Forgive up to $20,000 in student loan debt",
         "topic": "education",
-        "keywords": ["student loan", "student debt", "loan forgiveness",
-                     "college debt"],
+        "keywords": ["student loan", "student debt", "forgiveness"],
         "interpret": _binary_support,
+    },
+
+    # --- Foreign policy (CC24_308a Ukraine multi-select, 1=selected) ---
+    "CC24_308a_4": {
+        "name": "Provide arms to Ukraine",
+        "topic": "foreign_policy",
+        "keywords": ["ukraine", "arms", "military aid"],
+        "interpret": _multiselect_selected,
+    },
+    "CC24_308a_1": {
+        "name": "Do not get involved in Ukraine",
+        "topic": "foreign_policy",
+        "keywords": ["stay out of ukraine", "not get involved"],
+        "interpret": _multiselect_selected,
     },
 }
 
