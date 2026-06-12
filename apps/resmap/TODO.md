@@ -28,14 +28,20 @@ Work top to bottom. Each phase is independently testable. Check off as you go.
 - [x] Re-parse loop: `is_stale=true` markets re-selected automatically
 - [ ] Ongoing: parse the backlog in `--limit` batches; review queue weekly
 
-## Phase 3 — equivalence (Layer 3: the moat)
-- [ ] `parse/candidate_matcher.py`: surface likely same-event pairs across
-      Poly↔Kalshi (title similarity + category + date window). Cheap recall,
-      human confirms.
-- [ ] `parse/equivalence.py`: compare two parsed interpretations across the 4
-      axes (source, cutoff, tie, threshold) → `match_type`, `divergence_axes`,
-      `risk_score`
-- [ ] Seed with a handful of hand-verified pairs to calibrate risk scoring
+## Phase 3 — equivalence (Layer 3: the moat) ✅ 2026-06-12
+- [x] `parse/candidate_matcher.py` — rapidfuzz titles + date window, rules-text
+      required (parlays excluded); 35,798 raw candidates, 51 at ≥0.90
+- [x] `parse/equivalence.py` — 4-axis compare: deterministic fast paths + LLM
+      judge for ambiguous axes; risk-weighted → match_type; upserts
+- [x] `scripts/equivalence_pipeline.py` — staged match → parse → compare
+- [x] Live seed: top 12 pairs compared; hand-verified the headline find —
+      "hottest year on record" is a TRUE false_friend (Poly resolves rank/tie
+      = YES, Kalshi strict inequality = NO on the same tie)
+- [ ] Calibration: curate `sources` rows so the source axis fires on real
+      authority differences, not canonical-name granularity (currently
+      inflates risk on pairs sharing a primary source with different
+      fallback chains)
+- [ ] Review the 51 ≥0.90 pairs; extend seed set; tune AXIS_WEIGHTS
 
 ## Phase 4 — product surface
 - [ ] `tool/api/`: read-only endpoints — markets, parsed rules, equivalences,

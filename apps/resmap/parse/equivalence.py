@@ -192,17 +192,20 @@ def _fetch_parsed(cur, market_id: str) -> Optional[dict]:
 
 def run(conn, judge: Judge | None = None,
         min_similarity: float | None = None,
-        date_window_days: int | None = None) -> dict:
-    """Find candidate pairs, compare the freshly parsed interpretations, and
-    upsert `equivalences` rows (canonical a<b ordering so re-runs update in
-    place). Pairs lacking a fresh parse on either side are skipped and counted
-    — parse them first, then re-run."""
-    kwargs = {}
-    if min_similarity is not None:
-        kwargs["min_similarity"] = min_similarity
-    if date_window_days is not None:
-        kwargs["date_window_days"] = date_window_days
-    pairs = find_candidates(conn, **kwargs)
+        date_window_days: int | None = None,
+        pairs: list | None = None) -> dict:
+    """Find candidate pairs (or use precomputed `pairs` — matching the full
+    registry takes minutes, so pipelines cache it), compare the freshly parsed
+    interpretations, and upsert `equivalences` rows (canonical a<b ordering so
+    re-runs update in place). Pairs lacking a fresh parse on either side are
+    skipped and counted — parse them first, then re-run."""
+    if pairs is None:
+        kwargs = {}
+        if min_similarity is not None:
+            kwargs["min_similarity"] = min_similarity
+        if date_window_days is not None:
+            kwargs["date_window_days"] = date_window_days
+        pairs = find_candidates(conn, **kwargs)
 
     stats = {"candidates": len(pairs), "compared": 0, "skipped_unparsed": 0}
 

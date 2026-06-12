@@ -179,6 +179,26 @@ def test_fetch_markets_cursor_pagination(kalshi_page, monkeypatch):
     assert calls[0]["market_status"] == "active"
 
 
+def test_fetch_markets_filters_same_day_parlays_by_default(kalshi_page, monkeypatch):
+    """min_close_ts must be sent by default — without it the cursor feed is
+    30k+ auto-generated parlay markets with no rules text."""
+    calls = []
+
+    class _FakeSession:
+        def request(self, method, url, params=None, **kw):
+            calls.append(dict(params or {}))
+            return _FakeResponse(200, {"cursor": "", "markets": []})
+
+    list(fetch_markets(status="open", session=_FakeSession()))
+    assert "min_close_ts" in calls[0]
+    assert calls[0]["min_close_ts"] > 0
+
+    calls.clear()
+    list(fetch_markets(status="open", session=_FakeSession(),
+                       min_close_days=None))
+    assert "min_close_ts" not in calls[0]
+
+
 def test_fetch_markets_max_pages(kalshi_page, monkeypatch):
     class _FakeSession:
         def request(self, method, url, params=None, **kw):

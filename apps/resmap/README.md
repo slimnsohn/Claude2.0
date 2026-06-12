@@ -19,11 +19,12 @@ tables are the IP.
 copy .env.example .env             # fill in values
 python -m venv .venv
 .\.venv\Scripts\python -m pip install -r requirements.txt
-.\.venv\Scripts\python -m pytest tests\ -q       # 75 tests, all green
+.\.venv\Scripts\python -m pytest tests\ -q       # 100 tests, all green
 
 .\.venv\Scripts\python -m ingest.run                          # pull all 3 venues
 .\.venv\Scripts\python -m parse.rule_parser --limit 20        # LLM-extract rules (claude -p)
 .\.venv\Scripts\python -m parse.review_cli list               # human review queue
+.\.venv\Scripts\python -m parse.equivalence                   # cross-venue divergence scoring
 ```
 (docker-compose.yml remains as an alternative DB path for other machines.)
 

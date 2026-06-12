@@ -114,8 +114,15 @@ class KalshiSession:
 
 def fetch_markets(status: str = "open", max_pages: int | None = None,
                   page_limit: int = 100,
-                  session: KalshiSession | None = None) -> Iterator[MarketRecord]:
-    """Cursor-paginate /markets and yield one MarketRecord per market."""
+                  session: KalshiSession | None = None,
+                  min_close_days: float | None = 1.0) -> Iterator[MarketRecord]:
+    """Cursor-paginate /markets and yield one MarketRecord per market.
+
+    min_close_days (default 1.0) maps to the API's min_close_ts: Kalshi's
+    feed is dominated by auto-generated same-day multi-leg parlays with NO
+    rules text (verified live: 30k of the first 30k cursor results). They are
+    worthless for a resolution-semantics dataset and drown out real markets.
+    Pass None to include them."""
     sess = session or KalshiSession.from_env()
     api_status = "active" if status == "open" else "settled"
     cursor = None
@@ -123,6 +130,8 @@ def fetch_markets(status: str = "open", max_pages: int | None = None,
 
     while max_pages is None or page < max_pages:
         params = {"market_status": api_status, "limit": page_limit}
+        if min_close_days is not None and status == "open":
+            params["min_close_ts"] = int(time.time() + min_close_days * 86400)
         if cursor:
             params["cursor"] = cursor
         resp = sess.request("GET", f"{BASE_URL}/markets", params=params)

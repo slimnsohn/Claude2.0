@@ -54,11 +54,17 @@ def find_candidates(conn, min_similarity: float = MIN_SIMILARITY,
                     venue_b: str = "kalshi") -> list[CandidatePair]:
     """Cross-venue same-event candidates, sorted by similarity descending."""
     def open_markets(venue_code: str):
+        # rules text required: a pair that can't be parsed can never be
+        # equivalence-scored, and rules-less markets (Kalshi parlays) are
+        # pure matching noise
         with conn.cursor() as cur:
             cur.execute("""
                 SELECT m.market_id, m.title, m.closes_at
                 FROM markets m JOIN venues v USING (venue_id)
                 WHERE v.code = %s AND m.status = 'open'
+                  AND EXISTS (SELECT 1 FROM rule_snapshots s
+                              WHERE s.market_id = m.market_id
+                                AND s.raw_rules <> '')
             """, (venue_code,))
             return cur.fetchall()
 

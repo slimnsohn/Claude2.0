@@ -78,6 +78,17 @@ def test_find_candidates_date_window_excludes(db_conn):
 
 
 @pytest.mark.integration
+def test_find_candidates_excludes_markets_without_rules_text(db_conn):
+    ingest(db_conn, [
+        _mk("polymarket", "0xA", "Will France win the 2026 FIFA World Cup?"),
+        MarketRecord(venue_code="kalshi", venue_market_id="KXPARLAY",
+                     title="France wins the 2026 World Cup?", raw_rules="",
+                     closes_at=NOW, status="open"),
+    ])
+    assert find_candidates(db_conn) == []  # unparseable side → no pair
+
+
+@pytest.mark.integration
 def test_find_candidates_ignores_closed_markets(db_conn):
     ingest(db_conn, [
         _mk("polymarket", "0xA", "Will France win the 2026 FIFA World Cup?"),

@@ -1,5 +1,6 @@
 .env
 secrets/
+pairs.json
 __pycache__/
 *.pyc
 export/parquet/
