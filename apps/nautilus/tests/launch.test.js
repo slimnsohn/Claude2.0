@@ -43,6 +43,24 @@ test('openExternal rejection returns ok:false', async () => {
   assert.match(result.error, /no browser/);
 });
 
+test('calc result copies to clipboard', async () => {
+  const copied = [];
+  const shell = { openPath: async () => '', openExternal: async () => {} };
+  const clipboard = { writeText: (t) => copied.push(t) };
+  const result = await launchItem(item('calc', '127.5'), { shell, clipboard });
+  assert.deepStrictEqual(copied, ['127.5']);
+  assert.deepStrictEqual(result, { ok: true });
+});
+
+test('calc with empty target (incomplete expression) is a no-op success', async () => {
+  const copied = [];
+  const shell = { openPath: async () => '', openExternal: async () => {} };
+  const clipboard = { writeText: (t) => copied.push(t) };
+  const result = await launchItem(item('calc', ''), { shell, clipboard });
+  assert.deepStrictEqual(copied, []);
+  assert.strictEqual(result.ok, false);
+});
+
 test('unknown item type returns ok:false', async () => {
   const shell = { openPath: async () => '', openExternal: async () => {} };
   const result = await launchItem(item('mystery', 'x'), { shell });

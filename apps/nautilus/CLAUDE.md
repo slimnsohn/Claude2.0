@@ -24,6 +24,7 @@ npm test         # unit tests (node --test tests/)
 ## Key Behaviors
 - Routing: strong match (score ≥600) → launch; question-shaped → Ask Claude; Ask Claude row always present.
 - Prefix overrides (first word only): `folder:` `site:`/`website:` `app:` restrict type; `claude:` forces Ask Claude.
+- Calculator: `=2+2` or bare math (`15*8.5`) shows the answer as top row; Enter copies it to clipboard. Safe parser in src/core/calc.js (no eval).
 - Hotkey: Alt+Space, fallbacks Ctrl+Alt+Space → Ctrl+Shift+Space; tray tooltip shows active hotkey.
 - Icons: apps/folders via app.getFileIcon (cached); sites via Google favicon service (badge fallback).
 - Tray-resident; window hides on Esc/blur; quit only via tray Exit.

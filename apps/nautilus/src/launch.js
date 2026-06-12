@@ -1,6 +1,6 @@
 'use strict';
 
-async function launchItem(item, { shell }) {
+async function launchItem(item, { shell, clipboard }) {
   try {
     switch (item.type) {
       case 'app':
@@ -11,6 +11,10 @@ async function launchItem(item, { shell }) {
       case 'site':
       case 'claude':
         await shell.openExternal(item.target);
+        return { ok: true };
+      case 'calc':
+        if (!item.target) return { ok: false, error: 'incomplete expression' };
+        clipboard.writeText(item.target);
         return { ok: true };
       default:
         return { ok: false, error: `Unknown item type: ${item.type}` };
