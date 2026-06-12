@@ -67,6 +67,7 @@
 .badge-backtest { background: rgba(210,153,34,0.15); color: var(--orange); }
 .badge-complete { background: rgba(63,185,80,0.15); color: var(--green); }
 .badge-pending { background: rgba(139,148,158,0.15); color: var(--text2); }
+.badge-warn { background: #8a5a00; color: #ffd27d; }
 
 /* Detail panel (slide-out) */
 .detail-panel {

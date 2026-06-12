@@ -1432,11 +1432,14 @@ function renderEventsView(el) {
         <div class="card">
             <div class="section-title">World Context</div>
             <p style="font-size:12px;color:var(--text2);margin-bottom:8px">Fetch real headlines from public news feeds (AP, NPR, BBC, Reuters). The population absorbs this info and their poll responses shift accordingly.</p>
-            <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
-                <button id="wu-fetch" class="btn btn-primary">Refresh World Context</button>
+            <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;flex-wrap:wrap">
+                <button id="wu-cycle" class="btn btn-primary">Run Update Cycle</button>
+                <button id="wu-fetch" class="btn btn-sm">Refresh Headlines Only</button>
                 <button id="wu-clear" class="btn btn-sm">Clear Auto</button>
+                <span id="wu-calib-badge"></span>
                 <span id="wu-status" style="font-size:12px;color:var(--text2)"></span>
             </div>
+            <div id="wu-drift-chart" style="margin-bottom:8px"></div>
             <div id="wu-shifts" style="margin-bottom:8px"></div>
             <div id="wu-list"></div>
             <details style="margin-top:12px">
@@ -1564,12 +1567,61 @@ function renderEventsView(el) {
             status.textContent = `Error: ${e.message}`;
         }
         btn.disabled = false;
-        btn.textContent = "Refresh World Context";
+        btn.textContent = "Refresh Headlines Only";
     });
     document.getElementById("wu-clear").addEventListener("click", async () => {
         await api("/api/world-updates/clear-auto", { method: "POST" });
         loadWorldUpdates();
     });
+    document.getElementById("wu-cycle").addEventListener("click", async () => {
+        const status = document.getElementById("wu-status");
+        status.textContent = "Running update cycle (fetch -> score -> apply -> calibrate)...";
+        try {
+            const s = await api("/api/world-updates/cycle", { method: "POST" });
+            const verdict = (s.calibration && s.calibration.verdict) || "?";
+            status.textContent = `Cycle ${s.update_id}: ${s.n_events} events (${s.scoring_method}), ` +
+                `${s.exposures} exposures, calibration: ${verdict}`;
+            loadWorldUpdates();
+            loadCalibrationBadge();
+            loadDriftChart();
+        } catch (e) {
+            status.textContent = `Cycle failed: ${e.message}`;
+        }
+    });
+
+    async function loadCalibrationBadge() {
+        const el = document.getElementById("wu-calib-badge");
+        if (!el) return;
+        try {
+            const c = await api("/api/world-updates/calibration-status");
+            const cls = { pass: "badge-live", drift_warning: "badge-warn", stale: "badge" };
+            const label = { pass: "calibration: pass", drift_warning: "calibration: drift warning",
+                            stale: "calibration: stale - refresh benchmarks", none: "calibration: never run" };
+            el.innerHTML = `<span class="badge ${cls[c.verdict] || "badge"}">${label[c.verdict] || esc(String(c.verdict))}</span>`;
+        } catch (e) { el.innerHTML = ""; }
+    }
+
+    async function loadDriftChart() {
+        const el = document.getElementById("wu-drift-chart");
+        if (!el) return;
+        try {
+            const hist = await api("/api/world-updates/belief-history");
+            if (!hist.length) { el.innerHTML = ""; return; }
+            const topics = [...new Set(hist.flatMap(h => Object.keys(h.mean_shift_by_topic || {})))];
+            const latest = hist[hist.length - 1].mean_shift_by_topic || {};
+            el.innerHTML = `<div class="section-title" style="font-size:12px">Population belief drift (mean shift, ${hist.length} cycles)</div>` +
+                topics.map(t => {
+                    const v = latest[t] || 0;
+                    const w = Math.min(100, Math.abs(v) * 800);
+                    const color = v >= 0 ? "var(--accent, #4a9eff)" : "#e06c5a";
+                    return `<div style="display:flex;align-items:center;gap:6px;font-size:11px">
+                        <span style="width:110px;color:var(--text2)">${esc(t)}</span>
+                        <div style="width:${w}px;height:8px;background:${color};border-radius:2px"></div>
+                        <span>${(v >= 0 ? "+" : "") + v.toFixed(4)}</span></div>`;
+                }).join("");
+        } catch (e) { el.innerHTML = ""; }
+    }
+
     document.getElementById("wu-manual")?.addEventListener("click", async () => {
         const text = document.getElementById("wu-text").value.trim();
         if (!text) return;
@@ -1578,6 +1630,8 @@ function renderEventsView(el) {
         loadWorldUpdates();
     });
     loadWorldUpdates();
+    loadCalibrationBadge();
+    loadDriftChart();
 
     loadEventList();
 }
