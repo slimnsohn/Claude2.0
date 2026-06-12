@@ -1,4 +1,3 @@
-import io
 import pytest
 import pandas as pd
 from pathlib import Path
@@ -27,7 +26,6 @@ def engine_fixture(tmp_path):
     import numpy as np
 
     n = 100
-    rng = np.random.default_rng(42)
 
     # Raw demographic columns that CESLoader.get_data() harmonises
     pid7 = [4] * n           # 4 → independent

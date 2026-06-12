@@ -154,11 +154,10 @@ def update_population(profiles: list, events: list, now: datetime,
                 exposures += 1
 
     # Aggregate summary
-    sums, counts = {}, {}
+    sums = {}
     for p in profiles:
         for topic, b in (p.get("beliefs") or {}).items():
             sums[topic] = sums.get(topic, 0.0) + b.get("shift", 0.0)
-            counts[topic] = counts.get(topic, 0) + 1
     n = max(1, len(profiles))
     return {
         "update_id": update_id,
