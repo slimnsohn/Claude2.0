@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ResMap — How It Works (FAQ)</title>
+<style>
+  :root {
+    --bg: #0d1117;
+    --panel: #161b22;
+    --border: #30363d;
+    --text: #e6edf3;
+    --muted: #8b949e;
+    --accent: #58a6ff;
+    --green: #3fb950;
+    --yellow: #d29922;
+    --red: #f85149;
+    --mono: "Cascadia Code", Consolas, monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg); color: var(--text);
+    font-family: "Segoe UI", system-ui, sans-serif;
+    line-height: 1.6; padding: 2rem 1rem 6rem;
+  }
+  .wrap { max-width: 880px; margin: 0 auto; }
+  h1 { font-size: 2rem; margin-bottom: .25rem; }
+  .tagline { color: var(--muted); font-size: 1.05rem; margin-bottom: 2rem; }
+  h2 {
+    font-size: 1.3rem; margin: 2.5rem 0 1rem; padding-bottom: .4rem;
+    border-bottom: 1px solid var(--border); color: var(--accent);
+  }
+  .pipeline {
+    display: flex; flex-wrap: wrap; gap: .5rem; align-items: center;
+    background: var(--panel); border: 1px solid var(--border);
+    border-radius: 8px; padding: 1rem; margin: 1rem 0; font-size: .85rem;
+  }
+  .stage {
+    background: #1f2937; border: 1px solid var(--border); border-radius: 6px;
+    padding: .4rem .7rem; font-family: var(--mono); white-space: nowrap;
+  }
+  .stage small { display: block; color: var(--muted); font-family: inherit; }
+  .arrow { color: var(--muted); }
+  details {
+    background: var(--panel); border: 1px solid var(--border);
+    border-radius: 8px; margin: .6rem 0; padding: 0;
+  }
+  summary {
+    cursor: pointer; padding: .8rem 1rem; font-weight: 600;
+    list-style-position: inside;
+  }
+  summary:hover { color: var(--accent); }
+  details > div { padding: 0 1.25rem 1rem; color: #c9d1d9; }
+  code, .cmd {
+    font-family: var(--mono); background: #1f2937; border-radius: 4px;
+    padding: .1rem .35rem; font-size: .9em;
+  }
+  pre.cmd {
+    display: block; padding: .7rem 1rem; margin: .6rem 0; overflow-x: auto;
+  }
+  table { border-collapse: collapse; width: 100%; margin: .8rem 0; font-size: .92rem; }
+  th, td { border: 1px solid var(--border); padding: .5rem .7rem; text-align: left; }
+  th { background: #1f2937; }
+  .tm { color: var(--green); font-weight: 600; }
+  .nm { color: var(--yellow); font-weight: 600; }
+  .ff { color: var(--red); font-weight: 600; }
+  .note {
+    border-left: 3px solid var(--accent); background: var(--panel);
+    padding: .7rem 1rem; margin: 1rem 0; border-radius: 0 6px 6px 0;
+    color: #c9d1d9;
+  }
+  ul, ol { padding-left: 1.4rem; margin: .5rem 0; }
+  li { margin: .25rem 0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>ResMap</h1>
+<p class="tagline">Prediction-market <strong>resolution intelligence</strong> —
+a dataset that knows <em>how</em> markets settle, not just what they cost.</p>
+
+<div class="note">
+<strong>The one idea:</strong> anyone can store "market X trades at 42¢."
+ResMap stores <em>under exactly what conditions X resolves YES, from what
+authoritative source, by what cutoff, and how that differs from the lookalike
+market on another venue.</em> That answer is expensive to compile, compounds
+over time, and is the entire product.
+</div>
+
+<h2>The pipeline at a glance</h2>
+<div class="pipeline">
+  <span class="stage">Polymarket · Kalshi · Gemini<small>public APIs</small></span>
+  <span class="arrow">→</span>
+  <span class="stage">adapters<small>fetch → MarketRecord</small></span>
+  <span class="arrow">→</span>
+  <span class="stage">ingest/core<small>hash + change detection</small></span>
+  <span class="arrow">→</span>
+  <span class="stage">rule_snapshots<small>append-only verbatim text</small></span>
+  <span class="arrow">→</span>
+  <span class="stage">rule_parser<small>LLM → 9 structured fields</small></span>
+  <span class="arrow">→</span>
+  <span class="stage">review_cli<small>human approves</small></span>
+  <span class="arrow">→</span>
+  <span class="stage">equivalence<small>4-axis divergence</small></span>
+</div>
+
+<h2>The big picture</h2>
+
+<details open>
+<summary>What is ResMap, in one paragraph?</summary><div>
+<p>ResMap continuously pulls every market from Polymarket, Kalshi, and Gemini,
+stores each market's <em>settlement rules text verbatim</em>, uses Claude to
+extract the rules into structured fields (a human reviews every extraction),
+and then compares lookalike markets across venues to determine whether they
+would actually resolve identically. The output is a Postgres dataset you can
+query: markets, immutable rule history, structured settlement semantics, and a
+cross-venue equivalence graph with risk scores.</p>
+</div></details>
+
+<details>
+<summary>Why is this valuable? Isn't this just an arb scanner?</summary><div>
+<p>No — that's the point. A naive arb scanner sees "France wins World Cup" at
+20¢ on one venue and 24¢ on another and calls it free money. But two markets
+on the <em>same real-world event</em> can resolve differently: different
+settlement sources can call the event differently, a 6pm vs 11:59pm cutoff
+captures different facts, draws may void one market and resolve the other NO,
+and "&gt;50%" vs "&ge;50.0%" flip on the boundary. ResMap's edge is knowing
+which lookalike pairs are <span class="ff">false friends</span> — the traps.
+Price arithmetic is a commodity; settlement semantics are not.</p>
+</div></details>
+
+<details>
+<summary>What are the three data layers?</summary><div>
+<ol>
+<li><strong>Market registry</strong> (<code>markets</code>) — every market per
+venue: ids, titles, timestamps, status, outcome. Table stakes; competitors
+sell this too.</li>
+<li><strong>Resolution-rule extraction</strong>
+(<code>rule_snapshots</code> → <code>parsed_rules</code>) — verbatim rules
+text captured immutably, then LLM-parsed into structured fields and
+human-reviewed. This is where the value starts.</li>
+<li><strong>Cross-venue equivalence</strong> (<code>equivalences</code>) — for
+markets that <em>look</em> identical: do they actually resolve identically?
+The crown jewel; nobody else has it cleanly.</li>
+</ol>
+<p>The <code>sources</code> and <code>equivalences</code> tables are the
+proprietary IP.</p>
+</div></details>
+
+<h2>Layer 1 — Ingestion</h2>
+
+<details>
+<summary>What does a venue adapter do?</summary><div>
+<p>Each adapter (<code>ingest/adapters/polymarket.py</code>,
+<code>kalshi.py</code>, <code>gemini.py</code>) fetches its venue's public API
+and yields a common <code>MarketRecord</code>: venue id, title, the verbatim
+settlement rules text, timestamps, status, and the full raw API blob for
+forensics. Adapters are deliberately <em>pure</em> — fetch and yield, no
+database writes — so all storage logic lives in one place
+(<code>ingest/core.py</code>) and a venue can be added without touching the
+core. None of the three venues requires credentials for market data.</p>
+<ul>
+<li><strong>Polymarket:</strong> Gamma API; the market <code>description</code>
+field is the settlement text (HTML is stripped, structure preserved).</li>
+<li><strong>Kalshi:</strong> <code>rules_primary + rules_secondary</code>;
+Kalshi names its settlement source most explicitly of the three.</li>
+<li><strong>Gemini:</strong> an event holds multiple contracts (the tradable
+YES/NO instruments); each contract's rich-text description holds the rules and
+becomes its own market row.</li>
+</ul>
+</div></details>
+
+<details>
+<summary>How does change detection work — and why does it matter?</summary><div>
+<p><code>ingest/core.py</code> normalizes each market's rules text (whitespace,
+casing) and hashes it (SHA-256). On every ingest run, the hash is compared to
+the latest stored snapshot:</p>
+<ul>
+<li><strong>Same hash</strong> → nothing written. Re-running ingest a hundred
+times adds zero noise.</li>
+<li><strong>New market</strong> → registry row + first snapshot.</li>
+<li><strong>Changed hash</strong> → a new immutable snapshot is appended, a
+<code>rule_change_events</code> row is written, and every existing parse of
+that market is flagged stale for re-parsing.</li>
+</ul>
+<p>"The venue edited the settlement criteria mid-market" is itself high-value
+risk information — traders holding positions want to know immediately. That
+alert feed falls out of the hashing for free.</p>
+</div></details>
+
+<details>
+<summary>Why is the raw rules text append-only?</summary><div>
+<p>Two reasons. <strong>Auditability:</strong> every structured field in
+<code>parsed_rules</code> references the exact snapshot it was derived from,
+so any claim in the dataset can be traced to "this is the text we read, fetched
+at this time." <strong>History is signal:</strong> overwriting rule text would
+destroy the record of what changed mid-market. Nothing in ResMap ever updates
+or deletes a snapshot.</p>
+</div></details>
+
+<h2>Layer 2 — Rule parsing</h2>
+
+<details>
+<summary>What does the LLM extract from the rules text?</summary><div>
+<p><code>parse/rule_parser.py</code> sends each snapshot's verbatim text to
+Claude (via the local <code>claude -p</code> CLI — no API cost) with a fixed
+contract: return exactly nine fields, JSON only, think "like a lawyer reading
+a contract, not a casual bettor reading a headline."</p>
+<table>
+<tr><th>Field</th><th>What it captures</th></tr>
+<tr><td><code>resolution_logic</code></td><td>normalized "resolves YES if …"</td></tr>
+<tr><td><code>authoritative_source</code></td><td>who calls it — "AP race call", "BLS CPI release"</td></tr>
+<tr><td><code>source_type</code></td><td>official_data / media_call / exchange_discretion / onchain / other</td></tr>
+<tr><td><code>cutoff_time</code> + <code>cutoff_basis</code></td><td>the actual settlement cutoff and how it's defined</td></tr>
+<tr><td><code>tie_handling</code></td><td>what happens on a tie / draw / push</td></tr>
+<tr><td><code>revision_handling</code></td><td>what happens if the source data is later revised</td></tr>
+<tr><td><code>threshold_def</code></td><td>exact threshold and rounding — "&ge; 50.0%" vs "&gt; 50%"</td></tr>
+<tr><td><code>confidence</code></td><td>the model's own 0–1 self-assessment</td></tr>
+</table>
+<p>If the text doesn't specify a field, it is stored as <em>null</em> — missing
+information is shown as missing, never invented. Markets are parsed
+highest-volume first; there's no cutoff, lower-volume markets just wait for a
+later batch.</p>
+</div></details>
+
+<details>
+<summary>Why does a human review every parse?</summary><div>
+<p>Because the review <em>is</em> the moat. LLM extraction is cheap and
+cloneable; a curated, human-verified settlement-semantics database is not.
+Every parse lands with <code>reviewed = false</code>. The review CLI
+(<code>parse/review_cli.py</code>) lists unreviewed parses
+<em>lowest-confidence first</em>, shows each parsed interpretation side-by-side
+with the verbatim snapshot text it came from, and only a human can flip a parse
+to approved. There is deliberately no auto-accept path anywhere in the
+codebase.</p>
+<pre class="cmd">python -m parse.review_cli list
+python -m parse.review_cli show 7d45baf9
+python -m parse.review_cli approve 7d45baf9</pre>
+</div></details>
+
+<details>
+<summary>What is the <code>sources</code> table?</summary><div>
+<p>A normalized registry of authoritative settlement sources. When the parser
+extracts "AP race call" from twelve different markets, they all point at one
+<code>sources</code> row. That lets you ask questions no competitor can answer
+without doing this curation work — "show me every market across all venues
+that settles off the BLS CPI release." It also powers the most important
+equivalence axis: two markets sharing a source row are verifiably settled by
+the same authority.</p>
+</div></details>
+
+<details>
+<summary>What happens when a venue edits rules after parsing?</summary><div>
+<p>The next ingest run detects the new hash, appends the new snapshot, and
+flags all of that market's parses <code>is_stale = true</code>. The parser's
+selection query automatically re-picks stale markets on the next run and
+parses the <em>new</em> text; old parses are kept as history. No special
+re-parse code path exists — staleness simply re-enters the normal queue.</p>
+</div></details>
+
+<h2>Layer 3 — Equivalence (the moat)</h2>
+
+<details>
+<summary>How are lookalike pairs found?</summary><div>
+<p><code>parse/candidate_matcher.py</code> does a cheap, high-recall sweep:
+fuzzy title similarity (rapidfuzz token-sort, threshold 0.65) across open
+Polymarket ↔ Kalshi markets, blocked by close-date proximity. It deliberately
+over-matches — missing a real pair is the costly error — and persists nothing.
+Pairs flow straight into the equivalence engine, which does the careful
+work.</p>
+</div></details>
+
+<details>
+<summary>What are the four divergence axes?</summary><div>
+<table>
+<tr><th>Axis</th><th>Weight</th><th>Why it can flip resolution</th></tr>
+<tr><td><strong>source</strong></td><td>0.45</td><td>a different authoritative source can call the same event differently</td></tr>
+<tr><td><strong>cutoff</strong></td><td>0.25</td><td>a 6pm vs 11:59pm cutoff captures different facts</td></tr>
+<tr><td><strong>threshold</strong></td><td>0.20</td><td>"&ge;50.0%" vs "&gt;50%" and rounding rules differ on the boundary</td></tr>
+<tr><td><strong>tie</strong></td><td>0.10</td><td>draw/push/void handling differs</td></tr>
+</table>
+<p>For each candidate pair, the engine compares the two <em>parsed</em>
+interpretations axis by axis. Wherever it can decide deterministically, it
+does (shared <code>sources</code> row → same source; equal timestamps → same
+cutoff; identical normalized text → same). Only genuinely ambiguous axes —
+paraphrased tie clauses, one-sided nulls — go to a Claude judgment call,
+prompted to flag a difference only when it could plausibly change which way
+money is paid.</p>
+</div></details>
+
+<details>
+<summary>What do the match types mean?</summary><div>
+<p>The weights of all differing axes are summed into a
+<code>risk_score</code> (0 = will resolve identically, 1 = will plausibly
+resolve differently):</p>
+<table>
+<tr><th>Match type</th><th>Risk</th><th>Meaning</th></tr>
+<tr><td class="tm">true_match</td><td>0</td><td>identical on all four axes — safe to treat as the same market</td></tr>
+<tr><td class="nm">near_match</td><td>0 &lt; r &le; 0.25</td><td>differ on a minor axis — flag, don't trust blindly</td></tr>
+<tr><td class="ff">false_friend</td><td>&gt; 0.25</td><td>differ in a way that can flip resolution — the trap a naive arb scanner calls free money</td></tr>
+</table>
+<p>Surfacing <span class="ff">false_friend</span>s is the product's edge over
+every cheap arb tool. Results are upserted into <code>equivalences</code> with
+the axes that diverged and human-readable notes; re-runs update in place.</p>
+</div></details>
+
+<h2>Operations</h2>
+
+<details>
+<summary>What's the day-to-day workflow?</summary><div>
+<pre class="cmd"># 1. pull latest markets + detect rule changes (all 3 venues)
+python -m ingest.run
+
+# 2. parse the highest-volume unparsed markets, e.g. 20 at a time
+python -m parse.rule_parser --limit 20
+
+# 3. review the new parses (shakiest first)
+python -m parse.review_cli list
+
+# 4. find lookalike pairs and score divergence
+python -m parse.equivalence</pre>
+<p>Each step is idempotent — running it twice never duplicates data. Maintenance
+is bounded: keep three adapters alive, review parses, re-review markets whose
+rules changed.</p>
+</div></details>
+
+<details>
+<summary>What does ResMap deliberately NOT do?</summary><div>
+<ul>
+<li><strong>No trading.</strong> Read-only by design — no custody, no order
+execution, no wallets. ResMap sells the signal; the buyer executes. This keeps
+the legal and maintenance surface near zero.</li>
+<li><strong>No auto-accepted parses.</strong> Human review is mandatory.</li>
+<li><strong>No invented data.</strong> Unparseable fields are null; markets
+with no rules text (e.g. Kalshi multi-leg parlays) stay registry-only.</li>
+<li><strong>No equivalence beyond Poly↔Kalshi yet.</strong> Gemini is ingested
+but stays out of the equivalence graph until the Poly↔Kalshi layer is solid.</li>
+</ul>
+</div></details>
+
+<details>
+<summary>What's built vs what's next?</summary><div>
+<table>
+<tr><th>Phase</th><th>What</th><th>Status</th></tr>
+<tr><td>0</td><td>Postgres 16, schema, environment</td><td class="tm">done</td></tr>
+<tr><td>1</td><td>3 venue adapters + change detection, verified live</td><td class="tm">done</td></tr>
+<tr><td>2</td><td>LLM rule parser + human review CLI</td><td class="tm">done</td></tr>
+<tr><td>3</td><td>candidate matcher + equivalence engine</td><td class="tm">done</td></tr>
+<tr><td>4</td><td>read-only metered API + demo arb dashboard</td><td>next</td></tr>
+<tr><td>5</td><td>Parquet export for analytical buyers</td><td>later</td></tr>
+</table>
+</div></details>
+
+<details>
+<summary>Where does the money come from?</summary><div>
+<p>Three surfaces, all riding the same dataset:</p>
+<ol>
+<li><strong>Metered read API</strong> over markets / parsed rules /
+equivalences — for tool-builders (B2B).</li>
+<li><strong>Alert feeds</strong> — rule-change events and new false-friend
+detections as a subscription.</li>
+<li><strong>Parquet historical export</strong> — for backtesters and
+researchers.</li>
+</ol>
+<p>The arb/alert web tool (Phase 4) is a demo that sells #1–#3, not the
+product itself.</p>
+</div></details>
+
+</div>
+
+<script>
+  window.CHAT_WIDGET_CONFIG = {
+    appName: "ResMap FAQ",
+    systemPrompt: "You are the ResMap assistant. ResMap is a prediction-market " +
+      "resolution-intelligence dataset: it ingests markets from Polymarket, " +
+      "Kalshi and Gemini, stores settlement rules verbatim and immutably, " +
+      "LLM-parses them into structured fields with mandatory human review, and " +
+      "scores cross-venue lookalike pairs on four divergence axes (source, " +
+      "cutoff, tie, threshold) as true_match / near_match / false_friend. " +
+      "Answer questions about how ResMap works using the page content. Be " +
+      "direct and concrete. ResMap is read-only and never trades.",
+    welcomeMessage: "Ask me anything about how ResMap works!",
+    accentColor: "#58a6ff",
+    position: "bottom-right",
+  };
+</script>
+<script src="../../../../_skills/llm-chat-widget/dist/chat-widget.js"></script>
+</body>
+</html>
