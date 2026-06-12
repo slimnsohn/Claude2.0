@@ -110,6 +110,7 @@
       <a class="toc-section" href="#calibration">5. Keep it calibrated</a>
       <a class="toc-section" href="#other-ops">6. Other operations</a>
       <a class="toc-section" href="#faq">7. FAQ &amp; limitations</a>
+      <a class="toc-section" href="#polymarket">8. Polymarket questions</a>
     </nav>
   </aside>
 
@@ -147,22 +148,38 @@
         on their demographics and political views. From those 60,000 records, the engine draws a
         representative sample of 5,000 personas using <em>raking</em> (iterative proportional fitting) —
         a technique that reweights the draw so the final set matches census targets on sex, race, education,
-        and age, while also respecting CES-native distributions for party identification and urban/rural
-        status. Each persona stores the <code>ces_row_id</code> of the real respondent it was drawn from,
-        so every opinion trace is ultimately grounded in a real person's data.
+        and age. Party identification and urban/rural targets come from CES's own
+        <code>commonweight</code> post-stratification weight rather than the raw panel counts — the raw
+        CES opt-in panel skews Democratic, and weighting corrects the population's D−R margin from
+        +13.6 (unweighted) to +1.9. The weighted party targets are strong_dem 21.9%, strong_rep 20.1%,
+        independent 18.7%, with the remaining leaner/weak-partisan groups around 9–10% each. Personas are
+        grouped into 134 demographic archetypes for efficient polling. Each persona stores the
+        <code>ces_row_id</code> of the real respondent it was drawn from, so every opinion trace is
+        ultimately grounded in a real person's data.
       </p>
 
       <h3>KNN opinion model</h3>
       <p>
-        When a poll question arrives, the engine keyword-matches it to one of 22 CES survey columns covering
-        Trump/Congress approval, economic outlook, immigration enforcement, healthcare programs, environment
-        and climate, fiscal and tax policy, education spending, and minimum wage. For each persona, it finds
+        When a poll question arrives, the engine keyword-matches it to one of 27 verified CES survey columns
+        covering presidential and Congress approval, the economy and inflation, immigration, healthcare,
+        environment and climate, guns, abortion, student debt, and Ukraine (see the FAQ for the full list).
+        Every column mapping has been verified against the official CES 2024 codebook and empirically
+        cross-tabbed against party ID in the raw data. For each persona, the engine finds
         the 50 most demographically similar real CES respondents (the K-nearest neighbors) and reads their
         actual answers to that column. Those answers become a probability distribution over yes / no / unsure.
         The LLM direction used in belief scoring is a signed strength from -1 to +1; the keyword fallback
         uses ±0.5 or 0. Questions that don't match any covered column are blocked — the engine never invents
-        an answer from scratch.
+        an answer from scratch. Questions phrased as a negation ("do you oppose…", "do you disapprove…")
+        are also rejected with an error asking you to rephrase affirmatively, because the matcher would
+        otherwise silently return the <em>support</em> distribution for an <em>oppose</em> question.
       </p>
+      <div class="callout">
+        One documented proxy: CES 2024 was fielded in November 2024 while Biden was in office, so it
+        contains <strong>no direct Trump job-approval item</strong>. "Do you approve of Trump's job
+        performance?" is answered using each matched respondent's <em>actual 2024 presidential vote</em>
+        (CC24_410) as a stand-in. This is disclosed in the column registry and validates within ~4 points
+        of the current real-poll average, but it is a vote proxy, not a measured approval rating.
+      </div>
 
       <h3>Belief layer</h3>
       <p>
@@ -180,9 +197,9 @@ CES 2024 survey (60,000 real respondents)
         v
   5,000 personas  ←─── ces_row_id tracks provenance
         |
-        |  Poll question
+        |  Poll question  (negated phrasing → rejected)
         v
-  Keyword → CES column match (22 topics)
+  Keyword → CES column match (27 verified columns)
         |
         | KNN: 50 nearest neighbors by demographics
         v
@@ -213,7 +230,7 @@ CES 2024 survey (60,000 real respondents)
       <h3>Enter a question</h3>
       <p>
         Open the <strong>Poll</strong> tab. Type a yes/no question in the text field — for example,
-        "Do you approve of Trump's job performance?" or "Do you support Medicare for all?" — and click
+        "Do you approve of Trump's job performance?" or "Do you support building a border wall?" — and click
         <strong>Run Poll</strong>. Coverage is checked when the poll runs. If the question matches a
         CES column the poll proceeds; if it does not match, you will see a message reading "This question
         isn't covered by CES survey data" after you click. There is no pre-run indicator.
@@ -224,8 +241,22 @@ CES 2024 survey (60,000 real respondents)
         demographically calibrated data is misleading. If your question is blocked, try rephrasing it
         toward a covered topic. Good examples that pass the matcher: "Do you approve of Trump's job
         performance?", "Is the economy getting better or worse?", "Do you support increasing border
-        patrol on the US-Mexico border?", "Do you support Medicare for all?"
+        patrol on the US-Mexico border?", "Do you support background checks on all gun sales?",
+        "Do you support allowing abortion as a matter of choice?"
       </div>
+
+      <h3>Phrase questions affirmatively (negation rule)</h3>
+      <p>
+        Questions phrased as a negation — "do you <strong>oppose</strong> the border wall?",
+        "do you <strong>disapprove</strong> of Trump?", "are you <strong>against</strong> banning assault
+        rifles?" — are <strong>rejected with an error</strong> (HTTP 400) before any poll runs. The
+        underlying keyword matcher is polarity-blind: it would match "do you oppose building a border
+        wall?" to the border-wall column and report the <em>support</em> distribution as "yes", silently
+        inverting the answer. Rather than guess, the engine refuses and asks you to rephrase affirmatively:
+        "Do you support X?". The engine answers support/approval distributions. Words that are part of the
+        proposal itself — "ban assault rifles", "make abortion illegal", "repeal the ACA" — are fine;
+        only negated question stems are blocked.
+      </p>
 
       <h3>Demographic filters</h3>
       <p>
@@ -524,6 +555,22 @@ Max marginal gap: 2.2%
             <td>Real-world poll anchor values you enter manually in the Benchmark tab.</td>
           </tr>
           <tr>
+            <td>data/polymarket_cache.json</td>
+            <td>Last successfully fetched Polymarket trending markets. Served as a fallback when the Gamma API is unreachable.</td>
+          </tr>
+          <tr>
+            <td>data/validation_synthetic.json</td>
+            <td>Blind validation study: synthetic distributions recorded before real numbers were looked up.</td>
+          </tr>
+          <tr>
+            <td>data/validation_real.json</td>
+            <td>Blind validation study: real poll numbers with sources and quality tags, collected after the synthetic phase.</td>
+          </tr>
+          <tr>
+            <td>data/validation_report.json</td>
+            <td>Per-question deltas between synthetic and real results (see Section 7 for a summary).</td>
+          </tr>
+          <tr>
             <td>data/raw/ces/ces_2024_common.csv</td>
             <td>Source CES 2024 survey microdata (60,000 rows). Not modified by the engine — read-only.</td>
           </tr>
@@ -537,16 +584,79 @@ Max marginal gap: 2.2%
           </tr>
         </tbody>
       </table>
+      <p>
+        Two methodology documents live at the project root: <code>VALIDATION.md</code> (the blind
+        validation study — protocol, per-question results, strengths and weaknesses) and
+        <code>AUDIT.md</code> (an independent adversarial integrity audit of the engine). Both are
+        summarized in the FAQ below.
+      </p>
 
       <!-- ================================================================ -->
       <h2 id="faq">7. FAQ &amp; limitations</h2>
 
-      <h3>Why aren't abortion and gun control covered?</h3>
+      <h3>Why was my question rejected for "negated phrasing"?</h3>
       <p>
-        The 2024 CES actually contains binary support/oppose grids for both topics: abortion items
-        CC24_321a–f and gun policy items CC24_330a–l. They have not yet been added to the engine's
-        column registry (<code>engine/ces_columns.py</code>), so polls on these topics are blocked for
-        now. Adding them is a planned extension.
+        Questions phrased "do you oppose / disapprove / are you against X" are rejected with a 400 error
+        on every poll path (Poll tab, Benchmark compare, Polymarket ask). The keyword matcher is
+        polarity-blind — it would match your question to the right topic but return the
+        <em>support</em> distribution as "yes", inverting the answer with full confidence and no warning.
+        Rephrase affirmatively: "Do you support X?". The engine answers support/approval distributions;
+        compute the oppose share yourself from the "no" column.
+      </p>
+
+      <h3>How accurate is it? (the validation study)</h3>
+      <p>
+        A blind validation study (<code>VALIDATION.md</code>) compared the population's answers to real
+        polls: synthetic distributions were recorded and committed <em>before</em> real numbers were looked
+        up. Two rounds were run — round one exposed that most of the original CES column mappings were
+        wrong; the registry was rebuilt against the official CES 2024 codebook (30/30 empirical direction
+        checks) and the study repeated. After the registry correction and the commonweight-weighted
+        population rebuild, typical error on identity-anchored questions is single digits.
+        Re-measured against the current population (synthetic yes% minus real yes%):
+      </p>
+      <table class="data-file-table">
+        <thead>
+          <tr><th>Question (CES column)</th><th>&Delta; yes</th><th>Real source</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Renewable energy mandate (CC24_326b)</td><td>+1</td><td>Yale CCAM + Pew, spring 2026</td></tr>
+          <tr><td>Repeal the ACA (CC24_328d)</td><td>+2</td><td>KFF, Mar 2026</td></tr>
+          <tr><td>Abortion as a matter of choice (CC24_324a)</td><td>&minus;3</td><td>Pew, Jan 2026</td></tr>
+          <tr><td>Trump job approval (CC24_410, vote proxy)</td><td>+4</td><td>RealClearPolling aggregate, Jun 2026</td></tr>
+          <tr><td>Build a border wall (CC24_323c)</td><td>&minus;4</td><td>Pew, Jun 2025</td></tr>
+          <tr><td>Economy getting better (CC24_301)</td><td>+5 to +8</td><td>Gallup, May 2026</td></tr>
+          <tr><td>Ban assault rifles (CC24_321a)</td><td>+7 to +9</td><td>Gallup, Oct 2024 (wording gap)</td></tr>
+          <tr><td>Increase border patrol (CC24_323b)</td><td>+17 to +19</td><td>Gallup, Jun 2025</td></tr>
+          <tr><td>Expand Medicaid (CC24_328e)</td><td>+21</td><td>KFF-derived estimate</td></tr>
+          <tr><td>Provide arms to Ukraine (CC24_308a_4)</td><td>&minus;18 to &minus;22</td><td>YouGov, Apr 2026 (multi-select floor)</td></tr>
+        </tbody>
+      </table>
+      <p>
+        The honest framing: the population is <strong>good at culture/politics support questions</strong> —
+        stable, identity-anchored opinions where demographics and real survey microdata carry the signal —
+        and <strong>weak at fast-moving sentiment levels</strong>. The CES baseline is frozen at November
+        2024; real opinion on things like border enforcement has moved since, and the belief layer closes
+        that gap only slowly (its shifts are deliberately bounded). Two caveats on the worst rows: the
+        Ukraine items are CES multi-select ("check all that apply"), which suppresses selection — treat
+        those numbers as floors, not levels; and the Medicaid-expansion "real" number is itself a derived
+        estimate (no pollster fields a direct national question), so the true miss may be smaller than it
+        looks. Even where the level is off, the population almost always gets the majority side and the
+        partisan ordering right.
+      </p>
+
+      <h3>Has the system been independently audited?</h3>
+      <p>
+        Yes — an adversarial integrity audit (<code>AUDIT.md</code>) actively tried to prove the system
+        cheats. Verdict on integrity: clean. Real poll numbers can never tune opinions — the only code
+        path where they touch the engine is a disclosed dampening gate that, when synthetic drift diverges
+        from reality, halves all belief shifts (×0.5), shrinking them <em>toward the CES baseline</em>,
+        never toward the real poll value. No fitted constants or optimization against benchmarks were
+        found, and the blind-validation protocol was verified against git commit timestamps. The audit
+        also found two high-severity bugs in the poll path — an archetype-ID mismatch that corrupted
+        filtered polls, and the negation blindness described above — both since fixed (the negation gate
+        now rejects negated questions). It additionally flagged that the population's party mix baked in
+        the raw CES panel's Democratic skew; the builder now rakes party targets to CES's own
+        <code>commonweight</code>, moving the D&minus;R margin from +13.6 to +1.9.
       </p>
 
       <h3>Why is belief drift bounded at ±0.15?</h3>
@@ -581,23 +691,41 @@ Max marginal gap: 2.2%
 
       <h3>How many topics does the engine actually cover?</h3>
       <p>
-        22 CES 2024 common-content columns, grouped by theme:
+        27 verified CES 2024 common-content columns, every mapping checked against the official codebook
+        and empirically cross-tabbed against party ID (<code>verify_ces_mappings.py</code>, 30/30 direction
+        checks). Grouped by theme:
       </p>
       <ul>
-        <li><strong>Approval</strong>: Trump job approval (CC24_312i), Congress approval (CC24_311a)</li>
-        <li><strong>Economy</strong>: economy retrospective (CC24_301), current economic conditions (CC24_302),
-            personal finances (CC24_303), minimum wage $15/hour (CC24_308a_2)</li>
-        <li><strong>Immigration</strong>: increase border patrol (CC24_300_1), grant legal status to DREAMers
-            (CC24_300_2), increase deportations (CC24_300_3), identify-and-deport (CC24_300_4)</li>
-        <li><strong>Healthcare</strong>: repeal ACA (CC24_326a), Medicare for All (CC24_326b), Medicaid
-            expansion (CC24_326c), drug importation from Canada (CC24_326d), employer mandate (CC24_326e),
-            individual mandate (CC24_326f)</li>
-        <li><strong>Environment</strong>: carbon tax (CC24_415c), renewable energy mandate (CC24_415d),
-            regulate CO2 as pollutant (CC24_308a_3)</li>
-        <li><strong>Fiscal</strong>: cut federal spending 5% (CC24_308a_1), raise taxes on income over
-            $400k (CC24_308a_4)</li>
-        <li><strong>Education</strong>: forgive student loan debt up to $50k (CC24_308a_5)</li>
+        <li><strong>Approval</strong>: Trump job approval (CC24_410 — a <em>documented proxy</em>: CES 2024
+            was fielded in November 2024 under Biden, so no direct Trump-approval item exists; each matched
+            respondent's actual 2024 presidential vote stands in for approval), Biden approval (CC24_312a,
+            historical), Congress approval (CC24_312b), Harris approval (CC24_312i, historical)</li>
+        <li><strong>Economy</strong>: economy retrospective (CC24_301), household income past year
+            (CC24_302), prices/inflation past year (CC24_303)</li>
+        <li><strong>Immigration</strong>: legal status for tax-paying immigrants (CC24_323a), increase
+            border patrol (CC24_323b), build a border wall (CC24_323c), pathway to citizenship for
+            Dreamers (CC24_323d)</li>
+        <li><strong>Healthcare</strong>: Medicaid work requirements (CC24_328c), repeal the ACA
+            (CC24_328d), expand Medicaid (CC24_328e)</li>
+        <li><strong>Environment</strong>: EPA regulate CO2 (CC24_326a), renewable energy mandate
+            (CC24_326b), increase fossil-fuel production (CC24_326d), halt new federal oil and gas leases
+            (CC24_326e)</li>
+        <li><strong>Guns</strong>: ban assault rifles (CC24_321a), easier concealed-carry permits
+            (CC24_321b), universal background checks (CC24_321c)</li>
+        <li><strong>Abortion</strong>: abortion as a matter of choice (CC24_324a), total abortion ban
+            (CC24_324c), expand abortion access (CC24_324d)</li>
+        <li><strong>Education</strong>: forgive up to $20,000 in student loan debt (CC24_323f —
+            misnumbered into the immigration grid in the released data; codebook-confirmed)</li>
+        <li><strong>Foreign policy</strong>: provide arms to Ukraine (CC24_308a_4), stay out of Ukraine
+            (CC24_308a_1) — both are multi-select "check all that apply" items, so the numbers are
+            <em>floors</em>, not direct support levels</li>
       </ul>
+      <p>
+        <strong>Not covered</strong> (the engine returns "not covered" honestly — these items simply do not
+        exist in CES 2024): Medicare for All, $15 minimum wage, raising taxes on income over $400k,
+        increasing deportations, a carbon tax, and tariffs. Earlier versions of this guide listed several
+        of these as covered; that was a column-mapping bug, fixed in the registry correction.
+      </p>
       <p>Any question whose keywords match one of these columns is eligible for a poll; all others are blocked.</p>
 
       <h3>What happens if the CES source file is missing?</h3>
@@ -608,6 +736,58 @@ Max marginal gap: 2.2%
         <code>data/raw/ces/ces_2024_common.csv</code> and restart the server.
       </p>
 
+      <!-- ================================================================ -->
+      <h2 id="polymarket">8. Walkthrough: Polymarket questions</h2>
+
+      <p>
+        The <strong>Polymarket</strong> tab puts the synthetic population side by side with real
+        prediction markets. Click <strong>Refresh Markets</strong> and it fetches the top ~20 open
+        markets by 24-hour volume from Polymarket's public Gamma API (no API key required). Each market
+        row shows the market's <strong>implied YES%</strong> (the current price of the Yes outcome),
+        its 24h volume, and a <strong>coverage badge</strong>: green means the population can answer the
+        market's question from real CES data; grey means no CES coverage. Coverage uses a stricter
+        keyword threshold than the regular poll matcher (a summed match score of at least 10), so a bare
+        mention of "trump" in an unrelated market does not count as coverage. The most recent fetch is
+        cached to <code>data/polymarket_cache.json</code> and served as a fallback when the Gamma API is
+        unreachable.
+      </p>
+      <p>
+        For any covered market, <strong>Ask population</strong> runs the synthetic poll (10 runs,
+        averaged to reduce sampling noise) and shows the population's yes / no / unsure split next to the
+        market's implied YES% with the delta between them. The CES column that actually answered the
+        question is named in the result, so you always know what was measured. There is also a free-form
+        box at the top for any market-style question — it goes through the same coverage check, the same
+        negation gate (rephrase "will X fail" / "do you oppose" questions affirmatively), and the same
+        averaged synthetic poll.
+      </p>
+
+      <div class="callout callout-warn">
+        <strong>What the numbers mean — read this before comparing.</strong> The population answers what
+        the public <em>supports or believes</em> — not what will <em>happen</em>. A "Will X win?" market
+        prices event probability: candidate quality, procedural rules, insider information, timing. The
+        synthetic population knows none of that; it offers a <em>public-opinion lens</em> on the same
+        question. The two numbers measure different things, and a gap between them is not automatically
+        an edge. The lens is most meaningful for culture/politics markets where public sentiment
+        <em>is</em> the question.
+      </div>
+
+      <h3>Best and worst uses</h3>
+      <ul>
+        <li><strong>Best:</strong> markets about public support, approval levels, or cultural acceptance —
+        "Will Trump's approval be above 45%?", markets keyed to abortion, guns, immigration, or healthcare
+        sentiment. These map directly onto what the population measures, and validation shows single-digit
+        error on exactly these identity-anchored questions.</li>
+        <li><strong>Worst:</strong> event outcomes ("Will the bill pass by July?"), deadlines, sports,
+        anything resolved by facts rather than opinion. The population has no model of events — only of
+        people.</li>
+      </ul>
+      <p>
+        Also keep the validation caveats from Section 7 in mind here: fast-moving sentiment levels
+        (e.g. border enforcement) lag reality because the CES baseline is frozen at November 2024, and
+        Ukraine items are multi-select floors. Direction and partisan ordering are reliable; exact levels
+        on fast-moving topics are not.
+      </p>
+
     </div><!-- /guide-body -->
   </main>
 </div><!-- /guide-page -->
@@ -615,7 +795,7 @@ Max marginal gap: 2.2%
 <script>
   window.CHAT_WIDGET_CONFIG = {
     appName: "Synthetic Population Engine — Guide",
-    systemPrompt: "You are a helpful assistant for the Synthetic Population Engine. The user is reading the guide page. Help them understand how the system works, how to run polls, how the news update cycle functions, and how calibration works.",
+    systemPrompt: "You are a helpful assistant for the Synthetic Population Engine. The user is reading the guide page. Help them understand how the system works, how to run polls, how the news update cycle functions, how calibration works, and how the Polymarket comparison tab works (it is a public-opinion lens on markets, not a price predictor). Questions must be phrased affirmatively — negated phrasing like 'do you oppose X' is rejected.",
     welcomeMessage: "Ask me anything about how the Synthetic Population Engine works.",
     position: "bottom-right",
   };
