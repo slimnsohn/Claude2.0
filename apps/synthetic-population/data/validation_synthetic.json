@@ -1,0 +1,202 @@
+{
+  "recorded_at": "2026-06-12T07:29:01.789782",
+  "protocol": "synthetic recorded BEFORE real numbers were looked up",
+  "results": [
+    {
+      "topic": "approval",
+      "question": "Do you approve of Trump's job performance?",
+      "ces_column": "CC24_312i",
+      "ces_name": "Trump job approval",
+      "synthetic": {
+        "no": 0.5373,
+        "unsure": 0.0511,
+        "yes": 0.4116
+      },
+      "runs": 10,
+      "archetype_count": 140,
+      "profile_count": 5000
+    },
+    {
+      "topic": "approval",
+      "question": "Do you approve of the way Congress is handling its job?",
+      "ces_column": "CC24_311a",
+      "ces_name": "Congress approval",
+      "synthetic": {
+        "no": 0.4273,
+        "unsure": 0.0822,
+        "yes": 0.4906
+      },
+      "runs": 10,
+      "archetype_count": 140,
+      "profile_count": 5000
+    },
+    {
+      "topic": "economy",
+      "question": "Is the economy getting better or worse?",
+      "ces_column": "CC24_301",
+      "ces_name": "Economy retrospective (better/worse than year ago)",
+      "synthetic": {
+        "no": 0.5281,
+        "unsure": 0.1856,
+        "yes": 0.2863
+      },
+      "runs": 10,
+      "archetype_count": 140,
+      "profile_count": 5000
+    },
+    {
+      "topic": "economy",
+      "question": "Are your personal finances better off than a year ago?",
+      "ces_column": "CC24_303",
+      "ces_name": "Personal finances (better/worse than year ago)",
+      "synthetic": {
+        "no": 0.0408,
+        "unsure": 0.077,
+        "yes": 0.8822
+      },
+      "runs": 10,
+      "archetype_count": 140,
+      "profile_count": 5000
+    },
+    {
+      "topic": "immigration",
+      "question": "Do you support increasing border patrol on the US-Mexico border?",
+      "ces_column": "CC24_300_1",
+      "ces_name": "Increase border patrol on US-Mexico border",
+      "synthetic": {
+        "no": 0.1822,
+        "unsure": 0.0,
+        "yes": 0.8178
+      },
+      "runs": 10,
+      "archetype_count": 140,
+      "profile_count": 5000
+    },
+    {
+      "topic": "immigration",
+      "question": "Do you support granting legal status to DREAMers brought to the US as children?",
+      "ces_column": "CC24_300_2",
+      "ces_name": "Grant legal status to DREAMers (brought to US as children)",
+      "synthetic": {
+        "no": 0.4316,
+        "unsure": 0.0,
+        "yes": 0.5684
+      },
+      "runs": 10,
+      "archetype_count": 140,
+      "profile_count": 5000
+    },
+    {
+      "topic": "immigration",
+      "question": "Do you support increasing deportation of undocumented immigrants?",
+      "ces_column": "CC24_300_3",
+      "ces_name": "Increase deportation of undocumented immigrants",
+      "synthetic": {
+        "no": 0.6541,
+        "unsure": 0.0,
+        "yes": 0.3459
+      },
+      "runs": 10,
+      "archetype_count": 140,
+      "profile_count": 5000
+    },
+    {
+      "topic": "healthcare",
+      "question": "Do you support repealing the Affordable Care Act?",
+      "ces_column": "CC24_326a",
+      "ces_name": "Repeal the Affordable Care Act (Obamacare)",
+      "synthetic": {
+        "no": 0.2979,
+        "unsure": 0.0,
+        "yes": 0.7021
+      },
+      "runs": 10,
+      "archetype_count": 140,
+      "profile_count": 5000
+    },
+    {
+      "topic": "healthcare",
+      "question": "Do you support Medicare for all?",
+      "ces_column": "CC24_326b",
+      "ces_name": "Medicare for All / government health insurance plan",
+      "synthetic": {
+        "no": 0.2856,
+        "unsure": 0.0,
+        "yes": 0.7144
+      },
+      "runs": 10,
+      "archetype_count": 140,
+      "profile_count": 5000
+    },
+    {
+      "topic": "climate",
+      "question": "Do you support a carbon tax on fossil fuels?",
+      "ces_column": "CC24_415c",
+      "ces_name": "Carbon tax on fossil fuels",
+      "synthetic": {
+        "no": 0.3671,
+        "unsure": 0.0836,
+        "yes": 0.5493
+      },
+      "runs": 10,
+      "archetype_count": 140,
+      "profile_count": 5000
+    },
+    {
+      "topic": "climate",
+      "question": "Do you support requiring renewable energy production?",
+      "ces_column": "CC24_415d",
+      "ces_name": "Require renewable energy production",
+      "synthetic": {
+        "no": 0.3592,
+        "unsure": 0.1195,
+        "yes": 0.5213
+      },
+      "runs": 10,
+      "archetype_count": 140,
+      "profile_count": 5000
+    },
+    {
+      "topic": "fiscal",
+      "question": "Do you support raising taxes on income over $400k?",
+      "ces_column": "CC24_308a_4",
+      "ces_name": "Raise taxes on income over $400k",
+      "synthetic": {
+        "no": 0.6435,
+        "unsure": 0.0,
+        "yes": 0.3565
+      },
+      "runs": 10,
+      "archetype_count": 140,
+      "profile_count": 5000
+    },
+    {
+      "topic": "economy",
+      "question": "Do you support raising the minimum wage to $15 per hour?",
+      "ces_column": "CC24_308a_2",
+      "ces_name": "Raise federal minimum wage to $15/hour",
+      "synthetic": {
+        "no": 0.4634,
+        "unsure": 0.0,
+        "yes": 0.5366
+      },
+      "runs": 10,
+      "archetype_count": 140,
+      "profile_count": 5000
+    },
+    {
+      "topic": "education",
+      "question": "Do you support forgiving student loan debt up to $50k?",
+      "ces_column": "CC24_308a_5",
+      "ces_name": "Forgive student loan debt up to $50k",
+      "synthetic": {
+        "no": 0.7446,
+        "unsure": 0.0,
+        "yes": 0.2554
+      },
+      "runs": 10,
+      "archetype_count": 140,
+      "profile_count": 5000
+    }
+  ]
+}
