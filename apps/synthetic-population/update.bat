@@ -4,7 +4,8 @@ echo Running population update cycle...
 python run_update_cycle.py
 if errorlevel 1 (
     echo Update cycle FAILED.
-    pause
+    rem Pause only in interactive sessions; Task Scheduler runs must not block
+    if defined SESSIONNAME pause
     exit /b 1
 )
 echo Done.
