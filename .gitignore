@@ -33,3 +33,7 @@ desktop.ini
 # Generated / runtime
 launch-error.log
 SECURITY_AUDIT.md
+
+# Tool session state
+.claire/
+.superpowers/
