@@ -1,10 +1,155 @@
 [
   {
-    "id": "WU-20260612012459-00",
-    "text": "Live Updates: Trump says \"settlement\" reached on Iran, signing could be as soon as this weekend - CBS News",
-    "description": "Live Updates: Trump says \"settlement\" reached on Iran, signing could be as soon as this weekend\u00a0\u00a0CBS NewsLive updates: Trump says US \u2018ended the war with Iran\u2019 but Tehran has yet to confirm a deal\u00a0\u00a0CNNTrump says Iran war deal close as Strait of Hormuz tensions linger\u00a0\u00a0ReutersTrump news at a glance: a",
+    "id": "WU-20260612084120-00",
+    "text": "Which billionaire said they learned a 'significant lesson' this week? The quiz knows",
+    "description": "This week, Knicks fans had a big win after a big loss; fans of inflation were delighted and World Cup fans went broke. How will quiz fans fare?",
     "date": "2026-06-12",
-    "created_at": "2026-06-12T01:24:59.825619",
+    "created_at": "2026-06-12T08:41:20.474558",
+    "topics": [
+      "economy"
+    ],
+    "direction": "neutral",
+    "direction_score": 0.0,
+    "salience": 0.5,
+    "framing": {
+      "right": 1.0,
+      "left": 1.0,
+      "mainstream": 1.0
+    },
+    "scoring_method": "keyword",
+    "shifts": {
+      "dem": 0.0,
+      "rep": 0.0,
+      "independent": 0.0
+    },
+    "active": true,
+    "source": "auto",
+    "feed": "NPR",
+    "cycle_id": "CY-20260612084120"
+  },
+  {
+    "id": "WU-20260612084120-01",
+    "text": "Referees at the World Cup have new rules to whistle during games",
+    "description": "FIFA has introduced several changes to the laws of soccer for the World Cup. These include efforts to eliminate time-wasting and to ensure potentially game-changing officiating mistakes are corrected.",
+    "date": "2026-06-12",
+    "created_at": "2026-06-12T08:41:20.474558",
+    "topics": [
+      "general"
+    ],
+    "direction": "neutral",
+    "direction_score": 0.0,
+    "salience": 0.5,
+    "framing": {
+      "right": 1.0,
+      "left": 1.0,
+      "mainstream": 1.0
+    },
+    "scoring_method": "keyword",
+    "shifts": {
+      "dem": 0.0,
+      "rep": 0.0,
+      "independent": 0.0
+    },
+    "active": true,
+    "source": "auto",
+    "feed": "NPR",
+    "cycle_id": "CY-20260612084120"
+  },
+  {
+    "id": "WU-20260612084120-02",
+    "text": "The Only Constant of the Iran War Is Trump Saying It\u2019s About to End - Rolling Stone",
+    "description": "The Only Constant of the Iran War Is Trump Saying It\u2019s About to End\u00a0\u00a0Rolling StoneLive updates: Interim US-Iran agreement appears to take shape\u00a0\u00a0CNNPresident Trump says Iran deal could be signed this weekend, but questions remain\u00a0\u00a0WBAL-TVU.S.-Iran peace memorandum could be signed on Sunday in Geneva",
+    "date": "2026-06-12",
+    "created_at": "2026-06-12T08:41:20.474558",
+    "topics": [
+      "foreign_policy",
+      "trump_approval"
+    ],
+    "direction": "positive",
+    "direction_score": 0.5,
+    "salience": 0.5,
+    "framing": {
+      "right": 1.0,
+      "left": 1.0,
+      "mainstream": 1.0
+    },
+    "scoring_method": "keyword",
+    "shifts": {
+      "dem": -0.01,
+      "rep": 0.02,
+      "independent": 0.0
+    },
+    "active": true,
+    "source": "auto",
+    "feed": "Google News",
+    "cycle_id": "CY-20260612084120"
+  },
+  {
+    "id": "WU-20260612084120-03",
+    "text": "Trump's DOJ can't get names and medical files of trans youth in California, for now",
+    "description": "Trump's Department of Justice is seeking patient files that include the names of young people who have been treated in transgender clinics, as well as hospital staff who have provided care.",
+    "date": "2026-06-12",
+    "created_at": "2026-06-12T08:41:20.474558",
+    "topics": [
+      "climate",
+      "healthcare",
+      "immigration",
+      "social",
+      "trump_approval"
+    ],
+    "direction": "neutral",
+    "direction_score": 0.0,
+    "salience": 0.5,
+    "framing": {
+      "right": 1.0,
+      "left": 1.0,
+      "mainstream": 1.0
+    },
+    "scoring_method": "keyword",
+    "shifts": {
+      "dem": 0.0,
+      "rep": 0.0,
+      "independent": 0.0
+    },
+    "active": true,
+    "source": "auto",
+    "feed": "NPR",
+    "cycle_id": "CY-20260612084120"
+  },
+  {
+    "id": "WU-20260612084120-04",
+    "text": "Kennedy Center board seeks pause of ruling ordering removal of Trump's name - NPR",
+    "description": "Kennedy Center board seeks pause of ruling ordering removal of Trump's name\u00a0\u00a0NPRKennedy Center Appeals Order to Remove Trump\u2019s Name\u00a0\u00a0The New York TimesThis Live Stream Will Let You Watch Trump\u2019s Name Come Off the Kennedy Center\u00a0\u00a0WashingtonianKennedy Center board to appeal judge's order to remove Tru",
+    "date": "2026-06-12",
+    "created_at": "2026-06-12T08:41:20.474558",
+    "topics": [
+      "trump_approval"
+    ],
+    "direction": "neutral",
+    "direction_score": 0.0,
+    "salience": 0.5,
+    "framing": {
+      "right": 1.0,
+      "left": 1.0,
+      "mainstream": 1.0
+    },
+    "scoring_method": "keyword",
+    "shifts": {
+      "dem": 0.0,
+      "rep": 0.0,
+      "independent": 0.0
+    },
+    "active": true,
+    "source": "auto",
+    "feed": "Google News",
+    "cycle_id": "CY-20260612084120"
+  },
+  {
+    "id": "WU-20260612084120-05",
+    "text": "Trump claims Iran deal reached, Tehran says no \"final decision\" - Axios",
+    "description": "Trump claims Iran deal reached, Tehran says no \"final decision\"\u00a0\u00a0AxiosTrump claims breakthrough in Iran deal talks as he calls off planned strikes\u00a0\u00a0Fox NewsTrump calls off latest threats to strike Iran, citing a breakthrough in talks to end the war\u00a0\u00a0AP NewsIran war live: Trump claims peace deal \u2018app",
+    "date": "2026-06-12",
+    "created_at": "2026-06-12T08:41:20.474558",
     "topics": [
       "foreign_policy",
       "trump_approval"
@@ -26,74 +171,15 @@
     "active": true,
     "source": "auto",
     "feed": "Google News",
-    "cycle_id": "CY-20260612012459"
+    "cycle_id": "CY-20260612084120"
   },
   {
-    "id": "WU-20260612012459-01",
-    "text": "Ousted South Korean President Yoon given prison term for drone flights over Pyongyang",
-    "description": "South Korea's ousted President Yoon Suk Yeol and his former defense minister were sentenced to 30 years in prison Friday in a case alleging Yoon ordered drone flights over Pyongyang in 2024 to heighten tensions with North Korea and justify declaring martial law at home.",
+    "id": "WU-20260612084120-06",
+    "text": "How small-business loans got caught in Trump's immigration crackdown",
+    "description": "For decades, immigrants who are legal permanent residents in the U.S. could get loans through the Small Business Administration, a core pillar of small-business lending. Not anymore.",
     "date": "2026-06-12",
-    "created_at": "2026-06-12T01:24:59.825619",
+    "created_at": "2026-06-12T08:41:20.474558",
     "topics": [
-      "crime",
-      "foreign_policy",
-      "trump_approval"
-    ],
-    "direction": "negative",
-    "direction_score": -0.5,
-    "salience": 0.5,
-    "framing": {
-      "right": 1.0,
-      "left": 1.0,
-      "mainstream": 1.0
-    },
-    "scoring_method": "keyword",
-    "shifts": {
-      "dem": 0.015,
-      "rep": 0.0,
-      "independent": 0.0
-    },
-    "active": true,
-    "source": "auto",
-    "feed": "NPR",
-    "cycle_id": "CY-20260612012459"
-  },
-  {
-    "id": "WU-20260612012459-02",
-    "text": "Do not use my music, Ariana Grande tells White House",
-    "description": "Grande called a White House video using her song Bye \"heinous nonsense\", joining multiple artists demanding Trump's team not use their music.",
-    "date": "2026-06-12",
-    "created_at": "2026-06-12T01:24:59.825619",
-    "topics": [
-      "trump_approval"
-    ],
-    "direction": "neutral",
-    "direction_score": 0.0,
-    "salience": 0.5,
-    "framing": {
-      "right": 1.0,
-      "left": 1.0,
-      "mainstream": 1.0
-    },
-    "scoring_method": "keyword",
-    "shifts": {
-      "dem": 0.0,
-      "rep": 0.0,
-      "independent": 0.0
-    },
-    "active": true,
-    "source": "auto",
-    "feed": "BBC",
-    "cycle_id": "CY-20260612012459"
-  },
-  {
-    "id": "WU-20260612012459-03",
-    "text": "President Trump is taking aim at forest and wildfire research just as the West is poised to burn",
-    "description": "President Trump is trying to downsize the U.S Forest Service and eliminate wildfire and smoke research as the American West is facing a potentially epic summer fire season.",
-    "date": "2026-06-12",
-    "created_at": "2026-06-12T01:24:59.825619",
-    "topics": [
-      "climate",
       "economy",
       "immigration",
       "trump_approval"
@@ -115,104 +201,19 @@
     "active": true,
     "source": "auto",
     "feed": "NPR",
-    "cycle_id": "CY-20260612012459"
+    "cycle_id": "CY-20260612084120"
   },
   {
-    "id": "WU-20260612012459-04",
-    "text": "Kennedy Center board seeks pause of ruling ordering removal of Trump's name",
-    "description": "President Trump's board at the Kennedy Center is mounting a last-minute effort to keep his name on the facade of the performing arts facility before a court-ordered deadline to remove it by Friday.",
+    "id": "WU-20260612084120-07",
+    "text": "Austin Metcalf's family faces death threats after Karmelo Anthony's murder conviction and more top headlines - Fox News",
+    "description": "Austin Metcalf's family faces death threats after Karmelo Anthony's murder conviction and more top headlines\u00a0\u00a0Fox NewsAustin Metcalf's family hit with death threats as Karmelo Anthony supporters face violence allegations\u00a0\u00a0Fox News\"People want us dead.\" Karmelo Anthony's family and Austin Metcalf's f",
     "date": "2026-06-12",
-    "created_at": "2026-06-12T01:24:59.825619",
-    "topics": [
-      "trump_approval"
-    ],
-    "direction": "neutral",
-    "direction_score": 0.0,
-    "salience": 0.5,
-    "framing": {
-      "right": 1.0,
-      "left": 1.0,
-      "mainstream": 1.0
-    },
-    "scoring_method": "keyword",
-    "shifts": {
-      "dem": 0.0,
-      "rep": 0.0,
-      "independent": 0.0
-    },
-    "active": true,
-    "source": "auto",
-    "feed": "NPR",
-    "cycle_id": "CY-20260612012459"
-  },
-  {
-    "id": "WU-20260612012459-05",
-    "text": "Vance Boelter pleads guilty, agrees to serve life in prison for his attacks on Minnesota lawmakers - Star Tribune",
-    "description": "Vance Boelter pleads guilty, agrees to serve life in prison for his attacks on Minnesota lawmakers\u00a0\u00a0Star TribuneBoelter pleads guilty in lawmaker attacks, agrees to two life sentences\u00a0\u00a0MPR NewsFeds won't seek death penalty in plea deal with man accused of killing top Minnesota Democrat\u00a0\u00a0AP NewsMan p",
-    "date": "2026-06-12",
-    "created_at": "2026-06-12T01:24:59.825619",
+    "created_at": "2026-06-12T08:41:20.474558",
     "topics": [
       "crime"
     ],
-    "direction": "neutral",
-    "direction_score": 0.0,
-    "salience": 0.5,
-    "framing": {
-      "right": 1.0,
-      "left": 1.0,
-      "mainstream": 1.0
-    },
-    "scoring_method": "keyword",
-    "shifts": {
-      "dem": 0.0,
-      "rep": 0.0,
-      "independent": 0.0
-    },
-    "active": true,
-    "source": "auto",
-    "feed": "Google News",
-    "cycle_id": "CY-20260612012459"
-  },
-  {
-    "id": "WU-20260612012459-06",
-    "text": "Trump now says a peace deal will be announced 'soon,' cancels further strikes",
-    "description": "President Trump had previously been amping up his rhetoric against Iran.",
-    "date": "2026-06-12",
-    "created_at": "2026-06-12T01:24:59.825619",
-    "topics": [
-      "foreign_policy",
-      "trump_approval"
-    ],
-    "direction": "positive",
-    "direction_score": 0.5,
-    "salience": 0.5,
-    "framing": {
-      "right": 1.0,
-      "left": 1.0,
-      "mainstream": 1.0
-    },
-    "scoring_method": "keyword",
-    "shifts": {
-      "dem": -0.01,
-      "rep": 0.02,
-      "independent": 0.0
-    },
-    "active": true,
-    "source": "auto",
-    "feed": "NPR",
-    "cycle_id": "CY-20260612012459"
-  },
-  {
-    "id": "WU-20260612012459-07",
-    "text": "White House response to hantavirus and Ebola contrasts with COVID criticisms",
-    "description": "The administration imposed mandatory quarantine orders on two passengers from the cruise ship hit by hantavirus and is blocking Americans who catch Ebola from returning home for treatment.",
-    "date": "2026-06-12",
-    "created_at": "2026-06-12T01:24:59.825619",
-    "topics": [
-      "trump_approval"
-    ],
-    "direction": "positive",
-    "direction_score": 0.5,
+    "direction": "negative",
+    "direction_score": -0.5,
     "salience": 0.5,
     "framing": {
       "right": 1.0,
@@ -227,7 +228,7 @@
     },
     "active": true,
     "source": "auto",
-    "feed": "NPR",
-    "cycle_id": "CY-20260612012459"
+    "feed": "Google News",
+    "cycle_id": "CY-20260612084120"
   }
 ]
