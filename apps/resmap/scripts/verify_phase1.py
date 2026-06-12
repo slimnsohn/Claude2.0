@@ -15,6 +15,8 @@ from ingest.core import MarketRecord, ingest
 
 
 def main() -> int:
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     load_dotenv()
     dsn = os.environ.get("TEST_DATABASE_URL")
     if not dsn:
