@@ -12,9 +12,14 @@ from pmtrader.core.models import Market, Side
 
 
 class CostModel:
-    def __init__(self, half_spread: float = 0.01, slippage_bps: float = 50.0):
+    def __init__(self, half_spread: float = 0.01, slippage_bps: float = 50.0,
+                 book_depth: float = 50.0):
         self.half_spread = half_spread
         self.slippage_bps = slippage_bps
+        # displayed-depth cap per side: research on Polymarket arb found 76.9%
+        # of opportunities executable for only ~15 shares; sampled mids carry
+        # no depth, so cap synthetic books rather than assume infinity
+        self.book_depth = book_depth
 
     def synthetic_quote(self, mid: float, side: Side) -> float:
         """Price a taker actually gets when the sampled mid is `mid`."""

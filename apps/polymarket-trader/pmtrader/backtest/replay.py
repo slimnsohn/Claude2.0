@@ -2,9 +2,10 @@
 
 Honesty limits (by design, documented in the spec):
 - Sampled mids, not real books -> books are synthesized with a conservative
-  assumed half-spread and effectively infinite depth. Microstructure
-  strategies (S2) cannot be judged here; this harness is for S1/S3/S4-class
-  logic and produces *pessimistic-cost* results.
+  assumed half-spread and finite assumed depth (CostModel.book_depth,
+  default 50 shares/side). Microstructure strategies (S2) cannot be judged
+  here; this harness is for S1/S3/S4-class logic and produces
+  *pessimistic-cost* results.
 - Maker fills require a later tick strictly through the order price
   (touch != fill). Maker rebates are ignored.
 - Settlement uses the stored resolution; if its timestamp predates the last
@@ -20,8 +21,6 @@ from pmtrader.backtest.stats import bootstrap_ci, max_drawdown
 from pmtrader.core.models import Intent, Level, Market, OrderBook, Position, Side
 from pmtrader.datalayer.store import Store
 from pmtrader.strategies.base import Strategy, StrategyContext
-
-DEEP = 1_000_000.0  # synthetic book depth
 
 
 @dataclass
@@ -121,8 +120,8 @@ class ReplayEngine:
         bid = max(0.001, mid - self.cost.half_spread)
         ask = min(0.999, mid + self.cost.half_spread)
         return OrderBook(token_id=token_id, ts=ts,
-                         bids=[Level(price=bid, size=DEEP)],
-                         asks=[Level(price=ask, size=DEEP)])
+                         bids=[Level(price=bid, size=self.cost.book_depth)],
+                         asks=[Level(price=ask, size=self.cost.book_depth)])
 
     def _positions(self) -> dict[str, Position]:
         agg: dict[str, list[Lot]] = defaultdict(list)
@@ -149,22 +148,24 @@ class ReplayEngine:
         if intent.side == Side.SELL and intent.price > price:
             self.resting.append(RestingOrder(intent, ts))
             return
-        cash_delta, _fee = self.cost.taker_fill_cost(market, intent.side, price, intent.size)
-        self._apply_fill(market, intent, price, cash_delta, ts)
+        size = min(intent.size, self.cost.book_depth)
+        cash_delta, _fee = self.cost.taker_fill_cost(market, intent.side, price, size)
+        self._apply_fill(market, intent, price, cash_delta, ts, size)
 
     def _fill_maker(self, market: Market, intent: Intent, ts: float) -> None:
+        size = min(intent.size, self.cost.book_depth)
         cash_delta, _fee = self.cost.maker_fill_cost(market, intent.side,
-                                                     intent.price, intent.size)
-        self._apply_fill(market, intent, intent.price, cash_delta, ts)
+                                                     intent.price, size)
+        self._apply_fill(market, intent, intent.price, cash_delta, ts, size)
 
     def _apply_fill(self, market: Market, intent: Intent, price: float,
-                    cash_delta: float, ts: float) -> None:
+                    cash_delta: float, ts: float, size: float) -> None:
         self.cash += cash_delta
         if intent.side == Side.BUY:
-            self.lots.append(Lot(intent.strategy, intent.token_id, intent.size,
+            self.lots.append(Lot(intent.strategy, intent.token_id, size,
                                  -cash_delta, ts))
         else:
-            self._close_lots(intent.strategy, intent.token_id, intent.size,
+            self._close_lots(intent.strategy, intent.token_id, size,
                              cash_delta, ts)
 
     def _close_lots(self, strategy: str, token_id: str, size: float,

@@ -82,6 +82,9 @@ def store(tmp_path):
 
 
 def run(store, strategy, **cost_kw):
+    # deep book by default so the hand-computed arithmetic below is exact;
+    # TestDepthCap exercises the (default, conservative) finite depth
+    cost_kw.setdefault("book_depth", 1_000_000.0)
     cost = CostModel(half_spread=0.01, slippage_bps=50, **cost_kw)
     engine = ReplayEngine(store, [strategy], cost, start_ts=0.0, end_ts=10_000.0,
                           starting_cash=1000.0)
@@ -148,6 +151,45 @@ class TestMakerFills:
         s.set_resolution(m.condition_id, m.token_id_yes, 4000.0)
         result = run(s, RestingBid(0.44))  # price equals bid, never strictly below
         assert result.per_trade_pnl == []
+        s.close()
+
+
+class TestDepthCap:
+    def test_default_depth_is_conservative(self):
+        assert CostModel().book_depth == 50.0
+
+    def test_synthetic_book_depth_is_finite(self):
+        engine = ReplayEngine.__new__(ReplayEngine)
+        engine.cost = CostModel(book_depth=25.0)
+        book = ReplayEngine._book(engine, "tok", 0.5, ts=1.0)
+        assert book.best_ask_size == 25.0
+        assert book.best_bid_size == 25.0
+
+    def test_taker_fill_capped_at_book_depth(self, tmp_path):
+        s = Store(tmp_path / "bt5.db")
+        engine = ReplayEngine(s, [], CostModel(half_spread=0.0,
+                                               slippage_bps=0.0,
+                                               book_depth=10.0))
+        market = make_market()
+        intent = Intent(strategy="s", token_id=market.token_id_yes,
+                        side=Side.BUY, price=0.99, size=100.0,
+                        expected_edge=0.01, reasoning="t")
+        engine._fill_taker(market, intent, mid=0.5, ts=1.0)
+        assert engine.lots and engine.lots[0].size == 10.0
+        s.close()
+
+    def test_maker_fill_capped_at_book_depth(self, tmp_path):
+        s = Store(tmp_path / "bt6.db")
+        m = make_market(schedule=None)
+        s.upsert_market(m)
+        s.insert_price_history(m.token_id_yes,
+                               [(1000.0, 0.50), (2000.0, 0.43), (3000.0, 0.50)])
+        s.insert_price_history(m.token_id_no,
+                               [(1000.0, 0.50), (2000.0, 0.57), (3000.0, 0.50)])
+        s.set_resolution(m.condition_id, m.token_id_yes, 4000.0)
+        result = run(s, RestingBid(0.44), book_depth=30.0)
+        # resting 100 filled for only 30 shares at 0.44; resolves to $1
+        assert result.per_trade_pnl == [pytest.approx(30 - 30 * 0.44)]
         s.close()
 
 
