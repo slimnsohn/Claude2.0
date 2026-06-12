@@ -1,0 +1,23 @@
+# Core
+psycopg[binary]>=3.2   # 3.2+ ships Python 3.13 wheels
+python-dotenv>=1.0
+requests>=2.31
+
+# Kalshi adapter (RSA-PSS request signing)
+cryptography>=42.0
+
+# LLM extraction uses the `claude -p` CLI (Max plan, no per-call cost) — no SDK needed.
+
+# Dev
+pytest>=8.0
+
+# ── Phase 4–5 (API surface + export) — install when those phases start ──
+# fastapi>=0.110
+# uvicorn>=0.29
+# pyarrow>=15
+# duckdb>=0.10
+# sqlglot>=23.0
+
+# Candidate matching (Phase 3) — pick at build time
+# sentence-transformers>=2.6   # local embeddings
+# rapidfuzz>=3.6               # proven in the old mismatch detector

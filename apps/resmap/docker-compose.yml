@@ -1,0 +1,14 @@
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: resmap
+      POSTGRES_PASSWORD: resmap
+      POSTGRES_DB: resmap
+    ports:
+      - "5432:5432"
+    volumes:
+      - resmap_pgdata:/var/lib/postgresql/data
+      - ./db/schema.sql:/docker-entrypoint-initdb.d/schema.sql:ro
+volumes:
+  resmap_pgdata:
