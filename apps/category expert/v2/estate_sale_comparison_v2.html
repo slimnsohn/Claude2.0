@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Estate Sale Workflows — Side by Side (v2)</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #fafaf7;
+    --surface: #ffffff;
+    --ink: #1a1a1a;
+    --ink-soft: #5a5a5a;
+    --ink-faint: #8a8a8a;
+    --rule: #e8e6e0;
+    --rule-strong: #d4d2cc;
+
+    --coral-bg: #fef0ea;
+    --coral-border: #e8a48a;
+    --coral-ink: #8a3318;
+
+    --teal-bg: #e8f4f0;
+    --teal-border: #6fb89e;
+    --teal-ink: #1a5a44;
+
+    --purple-bg: #f0ecf7;
+    --purple-border: #a08fc4;
+    --purple-ink: #4a3878;
+
+    --gray-bg: #f0efeb;
+    --gray-border: #b8b6ae;
+    --gray-ink: #4a4a47;
+
+    --amber-bg: #fbf2dc;
+    --amber-ink: #7a5a14;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Inter', -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .container {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 48px 32px 80px;
+  }
+
+  /* Header */
+  header { margin-bottom: 40px; }
+  .eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin-bottom: 16px;
+  }
+  h1 {
+    font-size: clamp(28px, 4vw, 44px);
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+    margin-bottom: 16px;
+  }
+  .lede {
+    font-size: 17px;
+    color: var(--ink-soft);
+    max-width: 720px;
+    line-height: 1.55;
+  }
+
+  /* Phase strip */
+  .phases {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 32px;
+  }
+  .phase-pill {
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: 8px;
+    padding: 12px 14px;
+    text-align: center;
+  }
+  .phase-pill .pn {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--ink-faint);
+    letter-spacing: 0.1em;
+    margin-bottom: 4px;
+  }
+  .phase-pill .pt {
+    font-size: 13px;
+    font-weight: 600;
+  }
+
+  /* Legend */
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 18px;
+    padding: 14px 18px;
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: 10px;
+    margin-bottom: 32px;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--ink-soft);
+  }
+  .swatch {
+    width: 14px;
+    height: 14px;
+    border-radius: 3px;
+    border: 1px solid;
+  }
+  .sw-coral { background: var(--coral-bg); border-color: var(--coral-border); }
+  .sw-teal { background: var(--teal-bg); border-color: var(--teal-border); }
+  .sw-purple { background: var(--purple-bg); border-color: var(--purple-border); }
+  .sw-gray { background: var(--gray-bg); border-color: var(--gray-border); }
+
+  /* Comparison Grid */
+  .compare {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    margin-bottom: 48px;
+  }
+
+  .column {
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: 14px;
+    overflow: hidden;
+  }
+
+  .column-header {
+    padding: 18px 22px;
+    border-bottom: 1px solid var(--rule);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .column-header h2 {
+    font-size: 19px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+  .col-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .badge {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-weight: 500;
+  }
+  .badge-current { background: var(--coral-bg); color: var(--coral-ink); }
+  .badge-ideal { background: var(--teal-bg); color: var(--teal-ink); }
+  .total-time {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--ink-faint);
+  }
+
+  .flow {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Phase divider */
+  .phase-divider {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 18px 0 12px;
+    padding-top: 14px;
+    border-top: 1px dashed var(--rule-strong);
+  }
+  .phase-divider:first-child {
+    border-top: none;
+    margin-top: 0;
+    padding-top: 0;
+  }
+  .phase-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    font-weight: 500;
+  }
+  .phase-time {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--coral-ink);
+    background: var(--coral-bg);
+    padding: 2px 8px;
+    border-radius: 8px;
+    margin-left: auto;
+  }
+  .phase-time.teal {
+    color: var(--teal-ink);
+    background: var(--teal-bg);
+  }
+  .phase-time.amber {
+    color: var(--amber-ink);
+    background: var(--amber-bg);
+  }
+
+  /* Steps */
+  .step {
+    padding: 12px 14px;
+    border-radius: 10px;
+    border: 1px solid;
+    position: relative;
+  }
+  .step + .step,
+  .connector + .step {
+    margin-top: 0;
+  }
+  .step-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    opacity: 0.7;
+    margin-bottom: 3px;
+  }
+  .step-title {
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.3;
+  }
+  .step-sub {
+    font-size: 12px;
+    margin-top: 4px;
+    opacity: 0.78;
+    line-height: 1.4;
+  }
+  .step-time {
+    display: inline-block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    margin-top: 6px;
+    padding: 2px 6px;
+    border-radius: 6px;
+    background: rgba(0,0,0,0.06);
+    opacity: 0.85;
+  }
+
+  .step-coral { background: var(--coral-bg); border-color: var(--coral-border); color: var(--coral-ink); }
+  .step-teal { background: var(--teal-bg); border-color: var(--teal-border); color: var(--teal-ink); }
+  .step-purple { background: var(--purple-bg); border-color: var(--purple-border); color: var(--purple-ink); }
+  .step-gray { background: var(--gray-bg); border-color: var(--gray-border); color: var(--gray-ink); }
+
+  .connector {
+    height: 14px;
+    width: 1.5px;
+    background: var(--rule-strong);
+    margin: 0 auto;
+    position: relative;
+  }
+  .connector::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 0;
+    border-left: 4px solid transparent;
+    border-right: 4px solid transparent;
+    border-top: 5px solid var(--rule-strong);
+  }
+
+  /* Branches */
+  .branch-down {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    position: relative;
+    margin-top: 18px;
+  }
+  .branch-down.three {
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+  .branch-down::before {
+    content: '';
+    position: absolute;
+    top: -10px;
+    left: 25%;
+    right: 25%;
+    height: 1.5px;
+    background: var(--rule-strong);
+  }
+  .branch-down.three::before {
+    left: 16.66%;
+    right: 16.66%;
+  }
+  .branch-arrow {
+    position: relative;
+  }
+  .branch-arrow::before {
+    content: '';
+    position: absolute;
+    top: -10px;
+    left: 50%;
+    width: 1.5px;
+    height: 10px;
+    background: var(--rule-strong);
+    transform: translateX(-50%);
+  }
+
+  /* Time honesty callout */
+  .honesty {
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-left: 4px solid var(--amber-ink);
+    border-radius: 10px;
+    padding: 22px 26px;
+    margin-bottom: 48px;
+  }
+  .honesty-eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--amber-ink);
+    margin-bottom: 10px;
+  }
+  .honesty h3 {
+    font-size: 19px;
+    font-weight: 600;
+    margin-bottom: 10px;
+    letter-spacing: -0.01em;
+  }
+  .honesty p {
+    font-size: 14.5px;
+    color: var(--ink-soft);
+    line-height: 1.6;
+    max-width: 780px;
+  }
+  .honesty p + p { margin-top: 8px; }
+
+  /* Time comparison table */
+  .time-compare {
+    background: var(--ink);
+    color: #fafaf7;
+    border-radius: 14px;
+    padding: 28px 32px;
+    margin-bottom: 48px;
+  }
+  .time-compare-eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    opacity: 0.55;
+    margin-bottom: 10px;
+  }
+  .time-compare h3 {
+    font-size: 22px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    margin-bottom: 20px;
+  }
+  .tc-grid {
+    display: grid;
+    grid-template-columns: 1.5fr 1fr 1fr 1fr;
+    gap: 1px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .tc-cell {
+    background: var(--ink);
+    padding: 12px 14px;
+    font-size: 13px;
+  }
+  .tc-head {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    opacity: 0.6;
+    font-weight: 500;
+  }
+  .tc-row-label {
+    font-weight: 500;
+    color: #fafaf7;
+  }
+  .tc-delta-up { color: #f4a672; }
+  .tc-delta-down { color: #7bc9a3; }
+  .tc-mono {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+  }
+
+  @media (max-width: 760px) {
+    .container { padding: 32px 16px 60px; }
+    .compare { grid-template-columns: 1fr; gap: 20px; }
+    .legend { gap: 12px; }
+    .phases { grid-template-columns: repeat(2, 1fr); }
+    .branch-down.three { grid-template-columns: 1fr; gap: 8px; }
+    .branch-down.three::before { display: none; }
+    .branch-arrow::before { display: none; }
+    .tc-grid { grid-template-columns: 1fr 1fr; }
+    .tc-cell:nth-child(1), .tc-cell:nth-child(2),
+    .tc-cell:nth-child(3), .tc-cell:nth-child(4) {
+      font-weight: 600;
+    }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <header>
+    <div class="eyebrow">Workflow Comparison · V2 · Time-honest</div>
+    <h1>Estate sale operations: current vs. ideal</h1>
+    <p class="lede">Each workflow now broken into four explicit phases with realistic time costs. The ideal model is <em>slower upfront</em> and <em>faster + more profitable downstream</em> — not faster everywhere.</p>
+  </header>
+
+  <div class="phases">
+    <div class="phase-pill"><div class="pn">Phase 1</div><div class="pt">Estimate</div></div>
+    <div class="phase-pill"><div class="pn">Phase 2</div><div class="pt">Intake &amp; catalog</div></div>
+    <div class="phase-pill"><div class="pn">Phase 3</div><div class="pt">Stage &amp; sell</div></div>
+    <div class="phase-pill"><div class="pn">Phase 4</div><div class="pt">Close &amp; report</div></div>
+  </div>
+
+  <div class="legend">
+    <div class="legend-item"><span class="swatch sw-coral"></span>Human expertise required</div>
+    <div class="legend-item"><span class="swatch sw-teal"></span>Automated / scalable</div>
+    <div class="legend-item"><span class="swatch sw-purple"></span>Data layer</div>
+    <div class="legend-item"><span class="swatch sw-gray"></span>Generic flow / handoff</div>
+  </div>
+
+  <div class="compare">
+
+    <!-- CURRENT COLUMN -->
+    <div class="column">
+      <div class="column-header">
+        <h2>Current workflow</h2>
+        <div class="col-meta">
+          <span class="total-time">~5–8 days</span>
+          <span class="badge badge-current">As practiced</span>
+        </div>
+      </div>
+      <div class="flow">
+
+        <!-- PHASE 1: ESTIMATE -->
+        <div class="phase-divider">
+          <span class="phase-label">Phase 1 · Estimate</span>
+          <span class="phase-time">60–90 min</span>
+        </div>
+
+        <div class="step step-coral">
+          <div class="step-label">Lead</div>
+          <div class="step-title">Walkthrough &amp; verbal estimate</div>
+          <div class="step-sub">Operator pattern-matches: rough total in their head</div>
+          <span class="step-time">~75 min</span>
+        </div>
+
+        <!-- PHASE 2: INTAKE -->
+        <div class="phase-divider">
+          <span class="phase-label">Phase 2 · Intake &amp; catalog</span>
+          <span class="phase-time">2–4 days</span>
+        </div>
+
+        <div class="step step-coral">
+          <div class="step-label">Triage</div>
+          <div class="step-title">Sort in place: trash / donate / sell / hold</div>
+          <div class="step-sub">Crew moves through every room making judgment calls</div>
+          <span class="step-time">1–2 days</span>
+        </div>
+
+        <div class="connector"></div>
+
+        <div class="branch-down">
+          <div class="step step-coral branch-arrow">
+            <div class="step-label">Bulk</div>
+            <div class="step-title">Bulk-price 80% of items</div>
+            <div class="step-sub">Category signs, not item-level</div>
+            <span class="step-time">~1 day</span>
+          </div>
+          <div class="step step-coral branch-arrow">
+            <div class="step-label">Research</div>
+            <div class="step-title">Research high-value items</div>
+            <div class="step-sub">One person Googling comps</div>
+            <span class="step-time">~1 day</span>
+          </div>
+        </div>
+
+        <!-- PHASE 3: SALE -->
+        <div class="phase-divider">
+          <span class="phase-label">Phase 3 · Stage &amp; sell</span>
+          <span class="phase-time">3 days + setup</span>
+        </div>
+
+        <div class="step step-gray">
+          <div class="step-label">Stage</div>
+          <div class="step-title">Arrange house as store</div>
+          <span class="step-time">~1 day</span>
+        </div>
+
+        <div class="connector"></div>
+
+        <div class="step step-coral">
+          <div class="step-label">Sale</div>
+          <div class="step-title">3-day sale, verbal markdowns</div>
+          <div class="step-sub">Full, 25% off, 50% off — gut calls</div>
+          <span class="step-time">3 days</span>
+        </div>
+
+        <!-- PHASE 4: CLOSE -->
+        <div class="phase-divider">
+          <span class="phase-label">Phase 4 · Close &amp; report</span>
+          <span class="phase-time">~1 day</span>
+        </div>
+
+        <div class="step step-coral">
+          <div class="step-label">Close</div>
+          <div class="step-title">Leftovers: buyout or dump</div>
+          <div class="step-sub">Cash tally, paper report to owner</div>
+          <span class="step-time">~1 day</span>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- IDEAL COLUMN -->
+    <div class="column">
+      <div class="column-header">
+        <h2>Ideal workflow</h2>
+        <div class="col-meta">
+          <span class="total-time">~6–9 days</span>
+          <span class="badge badge-ideal">Modularized</span>
+        </div>
+      </div>
+      <div class="flow">
+
+        <!-- PHASE 1: ESTIMATE -->
+        <div class="phase-divider">
+          <span class="phase-label">Phase 1 · Estimate</span>
+          <span class="phase-time teal">75–120 min</span>
+        </div>
+
+        <div class="step step-teal">
+          <div class="step-label">Lead</div>
+          <div class="step-title">Walkthrough + room-level photo capture</div>
+          <div class="step-sub">30–50 overview shots, not item-level. Pattern-recognition flags categories &amp; density.</div>
+          <span class="step-time">~90 min</span>
+        </div>
+
+        <!-- PHASE 2: INTAKE — THE DIFFERENCE LIVES HERE -->
+        <div class="phase-divider">
+          <span class="phase-label">Phase 2 · Intake &amp; catalog</span>
+          <span class="phase-time amber">3–5 days (slower)</span>
+        </div>
+
+        <div class="step step-coral">
+          <div class="step-label">Triage</div>
+          <div class="step-title">Sort in place: trash / donate / sell / hold</div>
+          <div class="step-sub">Same human judgment, same time</div>
+          <span class="step-time">1–2 days</span>
+        </div>
+
+        <div class="connector"></div>
+
+        <div class="step step-teal">
+          <div class="step-label">Identity</div>
+          <div class="step-title">SKU sticker on every sellable item</div>
+          <div class="step-sub">Lower-skilled labor, ~3-5 sec per item. The foundational move.</div>
+          <span class="step-time">+0.5–1 day</span>
+        </div>
+
+        <div class="connector"></div>
+
+        <div class="branch-down three">
+          <div class="step step-teal branch-arrow">
+            <div class="step-label">Scan</div>
+            <div class="step-title">Auto-catalog</div>
+            <div class="step-sub">ISBN/barcode → API comps. Per-item photo only if needed.</div>
+            <span class="step-time">~0.5 day</span>
+          </div>
+          <div class="step step-teal branch-arrow">
+            <div class="step-label">Template</div>
+            <div class="step-title">Template pricing</div>
+            <div class="step-sub">Category rules — no per-item research</div>
+            <span class="step-time">hours</span>
+          </div>
+          <div class="step step-coral branch-arrow">
+            <div class="step-label">Expert</div>
+            <div class="step-title">Specialist queue</div>
+            <div class="step-sub">Only flagged items go here</div>
+            <span class="step-time">~1 day</span>
+          </div>
+        </div>
+
+        <div class="connector"></div>
+
+        <div class="step step-purple">
+          <div class="step-label">Database</div>
+          <div class="step-title">Central item database populated</div>
+          <div class="step-sub">SKU · photo · price · condition · location — ready to drive the sale</div>
+        </div>
+
+        <!-- PHASE 3: SALE -->
+        <div class="phase-divider">
+          <span class="phase-label">Phase 3 · Stage &amp; sell</span>
+          <span class="phase-time teal">3 days + setup</span>
+        </div>
+
+        <div class="step step-gray">
+          <div class="step-label">Stage</div>
+          <div class="step-title">Arrange house as store</div>
+          <span class="step-time">~1 day</span>
+        </div>
+
+        <div class="connector"></div>
+
+        <div class="step step-teal">
+          <div class="step-label">Sale</div>
+          <div class="step-title">POS sale, live inventory, auto-markdowns</div>
+          <div class="step-sub">Velocity rules trigger markdowns automatically</div>
+          <span class="step-time">3 days</span>
+        </div>
+
+        <!-- PHASE 4: CLOSE -->
+        <div class="phase-divider">
+          <span class="phase-label">Phase 4 · Close &amp; report</span>
+          <span class="phase-time teal">faster</span>
+        </div>
+
+        <div class="step step-teal">
+          <div class="step-label">Route</div>
+          <div class="step-title">Channel routing for leftovers</div>
+          <div class="step-sub">Floor, online, auction — decided per item from DB</div>
+          <span class="step-time">~0.5 day</span>
+        </div>
+
+        <div class="connector"></div>
+
+        <div class="step step-purple">
+          <div class="step-label">Learn</div>
+          <div class="step-title">Auto-report + sales data feeds learning loop</div>
+          <div class="step-sub">Item-level report to owner. Next sale's pricing improves.</div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+
+  <div class="honesty">
+    <div class="honesty-eyebrow">Time honesty</div>
+    <h3>The ideal model is slower upfront, not faster</h3>
+    <p>An experienced operator walks a 2,000 sq ft home in 60–90 minutes today — they're pattern-matching, not cataloging. Photographing every item at 15 seconds per photo on a 3,000-item estate would be 12+ hours of photography alone. That's not the goal.</p>
+    <p>The ideal flow only does <strong>room-level overview photography</strong> at the estimate stage. <strong>Item-level photography happens later</strong> at intake, and only for items that warrant it — high-value flagged pieces that need photos for online listings anyway. Bulk categories get category photos, not individual ones. The SKU-tagging itself takes 3–5 seconds per item with lower-skilled labor — this is the real added time cost, roughly half a day to a day extra on intake.</p>
+  </div>
+
+  <div class="time-compare">
+    <div class="time-compare-eyebrow">Phase-by-phase time delta</div>
+    <h3>Where time is spent vs. where value is created</h3>
+    <div class="tc-grid">
+      <div class="tc-cell tc-head">Phase</div>
+      <div class="tc-cell tc-head">Current</div>
+      <div class="tc-cell tc-head">Ideal</div>
+      <div class="tc-cell tc-head">Delta</div>
+
+      <div class="tc-cell tc-row-label">Estimate</div>
+      <div class="tc-cell tc-mono">60–90 min</div>
+      <div class="tc-cell tc-mono">75–120 min</div>
+      <div class="tc-cell tc-mono tc-delta-up">+15–30 min</div>
+
+      <div class="tc-cell tc-row-label">Intake &amp; catalog</div>
+      <div class="tc-cell tc-mono">2–4 days</div>
+      <div class="tc-cell tc-mono">3–5 days</div>
+      <div class="tc-cell tc-mono tc-delta-up">+0.5–1 day</div>
+
+      <div class="tc-cell tc-row-label">Stage &amp; sell</div>
+      <div class="tc-cell tc-mono">3 days + setup</div>
+      <div class="tc-cell tc-mono">3 days + setup</div>
+      <div class="tc-cell tc-mono tc-delta-down">≈ same</div>
+
+      <div class="tc-cell tc-row-label">Close &amp; report</div>
+      <div class="tc-cell tc-mono">~1 day</div>
+      <div class="tc-cell tc-mono">~0.5 day</div>
+      <div class="tc-cell tc-mono tc-delta-down">−0.5 day</div>
+
+      <div class="tc-cell tc-row-label"><strong>Recovered value</strong></div>
+      <div class="tc-cell tc-mono">baseline</div>
+      <div class="tc-cell tc-mono">significantly higher</div>
+      <div class="tc-cell tc-mono tc-delta-down">the actual win</div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

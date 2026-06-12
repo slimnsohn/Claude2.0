@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Estate Sale Workflows — Current vs. Ideal</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+<style>
+  :root {
+    --ink: #1a1612;
+    --paper: #f4efe6;
+    --paper-dark: #e8e0d0;
+    --accent: #b8451f;
+    --accent-soft: #d4a574;
+    --green: #4a6741;
+    --rule: #3a322a;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Fraunces', serif;
+    background: var(--paper);
+    color: var(--ink);
+    line-height: 1.55;
+    padding: 24px 16px 60px;
+    background-image:
+      radial-gradient(circle at 20% 10%, rgba(184,69,31,0.04) 0%, transparent 40%),
+      radial-gradient(circle at 80% 80%, rgba(74,103,65,0.05) 0%, transparent 40%);
+  }
+  .wrap { max-width: 1100px; margin: 0 auto; }
+  header {
+    border-bottom: 2px solid var(--rule);
+    padding-bottom: 20px;
+    margin-bottom: 36px;
+  }
+  .kicker {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 12px;
+  }
+  h1 {
+    font-family: 'Fraunces', serif;
+    font-weight: 800;
+    font-size: clamp(32px, 6vw, 52px);
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    font-variation-settings: "opsz" 144;
+  }
+  h1 em { font-style: italic; color: var(--accent); font-weight: 400; }
+  .sub {
+    margin-top: 14px;
+    font-size: 16px;
+    max-width: 640px;
+    color: #4a3f33;
+  }
+  section { margin-bottom: 48px; }
+  .section-head {
+    display: flex;
+    align-items: baseline;
+    gap: 14px;
+    margin-bottom: 18px;
+    padding-bottom: 10px;
+    border-bottom: 1px dashed var(--rule);
+  }
+  .num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--accent);
+    font-weight: 600;
+  }
+  h2 {
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    font-size: clamp(24px, 4vw, 32px);
+    letter-spacing: -0.01em;
+  }
+  .tag {
+    margin-left: auto;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    padding: 4px 10px;
+    border-radius: 2px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .tag-current { background: #f0d4c0; color: #7a3010; }
+  .tag-ideal { background: #d4e0c8; color: #2a4520; }
+  .chart-card {
+    background: #fbf7ee;
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    padding: 20px 12px;
+    overflow-x: auto;
+    box-shadow: 4px 4px 0 var(--rule);
+  }
+  .mermaid { font-family: 'JetBrains Mono', monospace; }
+  .notes {
+    margin-top: 16px;
+    font-size: 15px;
+    padding: 14px 18px;
+    background: rgba(184,69,31,0.06);
+    border-left: 3px solid var(--accent);
+  }
+  .notes strong { font-weight: 600; }
+  .legend {
+    margin-top: 24px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 14px;
+    font-size: 14px;
+  }
+  .legend-item {
+    padding: 12px 14px;
+    border: 1px solid var(--rule);
+    background: #fbf7ee;
+  }
+  .legend-item .lbl {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 4px;
+    color: var(--accent);
+  }
+  footer {
+    margin-top: 50px;
+    padding-top: 20px;
+    border-top: 1px solid var(--rule);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    color: #6a5e4f;
+  }
+  @media (max-width: 640px) {
+    .chart-card { padding: 12px 6px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div class="kicker">Workflow Mapping — V1</div>
+  <h1>Estate Sale Operations<br><em>current state vs. ideal state</em></h1>
+  <p class="sub">Side-by-side flowcharts across the three containers — Category Playbook, Physical Operations, and the Integration Layer that ties them together.</p>
+</header>
+
+<section>
+  <div class="section-head">
+    <span class="num">01</span>
+    <h2>Current Workflow</h2>
+    <span class="tag tag-current">As Practiced Today</span>
+  </div>
+
+  <div class="chart-card">
+    <div class="mermaid">
+flowchart TD
+    Start([Estate Owner Contacts Operator]) --> Walk[Walkthrough &amp; Verbal Estimate]
+    Walk --> Sign[Contract Signed]
+    Sign --> Crew[Crew Arrives at House]
+
+    Crew --> Triage{Triage In Place}
+    Triage -->|Trash| Dump1[Hauled Away]
+    Triage -->|Family Reserved| Pull[Set Aside]
+    Triage -->|Donate| Donate1[Charity Pickup]
+    Triage -->|Sell| Stage[Stage House as Store]
+
+    Stage --> Bulk[Bulk-Price Most Items<br/>Books $2 / Glass $3 / Clothes $5]
+    Stage --> HighVal[Pull High-Value Items]
+    HighVal --> Research[Operator Googles Comps<br/>One Person, Hours of Work]
+    Research --> IndPrice[Hand-Tag Individually]
+
+    Bulk --> Floor[Sale Floor Ready]
+    IndPrice --> Floor
+
+    Floor --> Day1[Day 1: Full Price<br/>Dealers + Pickers]
+    Day1 --> Day2[Day 2: 25% Off<br/>Verbal Adjustments]
+    Day2 --> Day3[Day 3: 50% Off<br/>Bargain Hunters]
+
+    Day3 --> Leftover{What's Left?}
+    Leftover --> Buyout[Buyout Company<br/>Flat Fee]
+    Leftover --> Donate2[Donation]
+    Leftover --> Dump2[Dumpster]
+
+    Buyout --> Cash[Cash Tally at Close]
+    Donate2 --> Cash
+    Dump2 --> Cash
+    Cash --> Pay[Manual Report to Owner<br/>Check Cut]
+
+    classDef tribal fill:#f0d4c0,stroke:#7a3010,stroke-width:2px,color:#1a1612
+    classDef physical fill:#e8e0d0,stroke:#3a322a,stroke-width:1px,color:#1a1612
+    classDef decision fill:#fbf7ee,stroke:#b8451f,stroke-width:2px,color:#1a1612
+    classDef terminal fill:#d4a574,stroke:#7a3010,stroke-width:2px,color:#1a1612
+
+    class Walk,Research,IndPrice,Day2,Pay tribal
+    class Crew,Stage,Bulk,Floor,Day1,Day3 physical
+    class Triage,Leftover decision
+    class Start,Cash,Buyout,Donate1,Donate2,Dump1,Dump2 terminal
+    </div>
+  </div>
+
+  <div class="notes">
+    <strong>What's happening:</strong> Nearly every decision lives in the operator's head. No item-level identity, no inventory state, no learning loop. Pricing on 80% of items is bulk/category, individual research is bottlenecked through one expert. Markdowns are verbal. Leftovers are a cost, not a recoverable asset.
+  </div>
+</section>
+
+<section>
+  <div class="section-head">
+    <span class="num">02</span>
+    <h2>Ideal Workflow</h2>
+    <span class="tag tag-ideal">Modularized State</span>
+  </div>
+
+  <div class="chart-card">
+    <div class="mermaid">
+flowchart TD
+    Start([Owner Contracts via Portal]) --> Photo[Photo Walkthrough<br/>Phone Capture]
+    Photo --> AutoEst[Auto-Generated Estimate<br/>from Category Templates]
+    AutoEst --> Sign[Contract Signed]
+
+    Sign --> Intake[Intake Crew Arrives]
+    Intake --> ScanID[SKU/QR Sticker on<br/>Every Sellable Item]
+
+    ScanID --> Route{Route by Type}
+    Route -->|Has ISBN/Barcode| AutoCat[Auto-Catalog<br/>API Lookup + Comps]
+    Route -->|Known Category| TemplatePrice[Template Pricing<br/>by Category Rules]
+    Route -->|Specialty Flag| SpecQueue[Specialist Queue<br/>Books/Jewelry/Art Experts]
+    Route -->|Trash/Donate| Disposition[Routed Out]
+
+    AutoCat --> DB[(Central Item DB<br/>SKU + Photo + Price + Condition)]
+    TemplatePrice --> DB
+    SpecQueue --> DB
+
+    DB --> StageOpt[Optimized Staging<br/>Layout from Floorplan]
+    StageOpt --> POS[POS-Connected Sale Floor]
+
+    POS --> LiveInv[(Live Inventory State<br/>What's Sold / What's Left)]
+    LiveInv --> AutoMD[Auto-Markdown Rules<br/>Triggered by Velocity]
+
+    AutoMD --> Channel{Smart Channel Routing}
+    Channel -->|Sells Well In-Person| Floor2[Floor Sale]
+    Channel -->|Better Online| Online[eBay / Amazon / Abe]
+    Channel -->|Specialty Value| Auction[Auction Consignment]
+
+    Floor2 --> Close[Sale Closes]
+    Online --> Close
+    Auction --> Close
+
+    Close --> Leftover2[Remaining Items<br/>Pre-Routed by DB Tags]
+    Leftover2 --> Report[Auto Report to Owner<br/>Item-Level Detail]
+
+    Close --> Learn[(Sales Performance DB<br/>Feeds Future Pricing)]
+    Learn -.->|Improves| AutoCat
+    Learn -.->|Improves| TemplatePrice
+
+    classDef auto fill:#d4e0c8,stroke:#2a4520,stroke-width:2px,color:#1a1612
+    classDef human fill:#f0d4c0,stroke:#7a3010,stroke-width:2px,color:#1a1612
+    classDef data fill:#fbf7ee,stroke:#b8451f,stroke-width:2px,color:#1a1612
+    classDef decision fill:#e8e0d0,stroke:#3a322a,stroke-width:1px,color:#1a1612
+    classDef terminal fill:#d4a574,stroke:#7a3010,stroke-width:2px,color:#1a1612
+
+    class Photo,AutoEst,ScanID,AutoCat,TemplatePrice,StageOpt,POS,AutoMD,Report auto
+    class Intake,SpecQueue human
+    class DB,LiveInv,Learn data
+    class Route,Channel decision
+    class Start,Floor2,Online,Auction,Close,Leftover2,Disposition terminal
+    </div>
+  </div>
+
+  <div class="notes">
+    <strong>What changes:</strong> Every item gets a unique ID at intake — this single move unlocks the rest. Bulk pricing becomes template pricing driven by category rules. Specialist time is spent only on flagged items, not everything. Live inventory state enables auto-markdowns. Channel routing decides per-item whether floor / online / auction returns more. Every sale feeds the database so next month's pricing is smarter than last month's.
+  </div>
+
+  <div class="legend">
+    <div class="legend-item">
+      <div class="lbl">Green</div>
+      Automated / scalable step — minimal human input
+    </div>
+    <div class="legend-item">
+      <div class="lbl">Orange</div>
+      Human expertise required — specialist judgment
+    </div>
+    <div class="legend-item">
+      <div class="lbl">Cream</div>
+      Data layer — the integration backbone
+    </div>
+    <div class="legend-item">
+      <div class="lbl">Tan</div>
+      Decision branch / outcome
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="section-head">
+    <span class="num">03</span>
+    <h2>The Strategic Delta</h2>
+    <span class="tag tag-ideal">Where Leverage Lives</span>
+  </div>
+
+  <div class="chart-card" style="background:#1a1612; color:#f4efe6; border-color:#b8451f;">
+    <div class="mermaid">
+flowchart LR
+    A[Current: One Operator's Head] -->|Unique SKU at Intake| B[Item-Level Identity]
+    B -->|Live POS Tracking| C[Real-Time Inventory State]
+    C -->|Velocity Data| D[Smart Markdowns + Channel Routing]
+    D -->|Closed Loop| E[Learning System]
+    E -->|Better Pricing| B
+
+    classDef dark fill:#3a322a,stroke:#b8451f,stroke-width:2px,color:#f4efe6
+    classDef bright fill:#b8451f,stroke:#f4efe6,stroke-width:2px,color:#f4efe6
+    class A dark
+    class B,C,D,E bright
+    </div>
+  </div>
+
+  <div class="notes">
+    <strong>The single highest-leverage move:</strong> Giving every item a unique identifier at intake. It lives in Container 3 (Integration) but it unlocks automation across all three containers. Everything downstream — inventory, markdowns, learning loops, channel routing, owner reports — becomes possible only after this foundation is in place.
+  </div>
+</section>
+
+<footer>
+  WORKFLOW MAPPING / EST. SALE OPS / V1 — CURRENT &amp; IDEAL STATE
+</footer>
+
+</div>
+
+<script>
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'base',
+    themeVariables: {
+      fontFamily: 'JetBrains Mono, monospace',
+      fontSize: '13px',
+      primaryColor: '#fbf7ee',
+      primaryTextColor: '#1a1612',
+      primaryBorderColor: '#3a322a',
+      lineColor: '#3a322a',
+      tertiaryColor: '#f4efe6'
+    },
+    flowchart: {
+      curve: 'basis',
+      padding: 16,
+      nodeSpacing: 40,
+      rankSpacing: 50
+    }
+  });
+</script>
+</body>
+</html>

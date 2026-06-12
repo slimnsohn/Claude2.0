@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Estate Sale Workflows — Side by Side</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #fafaf7;
+    --surface: #ffffff;
+    --ink: #1a1a1a;
+    --ink-soft: #5a5a5a;
+    --ink-faint: #8a8a8a;
+    --rule: #e8e6e0;
+    --rule-strong: #d4d2cc;
+
+    --coral-bg: #fef0ea;
+    --coral-border: #e8a48a;
+    --coral-ink: #8a3318;
+
+    --teal-bg: #e8f4f0;
+    --teal-border: #6fb89e;
+    --teal-ink: #1a5a44;
+
+    --purple-bg: #f0ecf7;
+    --purple-border: #a08fc4;
+    --purple-ink: #4a3878;
+
+    --gray-bg: #f0efeb;
+    --gray-border: #b8b6ae;
+    --gray-ink: #4a4a47;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Inter', -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .container {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 48px 32px 80px;
+  }
+
+  /* Header */
+  header { margin-bottom: 56px; }
+  .eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin-bottom: 16px;
+  }
+  h1 {
+    font-size: clamp(28px, 4vw, 44px);
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+    margin-bottom: 16px;
+  }
+  .lede {
+    font-size: 17px;
+    color: var(--ink-soft);
+    max-width: 640px;
+    line-height: 1.55;
+  }
+
+  /* Legend */
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    padding: 16px 20px;
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: 10px;
+    margin-bottom: 40px;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--ink-soft);
+  }
+  .swatch {
+    width: 14px;
+    height: 14px;
+    border-radius: 3px;
+    border: 1px solid;
+  }
+  .sw-coral { background: var(--coral-bg); border-color: var(--coral-border); }
+  .sw-teal { background: var(--teal-bg); border-color: var(--teal-border); }
+  .sw-purple { background: var(--purple-bg); border-color: var(--purple-border); }
+  .sw-gray { background: var(--gray-bg); border-color: var(--gray-border); }
+
+  /* Comparison Grid */
+  .compare {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    margin-bottom: 56px;
+  }
+
+  .column {
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: 14px;
+    overflow: hidden;
+  }
+
+  .column-header {
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--rule);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .column-header h2 {
+    font-size: 20px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+  .badge {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-weight: 500;
+  }
+  .badge-current {
+    background: var(--coral-bg);
+    color: var(--coral-ink);
+  }
+  .badge-ideal {
+    background: var(--teal-bg);
+    color: var(--teal-ink);
+  }
+
+  .flow {
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  /* Steps */
+  .step {
+    padding: 14px 16px;
+    border-radius: 10px;
+    border: 1px solid;
+    position: relative;
+  }
+  .step-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    opacity: 0.7;
+    margin-bottom: 4px;
+  }
+  .step-title {
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.3;
+  }
+  .step-sub {
+    font-size: 12px;
+    margin-top: 4px;
+    opacity: 0.75;
+    line-height: 1.4;
+  }
+
+  .step-coral { background: var(--coral-bg); border-color: var(--coral-border); color: var(--coral-ink); }
+  .step-teal { background: var(--teal-bg); border-color: var(--teal-border); color: var(--teal-ink); }
+  .step-purple { background: var(--purple-bg); border-color: var(--purple-border); color: var(--purple-ink); }
+  .step-gray { background: var(--gray-bg); border-color: var(--gray-border); color: var(--gray-ink); }
+
+  .connector {
+    height: 16px;
+    width: 1.5px;
+    background: var(--rule-strong);
+    margin: 0 auto;
+    position: relative;
+  }
+  .connector::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 0;
+    border-left: 4px solid transparent;
+    border-right: 4px solid transparent;
+    border-top: 5px solid var(--rule-strong);
+  }
+
+  /* Split branches */
+  .branch {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  .branch.three {
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+  .branch-connector {
+    height: 20px;
+    position: relative;
+    margin: 0 8px;
+  }
+  .branch-connector::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 50%;
+    width: 1.5px;
+    height: 8px;
+    background: var(--rule-strong);
+    transform: translateX(-50%);
+  }
+  .branch-connector::after {
+    content: '';
+    position: absolute;
+    top: 8px;
+    left: 10%;
+    right: 10%;
+    height: 1.5px;
+    background: var(--rule-strong);
+  }
+  .branch-down {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    position: relative;
+  }
+  .branch-down.three {
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+  .branch-down::before {
+    content: '';
+    position: absolute;
+    top: -12px;
+    left: 16.66%;
+    right: 16.66%;
+    height: 1.5px;
+    background: var(--rule-strong);
+  }
+  .branch-down.three::before {
+    left: 16.66%;
+    right: 16.66%;
+  }
+  .branch-arrow {
+    position: relative;
+  }
+  .branch-arrow::before {
+    content: '';
+    position: absolute;
+    top: -12px;
+    left: 50%;
+    width: 1.5px;
+    height: 12px;
+    background: var(--rule-strong);
+    transform: translateX(-50%);
+  }
+  .branch-arrow::after {
+    content: '';
+    position: absolute;
+    top: -3px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 0;
+    border-left: 4px solid transparent;
+    border-right: 4px solid transparent;
+    border-top: 5px solid var(--rule-strong);
+  }
+
+  /* Insight bar */
+  .insight {
+    background: var(--ink);
+    color: #fafaf7;
+    border-radius: 14px;
+    padding: 32px;
+    margin-bottom: 48px;
+  }
+  .insight-eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    opacity: 0.6;
+    margin-bottom: 12px;
+  }
+  .insight h3 {
+    font-size: 22px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    margin-bottom: 12px;
+    line-height: 1.25;
+  }
+  .insight p {
+    font-size: 15px;
+    opacity: 0.85;
+    line-height: 1.6;
+    max-width: 720px;
+  }
+
+  /* Delta cards */
+  .deltas {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 16px;
+  }
+  .delta {
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: 12px;
+    padding: 20px 22px;
+  }
+  .delta-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--teal-ink);
+    margin-bottom: 8px;
+    letter-spacing: 0.08em;
+  }
+  .delta-title {
+    font-size: 15px;
+    font-weight: 600;
+    margin-bottom: 6px;
+    letter-spacing: -0.005em;
+  }
+  .delta-desc {
+    font-size: 13px;
+    color: var(--ink-soft);
+    line-height: 1.5;
+  }
+
+  /* Mobile */
+  @media (max-width: 760px) {
+    .container { padding: 32px 16px 60px; }
+    .compare { grid-template-columns: 1fr; gap: 20px; }
+    .legend { gap: 12px; }
+    .branch.three { grid-template-columns: 1fr; gap: 8px; }
+    .branch-down.three { grid-template-columns: 1fr; gap: 8px; }
+    .branch-down.three::before { display: none; }
+    .branch-arrow::before, .branch-arrow::after { display: none; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <header>
+    <div class="eyebrow">Workflow Comparison · V1</div>
+    <h1>Estate sale operations: current vs. ideal</h1>
+    <p class="lede">Two workflows, same shape — read across to see where human judgment compresses into automation, and where a data layer emerges that didn't exist before.</p>
+  </header>
+
+  <div class="legend">
+    <div class="legend-item"><span class="swatch sw-coral"></span>Human expertise required</div>
+    <div class="legend-item"><span class="swatch sw-teal"></span>Automated / scalable</div>
+    <div class="legend-item"><span class="swatch sw-purple"></span>Data layer</div>
+    <div class="legend-item"><span class="swatch sw-gray"></span>Generic flow / handoff</div>
+  </div>
+
+  <div class="compare">
+
+    <!-- CURRENT COLUMN -->
+    <div class="column">
+      <div class="column-header">
+        <h2>Current workflow</h2>
+        <span class="badge badge-current">As practiced</span>
+      </div>
+      <div class="flow">
+
+        <div class="step step-gray">
+          <div class="step-label">Step 1 · Lead</div>
+          <div class="step-title">Owner contacts operator</div>
+        </div>
+
+        <div class="connector"></div>
+
+        <div class="step step-coral">
+          <div class="step-label">Step 2 · Estimate</div>
+          <div class="step-title">Walkthrough &amp; verbal estimate</div>
+          <div class="step-sub">Lives in operator's head, no data</div>
+        </div>
+
+        <div class="connector"></div>
+
+        <div class="step step-gray">
+          <div class="step-label">Step 3 · Mobilize</div>
+          <div class="step-title">Crew arrives at house</div>
+        </div>
+
+        <div class="connector"></div>
+
+        <div class="step step-coral">
+          <div class="step-label">Step 4 · Triage</div>
+          <div class="step-title">Triage in place</div>
+          <div class="step-sub">Trash, donate, sell, family-hold</div>
+        </div>
+
+        <div class="branch-connector"></div>
+
+        <div class="branch-down">
+          <div class="step step-coral branch-arrow">
+            <div class="step-label">Step 5a · Bulk</div>
+            <div class="step-title">Bulk-price 80% of items</div>
+            <div class="step-sub">Books $2, glass $3, clothes $5</div>
+          </div>
+          <div class="step step-coral branch-arrow">
+            <div class="step-label">Step 5b · Research</div>
+            <div class="step-title">Research high-value items</div>
+            <div class="step-sub">One person, hours of Googling</div>
+          </div>
+        </div>
+
+        <div class="connector"></div>
+
+        <div class="step step-gray">
+          <div class="step-label">Step 6 · Stage</div>
+          <div class="step-title">Stage house as store</div>
+        </div>
+
+        <div class="connector"></div>
+
+        <div class="step step-coral">
+          <div class="step-label">Step 7 · Sale</div>
+          <div class="step-title">3-day sale, verbal markdowns</div>
+          <div class="step-sub">Full, 25% off, 50% off — gut calls</div>
+        </div>
+
+        <div class="connector"></div>
+
+        <div class="step step-coral">
+          <div class="step-label">Step 8 · Close</div>
+          <div class="step-title">Leftovers: buyout or dump</div>
+          <div class="step-sub">Cash tally, paper report to owner</div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- IDEAL COLUMN -->
+    <div class="column">
+      <div class="column-header">
+        <h2>Ideal workflow</h2>
+        <span class="badge badge-ideal">Modularized</span>
+      </div>
+      <div class="flow">
+
+        <div class="step step-gray">
+          <div class="step-label">Step 1 · Lead</div>
+          <div class="step-title">Owner contracts via portal</div>
+        </div>
+
+        <div class="connector"></div>
+
+        <div class="step step-teal">
+          <div class="step-label">Step 2 · Estimate</div>
+          <div class="step-title">Photo walkthrough &amp; auto-estimate</div>
+          <div class="step-sub">Phone capture, category templates</div>
+        </div>
+
+        <div class="connector"></div>
+
+        <div class="step step-teal">
+          <div class="step-label">Step 3 · Identity</div>
+          <div class="step-title">SKU sticker on every item</div>
+          <div class="step-sub">The foundational move — unlocks everything below</div>
+        </div>
+
+        <div class="connector"></div>
+
+        <div class="step step-gray">
+          <div class="step-label">Step 4 · Route</div>
+          <div class="step-title">Route by item type</div>
+        </div>
+
+        <div class="branch-connector"></div>
+
+        <div class="branch-down three">
+          <div class="step step-teal branch-arrow">
+            <div class="step-label">Step 5a · Scan</div>
+            <div class="step-title">Auto-catalog</div>
+            <div class="step-sub">ISBN, barcode, API comps</div>
+          </div>
+          <div class="step step-teal branch-arrow">
+            <div class="step-label">Step 5b · Template</div>
+            <div class="step-title">Template pricing</div>
+            <div class="step-sub">Category rules apply</div>
+          </div>
+          <div class="step step-coral branch-arrow">
+            <div class="step-label">Step 5c · Expert</div>
+            <div class="step-title">Specialist queue</div>
+            <div class="step-sub">Books, jewelry, art</div>
+          </div>
+        </div>
+
+        <div class="connector"></div>
+
+        <div class="step step-purple">
+          <div class="step-label">Step 6 · Database</div>
+          <div class="step-title">Central item database</div>
+          <div class="step-sub">SKU · photo · price · condition · location</div>
+        </div>
+
+        <div class="connector"></div>
+
+        <div class="step step-teal">
+          <div class="step-label">Step 7 · Sale</div>
+          <div class="step-title">POS sale, live inventory</div>
+          <div class="step-sub">Auto-markdowns by velocity rules</div>
+        </div>
+
+        <div class="connector"></div>
+
+        <div class="step step-teal">
+          <div class="step-label">Step 8 · Route</div>
+          <div class="step-title">Channel routing</div>
+          <div class="step-sub">Floor, online, or auction per item</div>
+        </div>
+
+        <div class="connector"></div>
+
+        <div class="step step-purple">
+          <div class="step-label">Step 9 · Learn</div>
+          <div class="step-title">Sales data feeds learning loop</div>
+          <div class="step-sub">Next sale's pricing is smarter than this one</div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+
+  <div class="insight">
+    <div class="insight-eyebrow">The strategic delta</div>
+    <h3>One change unlocks the rest</h3>
+    <p>Giving every item a unique identifier at intake (Step 3 in the ideal flow) is the foundational move. It's a small physical action — a QR sticker — but it's what makes the database, live inventory, auto-markdowns, channel routing, and learning loop possible. Without it, everything stays tribal knowledge. With it, the whole system can run.</p>
+  </div>
+
+  <div class="deltas">
+    <div class="delta">
+      <div class="delta-num">01</div>
+      <div class="delta-title">Coral collapses</div>
+      <div class="delta-desc">Human expertise concentrates into one node (specialists) instead of running through every step. Operators stop being the bottleneck.</div>
+    </div>
+    <div class="delta">
+      <div class="delta-num">02</div>
+      <div class="delta-title">Purple appears</div>
+      <div class="delta-desc">A data layer emerges that didn't exist before. It connects pricing, inventory, and sales performance into one system.</div>
+    </div>
+    <div class="delta">
+      <div class="delta-num">03</div>
+      <div class="delta-title">Routing replaces guessing</div>
+      <div class="delta-desc">Items go to the channel that maximizes return — floor, online, or auction — instead of all defaulting to the weekend sale.</div>
+    </div>
+    <div class="delta">
+      <div class="delta-num">04</div>
+      <div class="delta-title">Learning compounds</div>
+      <div class="delta-desc">Every sale feeds back into the database. Next month's pricing is informed by last month's velocity. The current model has no such loop.</div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>
