@@ -102,11 +102,14 @@ def test_strip_html_empty():
 # ── fetch_markets: pagination with a mocked session ──────────────────────────
 
 class _FakeResponse:
-    def __init__(self, payload):
+    def __init__(self, payload, status_code=200):
         self._payload = payload
+        self.status_code = status_code
 
     def raise_for_status(self):
-        pass
+        if self.status_code >= 400:
+            import requests
+            raise requests.HTTPError(f"{self.status_code}")
 
     def json(self):
         return self._payload
@@ -160,6 +163,24 @@ def test_fetch_markets_respects_max_pages(gamma_page, monkeypatch):
     records = list(fetch_markets(status="open", max_pages=2,
                                  page_limit=len(gamma_page)))
     assert len(records) == 2 * len(gamma_page)
+
+
+def test_fetch_markets_stops_cleanly_at_offset_cap(gamma_page, monkeypatch):
+    """Gamma 422s past ~offset 10k — that's end-of-window, not a crash."""
+    responses = [_FakeResponse(gamma_page), _FakeResponse([], status_code=422)]
+    calls = []
+
+    def fake_get(self, url, params=None, timeout=None):
+        calls.append(dict(params))
+        return responses[len(calls) - 1]
+
+    import requests
+    monkeypatch.setattr(requests.Session, "get", fake_get)
+    monkeypatch.setattr("ingest.adapters.polymarket.PAGE_DELAY_S", 0)
+
+    records = list(fetch_markets(status="open", page_limit=len(gamma_page)))
+    assert len(records) == len(gamma_page)  # page 1 delivered, cap ended it
+    assert calls[0]["order"] == "volumeNum"  # volume-first within the window
 
 
 def test_fetch_markets_skips_malformed_market(gamma_page, monkeypatch):

@@ -137,14 +137,25 @@ ORDER BY GREATEST(
 
 
 def run(conn, limit: int | None = None, dry_run: bool = False,
-        model: str | None = None) -> dict:
+        model: str | None = None, ids: list[str] | None = None) -> dict:
     """Parse un-parsed/stale snapshots, volume-first. Commits per row — LLM
-    calls are expensive and a crash must not lose completed work."""
+    calls are expensive and a crash must not lose completed work.
+
+    `ids` restricts to specific venue_market_ids (tickers / condition ids) —
+    used to parse the counterparts of candidate pairs before an equivalence
+    run, jumping the volume queue."""
     stats = {"parsed": 0, "failed": 0}
 
     with conn.cursor() as cur:
-        sql = SELECT_UNPARSED + (f" LIMIT {int(limit)}" if limit else "")
-        cur.execute(sql)
+        if ids:
+            sql = SELECT_UNPARSED.replace(
+                "WHERE m.status = 'open'",
+                "WHERE m.status = 'open' AND m.venue_market_id = ANY(%(ids)s)")
+            cur.execute(sql + (f" LIMIT {int(limit)}" if limit else ""),
+                        {"ids": list(ids)})
+        else:
+            sql = SELECT_UNPARSED + (f" LIMIT {int(limit)}" if limit else "")
+            cur.execute(sql)
         rows = cur.fetchall()
 
     print(f"{len(rows)} snapshot(s) queued for parsing")
@@ -201,12 +212,15 @@ def main(argv: list[str] | None = None) -> int:
                         help="print parses without writing to the DB")
     parser.add_argument("--model", default=None,
                         help="claude CLI model override (default: env CLAUDE_CLI_MODEL or sonnet)")
+    parser.add_argument("--ids", nargs="+", default=None, metavar="VENUE_MARKET_ID",
+                        help="parse only these venue market ids (jump the volume queue)")
     args = parser.parse_args(argv)
 
     import psycopg
     conn = psycopg.connect(os.environ["DATABASE_URL"])
     try:
-        stats = run(conn, limit=args.limit, dry_run=args.dry_run, model=args.model)
+        stats = run(conn, limit=args.limit, dry_run=args.dry_run,
+                    model=args.model, ids=args.ids)
     finally:
         conn.close()
     print(f"[rule_parser] {stats}")

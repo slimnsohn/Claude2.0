@@ -223,6 +223,25 @@ def test_stale_reparse_loop(db_conn, monkeypatch):
 
 
 @pytest.mark.integration
+def test_run_ids_filter_targets_specific_markets(db_conn, monkeypatch):
+    ingest(db_conn, [
+        MarketRecord(venue_code="polymarket", venue_market_id="0xBIG",
+                     title="big", raw_rules="r1", status="open",
+                     raw_payload={"volume": "999999"}),
+        MarketRecord(venue_code="kalshi", venue_market_id="KX-TARGET",
+                     title="target", raw_rules="r2", status="open"),
+    ])
+    monkeypatch.setattr(rule_parser, "parse_rules_text",
+                        lambda raw_rules, model=None: parse_rules_text_result())
+    stats = rule_parser.run(db_conn, ids=["KX-TARGET"])
+    assert stats["parsed"] == 1  # only the targeted market, not the big one
+    with db_conn.cursor() as cur:
+        cur.execute("""SELECT m.venue_market_id FROM parsed_rules p
+                       JOIN markets m USING (market_id)""")
+        assert cur.fetchall() == [("KX-TARGET",)]
+
+
+@pytest.mark.integration
 def test_run_skips_empty_rules_markets(db_conn, monkeypatch):
     ingest(db_conn, [MarketRecord(
         venue_code="kalshi", venue_market_id="PARLAY-1",

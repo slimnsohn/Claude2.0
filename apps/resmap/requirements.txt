@@ -8,6 +8,10 @@ cryptography>=42.0
 
 # LLM extraction uses the `claude -p` CLI (Max plan, no per-call cost) — no SDK needed.
 
+# Candidate matching (Phase 3) — proven in the old mismatch detector;
+# swap to embeddings later if fuzzy recall proves insufficient
+rapidfuzz>=3.6
+
 # Dev
 pytest>=8.0
 
@@ -18,6 +22,3 @@ pytest>=8.0
 # duckdb>=0.10
 # sqlglot>=23.0
 
-# Candidate matching (Phase 3) — pick at build time
-# sentence-transformers>=2.6   # local embeddings
-# rapidfuzz>=3.6               # proven in the old mismatch detector

@@ -56,6 +56,9 @@ def fetch_markets(status: str = "open", max_pages: int | None = None,
         base_params = {"active": "true", "closed": "false"}
     else:
         base_params = {"closed": "true"}
+    # Highest-volume first: Gamma rejects offsets past ~10k (422), so the
+    # reachable window must contain the markets that matter most.
+    base_params.update({"order": "volumeNum", "ascending": "false"})
 
     session = _get_session()
     offset = 0
@@ -64,6 +67,10 @@ def fetch_markets(status: str = "open", max_pages: int | None = None,
     while max_pages is None or page < max_pages:
         params = {**base_params, "limit": page_limit, "offset": offset}
         resp = session.get(f"{GAMMA_BASE_URL}/markets", params=params, timeout=30)
+        if resp.status_code == 422:
+            # offset cap reached — end of the reachable window, not an error
+            logger.warning("Gamma offset cap hit at offset=%d — stopping", offset)
+            break
         resp.raise_for_status()
         page_data = resp.json()
 
