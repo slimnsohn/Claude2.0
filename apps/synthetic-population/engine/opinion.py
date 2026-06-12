@@ -18,6 +18,7 @@ import pandas as pd
 
 from engine.ces_columns import CES_COLUMNS, match_question
 from engine.ces_loader import CESLoader, MATCH_KEYS
+from engine.beliefs import BELIEF_SIGN, CES_TOPIC_TO_BELIEF
 
 
 DEFAULT_K = 50
@@ -126,8 +127,21 @@ class OpinionEngine:
         no_p = counts.get("no", 0) / total
         unsure_p = counts.get("unsure", 0) / total
 
-        # Apply world update shifts
-        if world_shifts:
+        # Apply this persona's own belief shift (preferred), else legacy party shift
+        applied_belief = False
+        beliefs = profile.get("beliefs") or {}
+        belief_topic = CES_TOPIC_TO_BELIEF.get(col_match.get("topic", ""))
+        sign = BELIEF_SIGN.get(col_id, 0)
+        if beliefs and belief_topic and sign != 0:
+            shift = beliefs.get(belief_topic, {}).get("shift", 0.0)
+            if shift:
+                adj = sign * shift
+                yes_p += adj
+                no_p -= adj * 0.7
+                unsure_p -= adj * 0.3
+                applied_belief = True
+
+        if not applied_belief and world_shifts:
             party = profile.get("party_id", "independent")
             party_group = (
                 "dem" if party in ("strong_dem", "dem", "lean_dem")

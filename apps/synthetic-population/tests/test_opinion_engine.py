@@ -1,4 +1,6 @@
+import io
 import pytest
+import pandas as pd
 from pathlib import Path
 from engine.opinion import OpinionEngine
 
@@ -9,6 +11,47 @@ def engine():
     if not ces_path.exists():
         pytest.skip("CES data not available")
     return OpinionEngine(str(ces_path))
+
+
+@pytest.fixture
+def engine_fixture(tmp_path):
+    """OpinionEngine backed by a tiny synthetic CES fixture — no real data needed.
+
+    100 rows, all demographic values identical (independent/bachelors/35-44/white/suburban)
+    so every profile gets the same 100 neighbours and the distribution is deterministic.
+
+    CC24_301  (economy retro, BELIEF_SIGN=+1): 40 yes(1), 40 no(5), 20 unsure(3)
+              → baseline yes_p ≈ 0.40, firmly interior
+    CC24_308a_2 (min-wage, BELIEF_SIGN=0):      50 support(1), 50 oppose(2)
+    """
+    import numpy as np
+
+    n = 100
+    rng = np.random.default_rng(42)
+
+    # Raw demographic columns that CESLoader.get_data() harmonises
+    pid7 = [4] * n           # 4 → independent
+    educ = [5] * n           # 5 → bachelors
+    birthyr = [1984] * n     # 2026-1984=42 → age_bracket 35-44
+    gender4 = [1] * n        # 1 → M
+    race = [1] * n           # 1 → white
+    urbancity = [2] * n      # 2 → suburban
+
+    # CC24_301: 40 rows=1 (yes), 40 rows=5 (no), 20 rows=3 (unsure)
+    cc301 = [1] * 40 + [5] * 40 + [3] * 20
+
+    # CC24_308a_2: 50 support(1), 50 oppose(2)
+    cc308a2 = [1] * 50 + [2] * 50
+
+    df = pd.DataFrame({
+        "pid7": pid7, "educ": educ, "birthyr": birthyr,
+        "gender4": gender4, "race": race, "urbancity": urbancity,
+        "CC24_301": cc301, "CC24_308a_2": cc308a2,
+    })
+
+    csv_path = tmp_path / "fixture_ces.csv"
+    df.to_csv(csv_path, index=False)
+    return OpinionEngine(str(csv_path), k=100)
 
 
 class TestOpinionEngine:
@@ -79,3 +122,39 @@ class TestOpinionEngine:
         )
         assert dist is not None
         assert dist.get("_n_neighbors", 0) >= 10
+
+
+def test_belief_shift_applied_per_persona(engine_fixture):
+    """Personas with opposite economy beliefs diverge in their distributions."""
+    base_profile = {"party_id": "independent", "education": "bachelors",
+                    "age_bracket": "35-44", "race": "white", "urban_rural": "suburban"}
+    up = {**base_profile, "beliefs": {"economy": {"shift": 0.10, "exposures": 5,
+                                                  "last_updated": "2026-06-11T09:00:00"}}}
+    down = {**base_profile, "beliefs": {"economy": {"shift": -0.10, "exposures": 5,
+                                                    "last_updated": "2026-06-11T09:00:00"}}}
+    q = "Is the economy getting better or worse?"
+    d_up = engine_fixture.get_distribution(q, up)
+    d_down = engine_fixture.get_distribution(q, down)
+    d_base = engine_fixture.get_distribution(q, base_profile)
+    assert d_up["yes"] > d_base["yes"] > d_down["yes"]
+
+
+def test_belief_ignored_when_sign_zero(engine_fixture):
+    """Min-wage column has BELIEF_SIGN 0 — beliefs must not move it."""
+    base = {"party_id": "independent", "education": "bachelors",
+            "age_bracket": "35-44", "race": "white", "urban_rural": "suburban"}
+    bel = {**base, "beliefs": {"economy": {"shift": 0.15, "exposures": 9,
+                                           "last_updated": "2026-06-11T09:00:00"}}}
+    q = "Do you support raising the minimum wage to $15?"
+    assert engine_fixture.get_distribution(q, bel)["yes"] == \
+           engine_fixture.get_distribution(q, base)["yes"]
+
+
+def test_party_shift_fallback_without_beliefs(engine_fixture):
+    """Profiles lacking beliefs still respond to legacy world_shifts."""
+    base = {"party_id": "rep", "education": "bachelors", "age_bracket": "35-44",
+            "race": "white", "urban_rural": "suburban"}
+    q = "Is the economy getting better or worse?"
+    d_plain = engine_fixture.get_distribution(q, base)
+    d_shift = engine_fixture.get_distribution(q, base, world_shifts={"rep": 0.05})
+    assert d_shift["yes"] > d_plain["yes"]
