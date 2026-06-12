@@ -1,0 +1,170 @@
+"""Per-persona belief layer: media-diet exposure, bounded shifts, decay, audit trail.
+
+Each profile carries:
+  beliefs: {topic: {shift: float, exposures: int, last_updated: iso}}
+Shift is a bounded (±BELIEF_BOUND) adjustment applied to the KNN yes-probability
+of questions on that topic (sign per CES column via BELIEF_SIGN). Decays toward
+zero (the CES-grounded baseline) with HALF_LIFE_DAYS.
+"""
+import random
+from datetime import datetime
+
+from engine.news_scoring import PARTY_VALENCE
+
+BELIEF_BOUND = 0.15
+BASE_RATE = 0.01
+HALF_LIFE_DAYS = 14.0
+DRIFT_LOG_MAX = 200
+INCUMBENT = "rep"  # Trump administration 2025-2026
+OPPOSITION = "dem"
+
+OUTLET_FAMILY = {
+    "fox_news": "right", "newsmax": "right", "oann": "right", "breitbart": "right",
+    "msnbc": "left", "npr": "left", "new_york_times": "left",
+    "washington_post": "left", "cnn": "left",
+    "abc_news": "mainstream", "nbc_news": "mainstream", "cbs_news": "mainstream",
+    "local_tv": "mainstream", "local_newspaper": "mainstream", "bbc": "mainstream",
+    "the_hill": "mainstream", "politico": "mainstream",
+}
+
+# CES column topic → belief taxonomy topic
+CES_TOPIC_TO_BELIEF = {
+    "approval": "trump_approval", "economy": "economy", "immigration": "immigration",
+    "healthcare": "healthcare", "environment": "climate", "fiscal": "fiscal",
+    "education": "education",
+}
+
+# Per-CES-column sign: how a positive topic shift maps onto the column's yes-probability.
+# Conventions documented in engine/news_scoring.py. 0 = beliefs don't apply.
+BELIEF_SIGN = {
+    "CC24_312i": +1, "CC24_311a": +1,                      # approval: + favors admin
+    "CC24_301": +1, "CC24_302": +1, "CC24_303": +1,        # economy: + = doing well
+    "CC24_300_1": +1, "CC24_300_3": +1, "CC24_300_4": +1,  # enforcement items
+    "CC24_300_2": -1,                                      # DREAMers: pro-immigrant
+    "CC24_326a": -1,                                       # repeal ACA vs pro-program mood
+    "CC24_326b": +1, "CC24_326c": +1, "CC24_326d": +1, "CC24_326e": +1, "CC24_326f": +1,
+    "CC24_415c": +1, "CC24_415d": +1, "CC24_308a_3": +1,   # climate action
+    "CC24_308a_1": -1,                                     # cut spending vs progressive mood
+    "CC24_308a_4": +1,                                     # tax >$400k
+    "CC24_308a_2": 0,                                      # min wage: no clean mapping
+    "CC24_308a_5": +1,                                     # student debt relief
+}
+
+_PARTY_GROUP = {
+    "strong_dem": "dem", "dem": "dem", "lean_dem": "dem",
+    "independent": "independent",
+    "lean_rep": "rep", "rep": "rep", "strong_rep": "rep",
+}
+_STRONG = {"strong_dem", "strong_rep"}
+
+
+def decay_factor(elapsed_days: float) -> float:
+    return 0.5 ** (max(0.0, elapsed_days) / HALF_LIFE_DAYS)
+
+
+def decay_beliefs(profile: dict, now: datetime):
+    """Decay every topic shift toward zero based on elapsed time."""
+    beliefs = profile.get("beliefs") or {}
+    for topic, b in beliefs.items():
+        try:
+            last = datetime.fromisoformat(b.get("last_updated", now.isoformat()))
+        except (TypeError, ValueError):
+            last = now
+        elapsed = (now - last).total_seconds() / 86400.0
+        if elapsed > 0:
+            b["shift"] = round(b["shift"] * decay_factor(elapsed), 6)
+            b["last_updated"] = now.isoformat()
+
+
+def exposure_prob(salience: float, framing_mag: float) -> float:
+    return min(1.0, salience * (0.5 + 0.5 * abs(framing_mag)))
+
+
+def _alignment(party_group: str, topic: str, effective_direction: float) -> str:
+    """'congenial' | 'counter' | 'neutral' for this party on this signed event."""
+    if party_group == "independent" or effective_direction == 0:
+        return "neutral"
+    valence = PARTY_VALENCE.get(topic, {})
+    key = "positive" if effective_direction > 0 else "negative"
+    beneficiary = valence.get(key, "mixed")
+    if beneficiary == "incumbent":
+        beneficiary = INCUMBENT
+    elif beneficiary == "opposition":
+        beneficiary = OPPOSITION
+    if beneficiary == "mixed":
+        return "neutral"
+    return "congenial" if beneficiary == party_group else "counter"
+
+
+def susceptibility(party_id: str, topic: str, effective_direction: float) -> float:
+    group = _PARTY_GROUP.get(party_id, "independent")
+    base = 0.7 if party_id in _STRONG else 1.0
+    if _alignment(group, topic, effective_direction) == "counter":
+        return base * 0.4
+    return base
+
+
+def apply_event(profile: dict, event: dict, now: datetime, rng: random.Random,
+                update_id: str) -> float:
+    """Maybe expose profile to event; update beliefs. Returns total |delta| applied."""
+    family = OUTLET_FAMILY.get(profile.get("primary_news_source", ""), "mainstream")
+    framing = (event.get("framing") or {}).get(family, 1.0)
+    salience = float(event.get("salience", 0.5))
+    direction = float(event.get("direction", 0.0))
+    effective = direction * framing
+    if not event.get("topics") or effective == 0.0:
+        return 0.0
+    if rng.random() >= exposure_prob(salience, framing):
+        return 0.0
+
+    beliefs = profile.setdefault("beliefs", {})
+    drift_log = profile.setdefault("drift_log", [])
+    total = 0.0
+    for topic in event["topics"]:
+        susc = susceptibility(profile.get("party_id", "independent"), topic, effective)
+        delta = effective * salience * susc * BASE_RATE
+        if delta == 0.0:
+            continue
+        b = beliefs.setdefault(topic, {"shift": 0.0, "exposures": 0,
+                                       "last_updated": now.isoformat()})
+        b["shift"] = round(max(-BELIEF_BOUND, min(BELIEF_BOUND, b["shift"] + delta)), 6)
+        b["exposures"] = b.get("exposures", 0) + 1
+        b["last_updated"] = now.isoformat()
+        drift_log.append({"date": now.isoformat(), "topic": topic,
+                          "delta": round(delta, 6), "update_id": update_id,
+                          "shift_after": b["shift"]})
+        total += abs(delta)
+    if len(drift_log) > DRIFT_LOG_MAX:
+        del drift_log[:-DRIFT_LOG_MAX]
+    return total
+
+
+def update_population(profiles: list, events: list, now: datetime,
+                      update_id: str) -> dict:
+    """Decay all profiles, then expose each to each event. Deterministic per update_id."""
+    exposures = 0
+    for p in profiles:
+        # Reset corrupt beliefs defensively
+        if not isinstance(p.get("beliefs"), dict):
+            p["beliefs"] = {}
+        decay_beliefs(p, now)
+        rng = random.Random(f"{update_id}:{p.get('profile_id', '')}")
+        for ev in events:
+            if apply_event(p, ev, now, rng, update_id) > 0:
+                exposures += 1
+
+    # Aggregate summary
+    sums, counts = {}, {}
+    for p in profiles:
+        for topic, b in (p.get("beliefs") or {}).items():
+            sums[topic] = sums.get(topic, 0.0) + b.get("shift", 0.0)
+            counts[topic] = counts.get(topic, 0) + 1
+    n = max(1, len(profiles))
+    return {
+        "update_id": update_id,
+        "date": now.isoformat(),
+        "n_profiles": len(profiles),
+        "n_events": len(events),
+        "exposures": exposures,
+        "mean_shift_by_topic": {t: round(s / n, 5) for t, s in sums.items()},
+    }
