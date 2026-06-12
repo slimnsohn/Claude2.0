@@ -141,6 +141,12 @@ def create_poll():
     if not question:
         return jsonify({"error": "question is required"}), 400
 
+    # Reject negated question stems — the engine answers support/approval
+    # distributions and would silently invert them (audit H2).
+    from engine.ces_columns import detect_negated_phrasing, NEGATED_PHRASING_ERROR
+    if detect_negated_phrasing(question):
+        return jsonify({"error": NEGATED_PHRASING_ERROR}), 400
+
     # Load profiles
     try:
         profiles, events_applied_through = _load_profiles_for_snapshot(snapshot_id)
@@ -373,9 +379,16 @@ def auto_complete_poll(poll_id):
     if filters:
         profiles = _apply_filters(profiles, filters)
 
-    # Index profiles by archetype_id
+    # Rebuild archetypes EXACTLY as at poll creation and index representative
+    # profiles by the FRESH assignment. The archetype_id stored in the
+    # registry comes from the original population build and does NOT agree
+    # with the fresh IDs the prompts/weights are keyed by — indexing by the
+    # stale stored IDs silently polled wrong-party or empty profiles
+    # (audit H1).
+    profiles_with_arch, _ = _build_archetypes(profiles)
+
     profiles_by_arch = {}
-    for p in profiles:
+    for p in profiles_with_arch:
         aid = p.get("archetype_id")
         if aid and aid not in profiles_by_arch:
             profiles_by_arch[aid] = p
@@ -387,7 +400,11 @@ def auto_complete_poll(poll_id):
 
     for prompt_entry in prompts:
         aid = prompt_entry["archetype_id"]
-        profile = profiles_by_arch.get(aid, {})
+        profile = profiles_by_arch.get(aid)
+        if not profile:
+            # No representative for this archetype id — never poll an empty
+            # {} profile (it would KNN-match an arbitrary corner of CES).
+            continue
 
         opinion_result = _get_opinion(question, profile)
         if opinion_result is None:

@@ -424,3 +424,133 @@ def test_get_poll_after_aggregate_list_shows_headline(client):
     completed = next(p for p in polls if p["poll_id"] == poll_id)
     assert completed["status"] == "complete"
     assert completed["headline_result"] is not None
+
+
+# ---------------------------------------------------------------------------
+# POST /api/polls/<poll_id>/auto-complete — archetype alignment (audit H1)
+#
+# Poll creation builds FRESH archetypes and keys prompts/weights by fresh IDs.
+# Auto-complete must index representative profiles by the SAME fresh
+# assignment — never by the stale archetype_id stored in the registry.
+# ---------------------------------------------------------------------------
+
+CES_QUESTION = "Do you support building a border wall?"
+
+REP_PARTIES = ("strong_rep", "rep", "lean_rep")
+
+
+class _StubOpinionEngine:
+    """Party-deterministic stub: rep -> yes, anyone else (incl. empty) -> no."""
+
+    def __init__(self):
+        self.polled_profiles = []
+
+    def get_opinion(self, question, profile, world_shifts=None):
+        self.polled_profiles.append(profile)
+        opinion = "yes" if profile.get("party_id") in REP_PARTIES else "no"
+        return opinion, 8, "stub reasoning"
+
+
+def _stale_profile(pid, party, race, stored_archetype_id):
+    return {
+        "profile_id": pid,
+        "age": 40,
+        "sex": "M",
+        "race": race,
+        "education": "hs_diploma",
+        "party_id": party,
+        # Deliberately stale/garbage — assigned by an old population build,
+        # must never be used to pair poll prompts with profiles.
+        "archetype_id": stored_archetype_id,
+        "state": "OH",
+        "urban_rural": "suburban",
+        "religion_affiliation": "none",
+        "religion_attendance": "never",
+        "backstory": f"Test person {pid}.",
+        "drift_log": [],
+        "primary_news_source": "local",
+        "income_source": "wages",
+    }
+
+
+@pytest.fixture
+def stale_app(tmp_path):
+    """Registry whose stored archetype_ids are stale: the rep profiles carry
+    garbage IDs and the dem profiles carry IDs that COLLIDE with fresh IDs
+    of republican cells, so stale-indexed code answers with wrong/empty
+    profiles."""
+    data_dir = tmp_path / "data"
+    (data_dir / "profiles").mkdir(parents=True)
+    (data_dir / "polls").mkdir()
+    (data_dir / "snapshots").mkdir()
+    profiles = [
+        _stale_profile("r1", "strong_rep", "white", "STALE-OLD-77"),
+        _stale_profile("r2", "lean_rep", "black", "STALE-OLD-13"),
+        # Fresh build sorts cells: dem cells get A-001/A-002, rep cells get
+        # A-003/A-004 — these dem profiles squat on the rep fresh IDs.
+        _stale_profile("d1", "strong_dem", "white", "A-003"),
+        _stale_profile("d2", "dem", "hispanic", "A-004"),
+    ]
+    (data_dir / "profiles" / "registry.json").write_text(json.dumps(profiles))
+    (data_dir / "snapshots" / "manifest.json").write_text(json.dumps({"snapshots": []}))
+    from server import create_app
+    flask_app = create_app(data_dir=str(data_dir))
+    flask_app.config["TESTING"] = True
+    flask_app.config["OPINION_ENGINE"] = _StubOpinionEngine()
+    return flask_app
+
+
+@pytest.fixture
+def stale_client(stale_app):
+    return stale_app.test_client()
+
+
+def test_auto_complete_filtered_poll_party_consistent_no_empty_profiles(stale_client, stale_app):
+    create_resp = stale_client.post(
+        "/api/polls",
+        json={"question": CES_QUESTION, "filters": {"party_id": "rep"}},
+    )
+    assert create_resp.status_code == 201
+    poll_id = create_resp.get_json()["poll_id"]
+
+    resp = stale_client.post(f"/api/polls/{poll_id}/auto-complete")
+    assert resp.status_code == 200
+    assert resp.get_json()["recorded"] == 2
+
+    # Every profile actually polled must be non-empty and party-consistent
+    engine = stale_app.config["OPINION_ENGINE"]
+    assert engine.polled_profiles, "no profiles were polled"
+    for profile in engine.polled_profiles:
+        assert profile, "an empty profile {} was polled"
+        assert profile.get("party_id") in REP_PARTIES
+
+    # And every recorded response must carry rep demographics
+    data_dir = Path(stale_app.config["DATA_DIR"])
+    response_files = list((data_dir / "polls" / poll_id / "responses").glob("*.json"))
+    assert len(response_files) == 2
+    for rf in response_files:
+        result = json.loads(rf.read_text())
+        demos = result.get("demographics", {})
+        assert demos, f"response {rf.name} has empty demographics"
+        assert demos.get("party_id") in REP_PARTIES
+
+
+def test_auto_complete_unfiltered_poll_uses_fresh_archetype_assignment(stale_client, stale_app):
+    # 2 rep + 2 dem profiles, one archetype each (weight 0.25). With the
+    # party-deterministic stub the correct distribution is 50/50. The stale
+    # index would answer rep archetypes with dem squatters and dem
+    # archetypes with empty profiles -> yes = 0.0.
+    create_resp = stale_client.post("/api/polls", json={"question": CES_QUESTION})
+    assert create_resp.status_code == 201
+    poll_id = create_resp.get_json()["poll_id"]
+
+    resp = stale_client.post(f"/api/polls/{poll_id}/auto-complete")
+    assert resp.status_code == 200
+    body = resp.get_json()
+    assert body["recorded"] == 4
+    assert body["distribution"]["yes"] == pytest.approx(0.5)
+    assert body["distribution"]["no"] == pytest.approx(0.5)
+
+    engine = stale_app.config["OPINION_ENGINE"]
+    for profile in engine.polled_profiles:
+        assert profile, "an empty profile {} was polled"

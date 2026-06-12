@@ -17,7 +17,9 @@ import requests
 from flask import Blueprint, jsonify, request, current_app
 
 from api import benchmarks as _benchmarks
-from engine.ces_columns import match_question
+from engine.ces_columns import (
+    match_question, detect_negated_phrasing, NEGATED_PHRASING_ERROR,
+)
 
 polymarket_bp = Blueprint("polymarket", __name__)
 
@@ -31,6 +33,12 @@ GAMMA_PARAMS = {
 }
 MAX_RUNS = 25
 DEFAULT_RUNS = 10
+
+# Minimum summed keyword score for a trending market to be flagged "covered".
+# A single generic keyword hit (bare "trump" scores 5) is not real coverage;
+# /ask keeps the loose default because the user explicitly asked and the
+# response shows ces_name, so they can see what was actually answered.
+TRENDING_MIN_MATCH_SCORE = 10
 
 
 def _data_dir() -> Path:
@@ -94,7 +102,14 @@ def _parse_market(m: dict) -> dict | None:
     if outcomes and prices and str(outcomes[0]).strip().lower() == "yes":
         implied_yes = _to_float(prices[0])
 
-    match = match_question(question)
+    # Strict threshold for the coverage flag; loose match only for the
+    # transparency score so users can see how weak a sub-threshold hit was.
+    match = match_question(question, min_score=TRENDING_MIN_MATCH_SCORE)
+    if match is not None:
+        match_score = match["match_score"]
+    else:
+        loose = match_question(question)
+        match_score = loose["match_score"] if loose else 0
     return {
         "question": question,
         "market_id": m.get("id"),
@@ -106,6 +121,7 @@ def _parse_market(m: dict) -> dict | None:
         "ces_column": match["col_id"] if match else None,
         "ces_name": match["name"] if match else None,
         "ces_topic": match["topic"] if match else None,
+        "match_score": match_score,
     }
 
 
@@ -182,6 +198,11 @@ def ask():
     question = (body.get("question") or "").strip()
     if not question:
         return jsonify({"error": "question is required"}), 400
+
+    # Reject negated question stems — the engine answers support/approval
+    # distributions and would silently invert them (audit H2).
+    if detect_negated_phrasing(question):
+        return jsonify({"error": NEGATED_PHRASING_ERROR, "covered": False}), 400
 
     match = match_question(question)
     if match is None:

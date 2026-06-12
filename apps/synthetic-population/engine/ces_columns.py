@@ -282,13 +282,59 @@ CES_COLUMNS = {
 }
 
 
-def match_question(question: str) -> dict | None:
+# ---------------------------------------------------------------------------
+# Negated-phrasing detection (audit H2)
+# ---------------------------------------------------------------------------
+# The keyword matcher below is polarity-blind: "Do you oppose X?" matches X's
+# column and would return the SUPPORT distribution as "yes". Policy: REJECT
+# negated question stems at the API entry gates rather than try to flip them.
+# Only question-STEM negations are listed here — words like "ban", "illegal",
+# "repeal" are the proposal's content (handled by column polarity) and must
+# NOT be flagged.
+
+NEGATION_PATTERNS = [
+    "do you oppose",
+    "you opposed",
+    "do you disapprove",
+    "are you against",
+    "should we not",
+    "do you not support",
+    "don't you support",
+    "do you reject",
+]
+
+NEGATED_PHRASING_ERROR = (
+    "Question uses negated phrasing ('oppose/disapprove/against'). "
+    "Rephrase affirmatively (e.g. 'Do you support X?') — the engine answers "
+    "support/approval distributions."
+)
+
+
+def detect_negated_phrasing(question: str) -> bool:
+    """True if the question stem is negated (oppose/disapprove/against...).
+
+    Callers (API entry gates) should reject such questions with
+    NEGATED_PHRASING_ERROR instead of passing them to match_question.
+    """
+    q = question.lower()
+    return any(pattern in q for pattern in NEGATION_PATTERNS)
+
+
+def match_question(question: str, min_score: int = 1) -> dict | None:
     """Match a free-text question to the best CES column.
 
-    Returns dict with col_id, name, topic, interpret function, or None if
-    no CES column covers this question.
+    Returns dict with col_id, name, topic, interpret function, and
+    match_score, or None if no CES column covers this question.
 
-    Scoring: count keyword matches weighted by keyword length (longer = more specific).
+    Scoring: count keyword matches weighted by keyword length (longer = more
+    specific). min_score is the minimum summed score required to count as a
+    match: the default (1) keeps the loose historical behavior where any
+    single keyword hit matches; callers screening broad question streams
+    (e.g. Polymarket trending) should raise it so one generic keyword
+    (a bare "trump" scores 5) is not treated as coverage.
+
+    NOTE: the matcher is polarity-blind — gate negated questions with
+    detect_negated_phrasing() before calling this.
     """
     q = question.lower()
     best_col = None
@@ -301,6 +347,6 @@ def match_question(question: str) -> dict | None:
                 score += len(kw)
         if score > best_score:
             best_score = score
-            best_col = {"col_id": col_id, **col}
+            best_col = {"col_id": col_id, "match_score": score, **col}
 
-    return best_col if best_score > 0 else None
+    return best_col if best_score >= max(min_score, 1) else None

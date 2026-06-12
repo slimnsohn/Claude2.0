@@ -173,7 +173,14 @@ def _run_synthetic(question: str, filters: dict = None) -> dict:
     sys.path.insert(0, str(Path(__file__).parent.parent))
 
     from api.polls import _load_registry, _apply_filters, _build_archetypes, _get_opinion
-    from engine.ces_columns import match_question
+    from engine.ces_columns import (
+        match_question, detect_negated_phrasing, NEGATED_PHRASING_ERROR,
+    )
+
+    # Reject negated question stems — the matcher is polarity-blind and
+    # would return the SUPPORT distribution for "Do you oppose X?" (audit H2).
+    if detect_negated_phrasing(question):
+        return {"error": NEGATED_PHRASING_ERROR}
 
     if match_question(question) is None:
         return {"error": "Question not covered by CES data"}
@@ -197,7 +204,11 @@ def _run_synthetic(question: str, filters: dict = None) -> dict:
 
     yes_w, no_w, unsure_w, total_w = 0.0, 0.0, 0.0, 0.0
     for aid, weight in weights.items():
-        profile = profiles_by_arch.get(aid, {})
+        profile = profiles_by_arch.get(aid)
+        if not profile:
+            # No representative for this archetype — skip rather than poll
+            # an empty {} profile (audit H1 guard).
+            continue
         result = _get_opinion(question, profile)
         if result is None:
             continue

@@ -1,5 +1,5 @@
 import pytest
-from engine.ces_columns import CES_COLUMNS, match_question
+from engine.ces_columns import CES_COLUMNS, match_question, detect_negated_phrasing
 
 
 class TestCESColumns:
@@ -128,3 +128,69 @@ class TestCESColumns:
                       "CC24_328a", "CC24_328b"):
             assert stale not in CES_COLUMNS, f"stale column {stale} still in registry"
         assert CES_COLUMNS["CC24_312i"]["name"].lower().startswith("harris")
+
+
+class TestNegationDetection:
+    """Audit H2: negated question stems must be detectable so the API gates
+    can reject them instead of silently returning the SUPPORT distribution."""
+
+    def test_oppose_is_flagged(self):
+        assert detect_negated_phrasing("Do you oppose building a border wall?") is True
+
+    def test_disapprove_is_flagged(self):
+        assert detect_negated_phrasing("Do you disapprove of Trump?") is True
+
+    def test_against_is_flagged(self):
+        assert detect_negated_phrasing("Are you against expanding Medicaid?") is True
+
+    def test_do_you_not_support_is_flagged(self):
+        assert detect_negated_phrasing("Do you not support the ACA?") is True
+
+    def test_case_insensitive(self):
+        assert detect_negated_phrasing("DO YOU OPPOSE the border wall?") is True
+
+    def test_ban_is_content_not_negation(self):
+        # "ban" is the proposal's content (column polarity handles it)
+        assert detect_negated_phrasing("Do you support banning assault rifles?") is False
+
+    def test_repeal_is_content_not_negation(self):
+        assert detect_negated_phrasing("Do you support repealing the ACA?") is False
+
+    def test_illegal_is_content_not_negation(self):
+        assert detect_negated_phrasing("Should abortion be illegal in all circumstances?") is False
+
+    def test_match_question_unchanged_for_negated_text(self):
+        # match_question itself stays polarity-blind; gating happens at the
+        # API entry points, not inside the matcher.
+        result = match_question("Do you oppose building a border wall?")
+        assert result is not None
+        assert result["col_id"] == "CC24_323c"
+
+
+class TestMatchScoreThreshold:
+    """Fix 3: optional min_score lets broad question streams (Polymarket
+    trending) require more than one generic keyword to count as covered."""
+
+    def test_match_result_includes_match_score(self):
+        result = match_question("Do you approve of Trump's job performance?")
+        assert result["match_score"] == 27  # trump(5) + approve(7) + job performance(15)
+
+    def test_default_min_score_keeps_loose_behavior(self):
+        result = match_question("Will Trump restart Project Freedom by June 30?")
+        assert result is not None
+        assert result["col_id"] == "CC24_410"
+        assert result["match_score"] == 5  # bare "trump" only
+
+    def test_bare_generic_keyword_fails_min_score_10(self):
+        assert match_question("Will Trump restart Project Freedom by June 30?",
+                              min_score=10) is None
+
+    def test_multi_keyword_passes_min_score_10(self):
+        result = match_question("Will Trump's approval rating be above 45%?",
+                                min_score=10)
+        assert result is not None
+        assert result["col_id"] == "CC24_410"
+        assert result["match_score"] == 13  # trump(5) + approval(8)
+
+    def test_no_match_still_none_with_min_score(self):
+        assert match_question("Do you like pizza?", min_score=10) is None

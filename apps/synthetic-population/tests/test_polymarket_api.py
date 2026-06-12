@@ -98,6 +98,47 @@ def test_trending_success_envelope_sorting_and_coverage(client, tmp_path, monkey
     assert len(cache["markets"]) == 2
 
 
+def test_trending_min_score_excludes_single_generic_keyword(client, monkeypatch):
+    """Fix 3: a bare generic keyword hit ("trump", score 5) must not be
+    marked covered; a multi-keyword hit (trump+approval, score 13) must."""
+    payload = [
+        {
+            "question": "Will Trump restart Project Freedom by June 30?",
+            "id": "510", "slug": "project-freedom", "volume24hr": 99000.0,
+            "endDate": "2026-06-30T00:00:00Z",
+            "outcomes": '["Yes", "No"]', "outcomePrices": '["0.5", "0.5"]',
+        },
+        {
+            "question": "Will Trump's approval rating be above 45%?",
+            "id": "511", "slug": "trump-approval", "volume24hr": 88000.0,
+            "endDate": "2026-09-30T00:00:00Z",
+            "outcomes": '["Yes", "No"]', "outcomePrices": '["0.45", "0.55"]',
+        },
+    ]
+    _mock_gamma(monkeypatch, payload=payload)
+    resp = client.get("/api/polymarket/trending")
+    assert resp.status_code == 200
+    markets = {m["market_id"]: m for m in resp.get_json()["markets"]}
+
+    bare = markets["510"]  # only generic keyword "trump" -> score 5
+    assert bare["covered"] is False
+    assert bare["ces_column"] is None
+    assert bare["match_score"] == 5
+
+    strong = markets["511"]  # trump(5) + approval(8) -> score 13
+    assert strong["covered"] is True
+    assert strong["ces_column"] == "CC24_410"
+    assert strong["match_score"] == 13
+
+
+def test_trending_rows_include_match_score(client, monkeypatch):
+    _mock_gamma(monkeypatch)
+    resp = client.get("/api/polymarket/trending")
+    assert resp.status_code == 200
+    for m in resp.get_json()["markets"]:
+        assert "match_score" in m
+
+
 def test_trending_respects_limit(client, monkeypatch):
     _mock_gamma(monkeypatch)
     resp = client.get("/api/polymarket/trending?limit=1")
