@@ -138,7 +138,10 @@ def run_calibration(data_dir, profiles: list, poll_fn, now: datetime = None,
             result["verdict"] = "pass"
 
     hist_path = Path(data_dir) / "calibration_history.json"
-    history = json.loads(hist_path.read_text()) if hist_path.exists() else []
+    try:
+        history = json.loads(hist_path.read_text()) if hist_path.exists() else []
+    except (json.JSONDecodeError, OSError):
+        history = []
     history.append(result)
     hist_path.write_text(json.dumps(history[-100:], indent=2))
     return result
