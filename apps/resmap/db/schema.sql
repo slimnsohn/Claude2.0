@@ -121,6 +121,13 @@ CREATE TABLE equivalences (
     divergence_notes TEXT,             -- human explanation of the risk
     risk_score       REAL,             -- 0 = safe to treat as same, 1 = will resolve differently
     detected_by      TEXT NOT NULL DEFAULT 'auto',  -- auto | reviewed
+    -- divergence-play strategy (for false_friends): in the scenario where the two
+    -- markets resolve DIFFERENTLY, which side resolves YES. The position is then
+    -- mechanical: buy YES on that side, buy NO on the other — flat if they agree,
+    -- pays off if they diverge this way. (parse/strategy.py)
+    divergence_direction TEXT,         -- 'a' | 'b' = which market resolves YES in the split
+    strategy_scenario    TEXT,         -- one-line description of the divergence case
+    strategy_rationale   TEXT,         -- why, referencing the rule difference
     created_at       TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at       TIMESTAMPTZ NOT NULL DEFAULT now(),
     CHECK (market_a_id <> market_b_id),

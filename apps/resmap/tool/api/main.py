@@ -18,12 +18,14 @@ Responses are dataset-shaped stable JSON; the demo dashboard consumes these.
 from __future__ import annotations
 
 import os
+from datetime import datetime, timezone
 
 from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, Header, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 
 from tool.api.auth import RateLimiter, lookup_key
+from tool.api.pricing import extract_price, live_price
 
 load_dotenv()  # so `uvicorn tool.api.main:app` picks up DATABASE_URL from .env
 
@@ -116,6 +118,36 @@ def market_rules(market_id: str, conn=Depends(get_db), _=Depends(require_key)):
     return rows[0]
 
 
+@app.get("/markets/{market_id}/price")
+def market_price(market_id: str, conn=Depends(get_db), _=Depends(require_key)):
+    """Current YES/NO price: live from the venue, falling back to the
+    last-ingested snapshot. Polymarket + Kalshi only."""
+    with conn.cursor() as cur:
+        cur.execute("""
+            SELECT v.code, m.venue_market_id, s.raw_payload, s.fetched_at
+            FROM markets m
+            JOIN venues v USING (venue_id)
+            LEFT JOIN LATERAL (
+                SELECT raw_payload, fetched_at FROM rule_snapshots
+                WHERE market_id = m.market_id ORDER BY fetched_at DESC LIMIT 1
+            ) s ON TRUE
+            WHERE m.market_id = %s::uuid
+        """, (market_id,))
+        row = cur.fetchone()
+    if not row:
+        raise HTTPException(404, "unknown market")
+    venue, venue_market_id, payload, fetched_at = row
+
+    live = live_price(venue, venue_market_id)
+    if live:
+        return {**live, "source": "live", "venue": venue,
+                "as_of": datetime.now(timezone.utc)}
+    cached = extract_price(venue, payload or {})
+    if cached:
+        return {**cached, "source": "cached", "venue": venue, "as_of": fetched_at}
+    raise HTTPException(404, f"no price available for {venue} market")
+
+
 @app.get("/equivalences")
 def equivalences(match_type: str | None = None, min_risk: float = 0.0,
                  limit: int = Query(100, le=1000),
@@ -129,6 +161,7 @@ def equivalences(match_type: str | None = None, min_risk: float = 0.0,
         cur.execute(f"""
             SELECT e.equivalence_id, e.match_type, e.risk_score,
                    e.divergence_axes, e.divergence_notes,
+                   e.divergence_direction, e.strategy_scenario, e.strategy_rationale,
                    ma.title AS market_a_title, va.code AS market_a_venue,
                    mb.title AS market_b_title, vb.code AS market_b_venue,
                    e.market_a_id, e.market_b_id, e.updated_at

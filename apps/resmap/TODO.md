@@ -98,6 +98,20 @@ Work top to bottom. Each phase is independently testable. Check off as you go.
       both servers; `launch.vbs` does it silently (no terminal). Note: a server must
       be started once (a page can't bootstrap itself); after that it's all browser.
 
+## Divergence-play strategy + live prices ✅ 2026-06-13
+- [x] `parse/strategy.py`: for each false_friend, Claude derives which side resolves
+      YES in the divergence split (+ scenario + rationale) → `equivalences.divergence_direction`.
+- [x] `tool/api/pricing.py`: live YES/NO price from Polymarket (Gamma) + Kalshi
+      (markets/{ticker}), cached fallback from the latest snapshot raw_payload.
+- [x] API: `/equivalences` returns strategy fields; new `GET /markets/{id}/price`
+      (live + cached). Dashboard renders the two-leg play (buy YES on yes-side, buy
+      NO on the other), live prices pulled on load, cost + both-ways payoff table
+      (same→scratch, predicted-divergence→win, opposite→loss), rationale, risk note.
+- [x] Live-verified: e.g. Musk-CEO pair (Poly "before 2027" vs Kalshi "before 2026")
+      → BUY YES poly @ $0.07 + BUY NO kalshi @ $0.92, cost $0.99, +$1.01 on divergence.
+- [x] Control refresh timeout raised 1800→3600s (full unbounded ingest takes 30-40 min).
+- [ ] Later: per-pair "fetch live" refresh button; net-after-fees (still needs a fee model).
+
 ## Stretch / later
 - [ ] Rule-change alert feed as its own subscription (Telegram/Discord/webhook)
 - [ ] Historical price/probability time-series (the "closing line" archive idea)

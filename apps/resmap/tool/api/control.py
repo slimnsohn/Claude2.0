@@ -85,9 +85,11 @@ def _refresh_steps():
     """ingest then export, each as a subprocess using this venv's python."""
     def step(module: str):
         def run():
+            # a full unbounded ingest of all venues + 70k+ upserts can run
+            # 30-40 min; allow an hour (the job is async — nobody blocks on it)
             r = subprocess.run([sys.executable, "-m", module],
                                capture_output=True, text=True,
-                               cwd=str(PROJECT_ROOT), timeout=1800)
+                               cwd=str(PROJECT_ROOT), timeout=3600)
             if r.returncode != 0:
                 raise RuntimeError((r.stderr or r.stdout or "").strip()[-300:])
             lines = (r.stdout or "").strip().splitlines()

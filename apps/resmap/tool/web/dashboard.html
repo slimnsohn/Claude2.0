@@ -47,6 +47,18 @@
   .verdict{font-size:.82rem;margin-top:.4rem}
   .verdict.ff{color:var(--red)} .verdict.tm{color:var(--green)} .verdict.nm{color:var(--yellow)}
   .empty{color:var(--muted);font-style:italic}
+  .play{margin-top:.7rem;border-top:1px dashed var(--border);padding-top:.6rem}
+  .play h4{font-size:.82rem;color:var(--accent);margin-bottom:.4rem;text-transform:uppercase;letter-spacing:.04em}
+  .leg{font-family:var(--mono);font-size:.86rem;margin:.15rem 0}
+  .leg .y{color:var(--green);font-weight:700}.leg .n{color:var(--red);font-weight:700}
+  .leg .px{color:var(--muted)}
+  .cost{font-family:var(--mono);font-size:.86rem;margin:.45rem 0;font-weight:700}
+  .payoff{width:100%;border-collapse:collapse;font-size:.8rem;margin:.3rem 0}
+  .payoff td{border:1px solid var(--border);padding:.3rem .55rem}
+  .payoff .win{color:var(--green);font-weight:700}.payoff .loss{color:var(--red);font-weight:700}.payoff .scratch{color:var(--muted)}
+  .why{font-size:.85rem;color:#c9d1d9;margin:.5rem 0}
+  .disc{font-size:.74rem;color:var(--muted);margin-top:.4rem;font-style:italic}
+  .pending{color:var(--muted);font-style:italic;font-size:.85rem}
   .change{font-family:var(--mono);font-size:.82rem;border-bottom:1px solid var(--border);padding:.5rem 0}
   .change .new{color:var(--text)} .change .old{color:var(--muted);text-decoration:line-through}
   code{font-family:var(--mono);background:#1f2937;border-radius:4px;padding:.05rem .3rem;font-size:.88em}
@@ -69,8 +81,9 @@
   <h1>ResMap — Cross-Venue Divergence</h1>
   <p class="sub">Live view of the data. It flags which lookalike markets across
   venues are <span class="pill ff">false&nbsp;friend</span> traps — pairs that look
-  like the same bet but can settle <em>differently</em>, so the "free" arbitrage
-  ("arb") isn't free. New to the terms? <a href="faq.html">Read how it works →</a></p>
+  like the same bet but can settle <em>differently</em> — and for each one shows
+  <strong>the two-leg position</strong> (priced live) that's flat if they agree and
+  pays if they diverge. New to the terms? <a href="faq.html">Read how it works →</a></p>
 
   <div class="bar">
     <label>API <input id="api" value="http://127.0.0.1:8077"></label>
@@ -118,6 +131,10 @@
     return r.json();
   }
 
+  const money = x => (x < 0 ? "−$" : "$") + Math.abs(x).toFixed(2);
+  const hasPlay = r => r.match_type === "false_friend" &&
+                       (r.divergence_direction === "a" || r.divergence_direction === "b");
+
   function renderPairs(rows) {
     const ff = rows.filter(r => r.match_type === "false_friend").length;
     $("pairmeta").textContent = `— ${rows.length} pairs, ${ff} false friends`;
@@ -137,8 +154,51 @@
         </div>
         ${r.divergence_notes ? `<div class="notes">${esc(r.divergence_notes)}</div>` : ""}
         <div class="verdict ${c}">${VERDICT[r.match_type] || ""}</div>
+        ${hasPlay(r) ? `<div class="play" id="play-${esc(r.equivalence_id)}"><span class="pending">fetching live prices…</span></div>` : ""}
       </div>`;
     }).join("");
+  }
+
+  function renderPlay(r, pa, pb) {
+    const yesIsA = r.divergence_direction === "a";
+    const yesM = yesIsA ? {v: r.market_a_venue, t: r.market_a_title, p: pa}
+                        : {v: r.market_b_venue, t: r.market_b_title, p: pb};
+    const noM  = yesIsA ? {v: r.market_b_venue, t: r.market_b_title, p: pb}
+                        : {v: r.market_a_venue, t: r.market_a_title, p: pa};
+    const yesPx = yesM.p && yesM.p.yes != null ? yesM.p.yes : null;
+    const noPx  = noM.p  && noM.p.no  != null ? noM.p.no  : null;
+
+    let math;
+    if (yesPx != null && noPx != null) {
+      const cost = yesPx + noPx, agree = 1 - cost, pred = 2 - cost, opp = -cost;
+      math = `<div class="cost">Cost to enter: ${money(cost)} (per $1 contract pair)</div>
+        <table class="payoff">
+          <tr><td>Markets resolve the <b>same</b></td><td>collect $1.00</td><td class="scratch">net ${money(agree)} ≈ scratch</td></tr>
+          <tr><td>Diverge <b>as predicted</b> (${esc(yesM.v)} YES / ${esc(noM.v)} NO)</td><td>collect $2.00</td><td class="win">net ${money(pred)} — WIN</td></tr>
+          <tr><td>Diverge the <b>other</b> way</td><td>collect $0.00</td><td class="loss">net ${money(opp)} — the risk</td></tr>
+        </table>`;
+    } else {
+      math = `<div class="pending">live price unavailable for one side — showing the directional call only.</div>`;
+    }
+    const src = (m) => (m.p && m.p.source) || "?";
+    return `<h4>The play — bet on the split, not the event</h4>
+      <div class="leg"><span class="y">BUY YES</span> [${esc(yesM.v)}] ${esc(yesM.t)} <span class="px">@ ${yesPx != null ? money(yesPx) : "—"}</span></div>
+      <div class="leg"><span class="n">BUY NO</span>&nbsp; [${esc(noM.v)}] ${esc(noM.t)} <span class="px">@ ${noPx != null ? money(noPx) : "—"}</span></div>
+      ${math}
+      <div class="why"><strong>Why:</strong> ${esc(r.strategy_scenario || "")} ${esc(r.strategy_rationale || "")}</div>
+      <div class="disc">Structural signal, not financial advice — you decide and execute. Prices ${esc(src(yesM))}/${esc(src(noM))}; a YES at $0.27 ≈ a 27% implied chance.</div>`;
+  }
+
+  async function fillPlays(rows) {
+    await Promise.all(rows.filter(hasPlay).map(async r => {
+      const el = document.getElementById("play-" + r.equivalence_id);
+      if (!el) return;
+      const [pa, pb] = await Promise.all([
+        fetchJson(`/markets/${r.market_a_id}/price`).catch(() => null),
+        fetchJson(`/markets/${r.market_b_id}/price`).catch(() => null),
+      ]);
+      el.innerHTML = renderPlay(r, pa, pb);
+    }));
   }
 
   function renderChanges(rows) {
@@ -157,9 +217,13 @@
         fetchJson("/equivalences?limit=200"),
         fetchJson("/rule-changes?limit=50"),
       ]);
-      renderPairs(eq.equivalences || []);
+      const pairs = eq.equivalences || [];
+      renderPairs(pairs);
       renderChanges(rc.rule_changes || []);
-      $("status").textContent = "loaded " + new Date().toLocaleTimeString();
+      $("status").textContent = "loaded " + new Date().toLocaleTimeString() + " · pulling live prices…";
+      fillPlays(pairs).then(() => {
+        $("status").textContent = "loaded " + new Date().toLocaleTimeString();
+      });
     } catch (e) {
       $("status").textContent = "⚠ " + e.message;
     }

@@ -78,6 +78,7 @@
   nav a { color: var(--muted); font-size: .92rem; }
   nav a.active { color: var(--accent); }
   .legend { color: var(--muted); font-size: .85rem; margin: .3rem 0 .8rem; }
+  .win { color: var(--green); font-weight: 600; } .loss { color: var(--red); font-weight: 600; } .scratch { color: var(--muted); }
 </style>
 </head>
 <body>
@@ -332,6 +333,30 @@ resolve differently):</p>
 <p>Surfacing <span class="ff">false_friend</span>s is the product's edge over
 every cheap arb tool. Results are upserted into <code>equivalences</code> with
 the axes that diverged and human-readable notes; re-runs update in place.</p>
+</div></details>
+
+<details>
+<summary>Once a false friend is flagged, what position do you actually take?</summary><div>
+<p>The dashboard turns each false friend into a concrete two-leg play. The key
+question Claude answers is: <em>in the scenario where the two markets resolve
+DIFFERENTLY, which one resolves YES?</em> Call that the "yes side." Then:</p>
+<ul>
+<li><strong>Buy YES on the yes-side market</strong>, and</li>
+<li><strong>Buy NO on the other market.</strong></li>
+</ul>
+<p>You're now betting on the <em>split</em>, not on who wins the underlying event:</p>
+<table>
+<tr><th>What happens</th><th>You collect</th><th>Why</th></tr>
+<tr><td>The two markets <b>agree</b> (both YES or both NO)</td><td class="scratch">$1.00</td><td>exactly one leg pays — so if you entered near $1, you ≈ scratch</td></tr>
+<tr><td>They <b>diverge as predicted</b> (yes-side YES, other NO)</td><td class="win">$2.00</td><td>both legs pay — the win</td></tr>
+<tr><td>They diverge the <b>other</b> way</td><td class="loss">$0.00</td><td>neither pays — you lose the entry cost (the risk)</td></tr>
+</table>
+<p>So the edge is real when you can enter near $1.00: agreement roughly returns
+your stake, and the divergence scenario is cheap optionality in your favour — as
+long as the divergence goes the predicted way. The dashboard pulls each side's
+<strong>live price</strong> on load and shows the exact cost and the net in all
+three outcomes. This is a structural signal, not financial advice — ResMap sells
+the signal; you decide and execute.</p>
 </div></details>
 
 <h2>Operations</h2>

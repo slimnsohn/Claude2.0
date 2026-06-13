@@ -139,7 +139,11 @@ python -m scripts.cluster_sources               # let claude propose merges (you
     <p>Find lookalike Polymarket↔Kalshi pairs and compare their parsed interpretations across
     four axes (source, cutoff, tie, threshold) → <code>true_match</code> / <code>near_match</code>
     / <code>false_friend</code>.</p>
-    <pre>python -m parse.equivalence</pre>
+    <pre>python -m parse.equivalence
+python -m parse.strategy      # for each false friend: which side resolves YES in the split + why</pre>
+    <p><code>parse.strategy</code> is what powers the <strong>two-leg play</strong> the dashboard
+    shows for each false friend (buy YES on the side that diverges to YES, buy NO on the other —
+    flat if they agree, pays if they diverge). Prices are pulled live on the dashboard.</p>
     <p>For the full registry (slow to match), use the staged pipeline that caches candidates:</p>
     <pre>python -m scripts.equivalence_pipeline match --out pairs.json --top 12
 python -m parse.rule_parser --ids ID1 ID2 ...   # parse any sides it flags as unparsed

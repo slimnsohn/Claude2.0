@@ -137,6 +137,55 @@ def test_equivalences_filter_by_risk_and_type(client, db_conn):
     assert client.get("/equivalences?match_type=true_match", headers=H).json()["equivalences"] == []
 
 
+def test_equivalences_includes_strategy_fields(client, db_conn):
+    a = _seed_market(db_conn, "polymarket", "0xSA", "A")
+    b = _seed_market(db_conn, "kalshi", "KXSB", "B")
+    with db_conn.cursor() as cur:
+        cur.execute("""INSERT INTO equivalences (market_a_id, market_b_id, match_type,
+            divergence_axes, risk_score, divergence_direction, strategy_scenario,
+            strategy_rationale)
+            VALUES (%s,%s,'false_friend',ARRAY['threshold'],0.7,'a','A YES on boundary','looser threshold')""",
+            (a[0], b[0]))
+    db_conn.commit()
+    e = client.get("/equivalences", headers=H).json()["equivalences"][0]
+    assert e["divergence_direction"] == "a"
+    assert e["strategy_scenario"] == "A YES on boundary"
+    assert e["strategy_rationale"] == "looser threshold"
+
+
+def test_market_price_live(client, db_conn, monkeypatch):
+    market_id, _ = _seed_market(db_conn, "polymarket", "0xPR", "P")
+    import tool.api.main as main
+    monkeypatch.setattr(main, "live_price", lambda v, i: {"yes": 0.3, "no": 0.7})
+    r = client.get(f"/markets/{market_id}/price", headers=H).json()
+    assert r["yes"] == 0.3 and r["no"] == 0.7
+    assert r["source"] == "live"
+    assert r["venue"] == "polymarket"
+
+
+def test_market_price_cached_fallback(client, db_conn, monkeypatch):
+    # seed a polymarket market whose snapshot payload carries prices
+    from ingest.core import MarketRecord, ingest
+    ingest(db_conn, [MarketRecord(venue_code="polymarket", venue_market_id="0xCP",
+        title="C", raw_rules="r", status="open",
+        raw_payload={"outcomes": '["Yes","No"]', "outcomePrices": '["0.4","0.6"]'})])
+    with db_conn.cursor() as cur:
+        cur.execute("SELECT market_id FROM markets WHERE venue_market_id='0xCP'")
+        mid = cur.fetchone()[0]
+    db_conn.commit()
+    import tool.api.main as main
+    monkeypatch.setattr(main, "live_price", lambda v, i: None)   # venue unreachable
+    r = client.get(f"/markets/{mid}/price", headers=H).json()
+    assert r["yes"] == 0.4
+    assert r["source"] == "cached"
+
+
+def test_market_price_unknown_market_404(client):
+    import uuid
+    r = client.get(f"/markets/{uuid.uuid4()}/price", headers=H)
+    assert r.status_code == 404
+
+
 def test_rule_changes_feed(client, db_conn):
     market_id, snap1 = _seed_market(db_conn, vid="0xRC")
     with db_conn.cursor() as cur:
