@@ -20,6 +20,7 @@ NEW PROJECT START HERE/   Default Claude Code entry point
 - TODO.md files are manually controlled. Never auto-append dead ends from exploration.
 - Never commit or push to git unless explicitly asked. Stage changes silently if needed, but wait for the user to say "commit" or "push".
 - Keep all CLAUDE.md files under 50 lines.
+- `main` is the golden source — every app lives on `main` under `apps/`/`shipped/`. Develop on `app/<name>`, then merge finished work back. Exceptions: `_docs/golden-source.md`.
 - Data files use JSON or CSV. No proprietary formats.
 - Run security-audit skill before any deploy.
 - All browser-based apps include the chat widget from `_skills/llm-chat-widget/`.
@@ -46,5 +47,4 @@ NEW PROJECT START HERE/   Default Claude Code entry point
 
 ## Problem-Solving
 
-- When stuck, try 2-3 different approaches before stopping. If none work, explain what was tried and what the options are.
-- Don't ask permission to try the next approach — just try it.
+- When stuck, try 2-3 approaches before stopping; don't ask permission to try the next — just try it. If none work, explain what was tried and the options.
