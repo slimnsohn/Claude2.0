@@ -25,7 +25,7 @@ from fastapi import Depends, FastAPI, Header, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 
 from tool.api.auth import RateLimiter, lookup_key
-from tool.api.pricing import extract_price, live_price
+from tool.api.pricing import extract_fees, extract_price, live_market
 
 load_dotenv()  # so `uvicorn tool.api.main:app` picks up DATABASE_URL from .env
 
@@ -138,14 +138,17 @@ def market_price(market_id: str, conn=Depends(get_db), _=Depends(require_key)):
         raise HTTPException(404, "unknown market")
     venue, venue_market_id, payload, fetched_at = row
 
-    live = live_price(venue, venue_market_id)
-    if live:
-        return {**live, "source": "live", "venue": venue,
-                "as_of": datetime.now(timezone.utc)}
-    cached = extract_price(venue, payload or {})
-    if cached:
-        return {**cached, "source": "cached", "venue": venue, "as_of": fetched_at}
-    raise HTTPException(404, f"no price available for {venue} market")
+    m = live_market(venue, venue_market_id)
+    if m:
+        source, as_of = "live", datetime.now(timezone.utc)
+    else:
+        m, source, as_of = payload or {}, "cached", fetched_at
+
+    price = extract_price(venue, m)
+    if not price:
+        raise HTTPException(404, f"no price available for {venue} market")
+    fees = extract_fees(venue, m, price["yes"], price["no"])
+    return {**price, **fees, "source": source, "venue": venue, "as_of": as_of}
 
 
 @app.get("/equivalences")

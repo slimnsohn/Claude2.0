@@ -1,8 +1,10 @@
-"""Unit tests for price extraction (works on both live responses and stored
-raw_payload — same field names per venue)."""
+"""Unit tests for price + fee extraction (works on both live responses and
+stored raw_payload — same field names per venue)."""
+import math
+
 import pytest
 
-from tool.api.pricing import extract_price
+from tool.api.pricing import extract_fees, extract_price
 
 
 def test_polymarket_from_outcome_prices():
@@ -41,3 +43,35 @@ def test_missing_prices_returns_none():
 
 def test_unsupported_venue_returns_none():
     assert extract_price("gemini", {"yes_bid_dollars": "0.5"}) is None
+
+
+# ── fees ─────────────────────────────────────────────────────────────────────
+
+def test_kalshi_fee_formula_rounded_up_to_cent():
+    f = extract_fees("kalshi", {}, 0.5, 0.5)
+    # 0.07 * 0.5 * 0.5 = 0.0175 → rounds up to 0.02
+    assert f["yes_fee"] == 0.02 and f["no_fee"] == 0.02
+
+
+def test_kalshi_fee_small_price_still_rounds_to_cent():
+    f = extract_fees("kalshi", {}, 0.07, 0.93)
+    # 0.07*0.07*0.93 = 0.00456 → ceil to 0.01
+    assert f["yes_fee"] == 0.01
+
+
+def test_polymarket_fee_from_schedule():
+    m = {"feesEnabled": True, "feeSchedule": {"rate": 0.04, "exponent": 1}}
+    f = extract_fees("polymarket", m, 0.5, 0.5)
+    assert f["yes_fee"] == pytest.approx(0.5 * 0.04 * 0.25)   # 0.005/share
+
+
+def test_polymarket_fee_free_when_disabled():
+    assert extract_fees("polymarket", {"feesEnabled": False}, 0.5, 0.5)["yes_fee"] == 0.0
+    assert extract_fees("polymarket", {}, 0.5, 0.5)["no_fee"] == 0.0
+
+
+def test_settlement_is_never_charged():
+    # the formula returns 0 at the resolution prices on both venues
+    assert extract_fees("kalshi", {}, 1.0, 0.0)["yes_fee"] == 0.0
+    m = {"feesEnabled": True, "feeSchedule": {"rate": 0.04, "exponent": 1}}
+    assert extract_fees("polymarket", m, 1.0, 0.0)["yes_fee"] == 0.0

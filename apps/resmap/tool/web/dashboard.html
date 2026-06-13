@@ -167,26 +167,33 @@
                         : {v: r.market_a_venue, t: r.market_a_title, p: pa};
     const yesPx = yesM.p && yesM.p.yes != null ? yesM.p.yes : null;
     const noPx  = noM.p  && noM.p.no  != null ? noM.p.no  : null;
+    const yesFee = (yesM.p && +yesM.p.yes_fee) || 0;   // fee to BUY YES on yes-side
+    const noFee  = (noM.p  && +noM.p.no_fee)  || 0;    // fee to BUY NO on no-side
+    const feeNote = m => (m.p && m.p.fee_model) ? m.p.fee_model : "";
 
+    const legFee = (f) => f > 0 ? ` <span class="px">+ fee ${money(f)}</span>` : ` <span class="px">(fee-free)</span>`;
     let math;
     if (yesPx != null && noPx != null) {
-      const cost = yesPx + noPx, agree = 1 - cost, pred = 2 - cost, opp = -cost;
-      math = `<div class="cost">Cost to enter: ${money(cost)} (per $1 contract pair)</div>
+      const stakes = yesPx + noPx, fees = yesFee + noFee, cost = stakes + fees;
+      const agree = 1 - cost, pred = 2 - cost, opp = -cost;
+      const agreeCls = agree >= 0 ? "scratch" : "loss";
+      math = `<div class="cost">Cost to enter: ${money(cost)} <span class="px">= stakes ${money(stakes)} + fees ${money(fees)}</span></div>
         <table class="payoff">
-          <tr><td>Markets resolve the <b>same</b></td><td>collect $1.00</td><td class="scratch">net ${money(agree)} ≈ scratch</td></tr>
+          <tr><td>Markets resolve the <b>same</b></td><td>collect $1.00</td><td class="${agreeCls}">net ${money(agree)} ${agree >= 0 ? "≈ scratch" : "— you pay the spread + fees"}</td></tr>
           <tr><td>Diverge <b>as predicted</b> (${esc(yesM.v)} YES / ${esc(noM.v)} NO)</td><td>collect $2.00</td><td class="win">net ${money(pred)} — WIN</td></tr>
           <tr><td>Diverge the <b>other</b> way</td><td>collect $0.00</td><td class="loss">net ${money(opp)} — the risk</td></tr>
-        </table>`;
+        </table>
+        <div class="px">Fees: ${esc(yesM.v)} ${money(yesFee)} (YES leg) + ${esc(noM.v)} ${money(noFee)} (NO leg). Taker fees, charged on entry only — <b>$0 at settlement on both venues</b>, so a win collects the full $2.00.</div>`;
     } else {
       math = `<div class="pending">live price unavailable for one side — showing the directional call only.</div>`;
     }
     const src = (m) => (m.p && m.p.source) || "?";
     return `<h4>The play — bet on the split, not the event</h4>
-      <div class="leg"><span class="y">BUY YES</span> [${esc(yesM.v)}] ${esc(yesM.t)} <span class="px">@ ${yesPx != null ? money(yesPx) : "—"}</span></div>
-      <div class="leg"><span class="n">BUY NO</span>&nbsp; [${esc(noM.v)}] ${esc(noM.t)} <span class="px">@ ${noPx != null ? money(noPx) : "—"}</span></div>
+      <div class="leg"><span class="y">BUY YES</span> [${esc(yesM.v)}] ${esc(yesM.t)} <span class="px">@ ${yesPx != null ? money(yesPx) : "—"}</span>${yesPx != null ? legFee(yesFee) : ""}</div>
+      <div class="leg"><span class="n">BUY NO</span>&nbsp; [${esc(noM.v)}] ${esc(noM.t)} <span class="px">@ ${noPx != null ? money(noPx) : "—"}</span>${noPx != null ? legFee(noFee) : ""}</div>
       ${math}
       <div class="why"><strong>Why:</strong> ${esc(r.strategy_scenario || "")} ${esc(r.strategy_rationale || "")}</div>
-      <div class="disc">Structural signal, not financial advice — you decide and execute. Prices ${esc(src(yesM))}/${esc(src(noM))}; a YES at $0.27 ≈ a 27% implied chance.</div>`;
+      <div class="disc">Structural signal, not financial advice — you decide and execute. Prices ${esc(src(yesM))}/${esc(src(noM))} · fee models: ${esc(feeNote(yesM))} | ${esc(feeNote(noM))}. A YES at $0.27 ≈ a 27% implied chance; estimates assume taker (market) orders — maker/limit orders pay less.</div>`;
   }
 
   async function fillPlays(rows) {

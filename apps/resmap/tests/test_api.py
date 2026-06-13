@@ -153,18 +153,20 @@ def test_equivalences_includes_strategy_fields(client, db_conn):
     assert e["strategy_rationale"] == "looser threshold"
 
 
-def test_market_price_live(client, db_conn, monkeypatch):
+def test_market_price_live_includes_fees(client, db_conn, monkeypatch):
     market_id, _ = _seed_market(db_conn, "polymarket", "0xPR", "P")
     import tool.api.main as main
-    monkeypatch.setattr(main, "live_price", lambda v, i: {"yes": 0.3, "no": 0.7})
+    # live_market returns the raw market object (price + fee schedule)
+    monkeypatch.setattr(main, "live_market", lambda v, i: {
+        "outcomes": '["Yes","No"]', "outcomePrices": '["0.3","0.7"]',
+        "feesEnabled": True, "feeSchedule": {"rate": 0.04, "exponent": 1}})
     r = client.get(f"/markets/{market_id}/price", headers=H).json()
     assert r["yes"] == 0.3 and r["no"] == 0.7
-    assert r["source"] == "live"
-    assert r["venue"] == "polymarket"
+    assert r["source"] == "live" and r["venue"] == "polymarket"
+    assert "yes_fee" in r and "no_fee" in r and r["yes_fee"] > 0  # fee charged
 
 
 def test_market_price_cached_fallback(client, db_conn, monkeypatch):
-    # seed a polymarket market whose snapshot payload carries prices
     from ingest.core import MarketRecord, ingest
     ingest(db_conn, [MarketRecord(venue_code="polymarket", venue_market_id="0xCP",
         title="C", raw_rules="r", status="open",
@@ -174,10 +176,11 @@ def test_market_price_cached_fallback(client, db_conn, monkeypatch):
         mid = cur.fetchone()[0]
     db_conn.commit()
     import tool.api.main as main
-    monkeypatch.setattr(main, "live_price", lambda v, i: None)   # venue unreachable
+    monkeypatch.setattr(main, "live_market", lambda v, i: None)   # venue unreachable
     r = client.get(f"/markets/{mid}/price", headers=H).json()
     assert r["yes"] == 0.4
     assert r["source"] == "cached"
+    assert r["yes_fee"] == 0.0   # no feeSchedule in the cached payload → fee-free
 
 
 def test_market_price_unknown_market_404(client):
