@@ -17,7 +17,13 @@ of a market's parses, so the NOT EXISTS predicate re-selects it next run.
 PARSING CONTRACT (the JSON schema Claude must return — mirrors parsed_rules):
 {
   "resolution_logic":  str,   # normalized "resolves YES if ..."
-  "authoritative_source": str,# canonical settlement source, e.g. "AP race call"
+  "authoritative_source": str,# SHORT canonical name of the PRIMARY authority only,
+                              #   normalized as an entity, e.g. "FIFA", "AP",
+                              #   "NASA GISS land-ocean index" — NOT a sentence,
+                              #   NOT the fallback. Short names dedupe in `sources`.
+  "source_fallback": str|null,# secondary/fallback procedure if the primary is
+                              #   unavailable, e.g. "consensus of credible
+                              #   reporting"; null if none stated
   "source_type": str,         # official_data | media_call | exchange_discretion | onchain | other
   "cutoff_time": str|null,    # ISO8601 if determinable from rules text
   "cutoff_basis": str,        # event_time | data_release | venue_stated
@@ -41,17 +47,27 @@ from parse.claude_cli import call_claude_json
 logger = logging.getLogger(__name__)
 
 REQUIRED_KEYS = (
-    "resolution_logic", "authoritative_source", "source_type", "cutoff_time",
-    "cutoff_basis", "tie_handling", "revision_handling", "threshold_def",
-    "confidence",
+    "resolution_logic", "authoritative_source", "source_fallback", "source_type",
+    "cutoff_time", "cutoff_basis", "tie_handling", "revision_handling",
+    "threshold_def", "confidence",
 )
 
 PARSE_SYSTEM_PROMPT = """You extract prediction-market settlement semantics from raw \
 rules text. You think like a lawyer reading a contract, not a casual bettor reading \
 a headline — the exact source, cutoff, tie handling, and threshold wording decide \
 real money. Return ONLY a single JSON object with exactly these keys: resolution_logic, \
-authoritative_source, source_type, cutoff_time, cutoff_basis, tie_handling, \
-revision_handling, threshold_def, confidence. No prose, no markdown, no preamble. \
+authoritative_source, source_fallback, source_type, cutoff_time, cutoff_basis, \
+tie_handling, revision_handling, threshold_def, confidence. No prose, no markdown, no preamble. \
+authoritative_source must be the SHORT canonical name of the PRIMARY settlement authority \
+ONLY, normalized as a reusable entity — at most a few words — e.g. "FIFA", "AP", \
+"NASA GISS LOTI", "BLS CPI". For a data feed, name the publishing body plus the series \
+only; put any specific table, column, URL, dataset vintage, or "annual value for YEAR" \
+qualifier in resolution_logic or threshold_def, NEVER in authoritative_source. The \
+authoritative_source string must NOT be a sentence, must NOT contain the words \
+"primary", "fallback", "consensus", "secondary", or any "if unavailable" clause, and \
+must NOT contain a date. Put the secondary/fallback procedure (used only if the primary \
+is unavailable, e.g. "consensus of credible reporting") in source_fallback, or null if \
+none is stated. \
 source_type must be one of: official_data | media_call | exchange_discretion | onchain | other. \
 cutoff_basis must be one of: event_time | data_release | venue_stated. \
 If a field is not determinable from the text, use null (and lower your confidence)."""
@@ -182,16 +198,16 @@ def run(conn, limit: int | None = None, dry_run: bool = False,
             cur.execute(
                 """
                 INSERT INTO parsed_rules (market_id, snapshot_id, source_id,
-                    resolution_logic, cutoff_time, cutoff_basis, tie_handling,
-                    revision_handling, threshold_def, extraction_method,
-                    confidence, reviewed, is_stale)
-                VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,'llm',%s,FALSE,FALSE)
+                    resolution_logic, source_fallback, cutoff_time, cutoff_basis,
+                    tie_handling, revision_handling, threshold_def,
+                    extraction_method, confidence, reviewed, is_stale)
+                VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,'llm',%s,FALSE,FALSE)
                 """,
                 (market_id, snapshot_id, source_id,
-                 parsed["resolution_logic"], parsed["cutoff_time"],
-                 parsed["cutoff_basis"], parsed["tie_handling"],
-                 parsed["revision_handling"], parsed["threshold_def"],
-                 parsed["confidence"]),
+                 parsed["resolution_logic"], parsed["source_fallback"],
+                 parsed["cutoff_time"], parsed["cutoff_basis"],
+                 parsed["tie_handling"], parsed["revision_handling"],
+                 parsed["threshold_def"], parsed["confidence"]),
             )
         conn.commit()  # per row: a crash must not lose completed LLM work
         stats["parsed"] += 1

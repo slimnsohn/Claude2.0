@@ -210,7 +210,8 @@ a contract, not a casual bettor reading a headline."</p>
 <table>
 <tr><th>Field</th><th>What it captures</th></tr>
 <tr><td><code>resolution_logic</code></td><td>normalized "resolves YES if …"</td></tr>
-<tr><td><code>authoritative_source</code></td><td>who calls it — "AP race call", "BLS CPI release"</td></tr>
+<tr><td><code>authoritative_source</code></td><td>the primary authority as a short canonical entity — "FIFA", "AP", "NASA GISS land-ocean index" (so the same authority dedupes across markets)</td></tr>
+<tr><td><code>source_fallback</code></td><td>the secondary procedure if the primary is silent — e.g. "consensus of credible reporting"</td></tr>
 <tr><td><code>source_type</code></td><td>official_data / media_call / exchange_discretion / onchain / other</td></tr>
 <tr><td><code>cutoff_time</code> + <code>cutoff_basis</code></td><td>the actual settlement cutoff and how it's defined</td></tr>
 <tr><td><code>tie_handling</code></td><td>what happens on a tie / draw / push</td></tr>

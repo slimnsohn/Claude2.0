@@ -18,7 +18,8 @@ from parse.rule_parser import ParseValidationError, parse_rules_text
 
 GOOD_RESPONSE = {
     "resolution_logic": "Resolves YES if CPI rises more than 0.3% in June 2026.",
-    "authoritative_source": "BLS CPI release",
+    "authoritative_source": "BLS CPI release",       # short canonical entity
+    "source_fallback": "consensus of credible reporting",  # procedure, separate
     "source_type": "official_data",
     "cutoff_time": "2026-07-15T12:30:00Z",
     "cutoff_basis": "data_release",
@@ -146,6 +147,26 @@ def test_parse_rules_text_null_cutoff(monkeypatch):
     assert parse_rules_text("rules")["cutoff_time"] is None
 
 
+def test_parse_rules_text_returns_source_fallback(monkeypatch):
+    # the fallback chain is procedure, kept out of the authority entity so the
+    # source row dedupes cleanly
+    _patch_response(monkeypatch, GOOD_RESPONSE)
+    assert parse_rules_text("rules").get("source_fallback") == \
+        "consensus of credible reporting"
+
+
+def test_parse_rules_text_missing_source_fallback_rejected(monkeypatch):
+    bad = {k: v for k, v in GOOD_RESPONSE.items() if k != "source_fallback"}
+    _patch_response(monkeypatch, bad)
+    with pytest.raises(ParseValidationError, match="source_fallback"):
+        parse_rules_text("rules")
+
+
+def test_parse_rules_text_null_source_fallback_allowed(monkeypatch):
+    _patch_response(monkeypatch, {**GOOD_RESPONSE, "source_fallback": None})
+    assert parse_rules_text("rules")["source_fallback"] is None
+
+
 # ── run(): DB loop with mocked LLM (integration) ─────────────────────────────
 
 @pytest.mark.integration
@@ -176,6 +197,20 @@ def test_run_inserts_parse_and_source(db_conn, monkeypatch):
 def parse_rules_text_result():
     return {**GOOD_RESPONSE,
             "cutoff_time": datetime(2026, 7, 15, 12, 30, tzinfo=timezone.utc)}
+
+
+@pytest.mark.integration
+def test_run_stores_source_fallback(db_conn, monkeypatch):
+    ingest(db_conn, [MarketRecord(
+        venue_code="polymarket", venue_market_id="0xF1",
+        title="World Cup?", raw_rules="FIFA decides; else consensus.",
+        status="open")])
+    monkeypatch.setattr(rule_parser, "parse_rules_text",
+                        lambda raw_rules, model=None: parse_rules_text_result())
+    rule_parser.run(db_conn)
+    with db_conn.cursor() as cur:
+        cur.execute("SELECT source_fallback FROM parsed_rules")
+        assert cur.fetchone()[0] == "consensus of credible reporting"
 
 
 @pytest.mark.integration

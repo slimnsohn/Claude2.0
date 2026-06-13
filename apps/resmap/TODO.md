@@ -37,12 +37,18 @@ Work top to bottom. Each phase is independently testable. Check off as you go.
 - [x] Live seed: top 12 pairs compared; hand-verified the headline find —
       "hottest year on record" is a TRUE false_friend (Poly resolves rank/tie
       = YES, Kalshi strict inequality = NO on the same tie)
-- [ ] Calibration: curate `sources` rows so the source axis fires on real
-      authority differences, not canonical-name granularity (currently
-      inflates risk on pairs sharing a primary source with different
-      fallback chains). NOTE: canonical_name is UNIQUE, so dedup is semantic —
-      a human curation step or a judge call on near-name sources, not a code
-      fix. Decide the approach before tuning weights.
+- [x] Source calibration LAYER 1 (extraction fix, 2026-06-13): parse contract
+      now splits the PRIMARY authority (short canonical entity → `sources`)
+      from the fallback procedure (new `parsed_rules.source_fallback` column).
+      Verified live: FIFA markets collapse 10+ prose rows → one "FIFA";
+      NASA → "NASA GISS LOTI". Existing parses re-parsed under the new
+      contract; old verbose source rows stay referenced by stale parses
+      (history), live equivalence joins only fresh parses so it self-heals.
+- [ ] Source calibration LAYER 2 (residual semantic merge): even short names
+      recur as near-duplicates ("FIFA" vs "Fifa governing body"). Add
+      `sources.merged_into` self-ref; source axis resolves through
+      COALESCE(merged_into, source_id); bootstrap merges with an LLM cluster
+      pass a human approves via a `review_cli merge-source` command.
 - [ ] Review the 51 ≥0.90 pairs; extend seed set; tune AXIS_WEIGHTS
 
 ## Hardening (audit 2026-06-13, fixed) ✅

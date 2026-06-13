@@ -70,7 +70,8 @@ def cmd_show(conn, prefix: str) -> int:
         parsed_id = _resolve_prefix(cur, prefix)
         cur.execute("""
             SELECT v.code, m.title, p.resolution_logic, s.canonical_name,
-                   s.source_type, p.cutoff_time, p.cutoff_basis, p.tie_handling,
+                   s.source_type, p.source_fallback, p.cutoff_time,
+                   p.cutoff_basis, p.tie_handling,
                    p.revision_handling, p.threshold_def, p.confidence,
                    p.reviewed, p.is_stale, snap.raw_rules, snap.fetched_at
             FROM parsed_rules p
@@ -82,8 +83,9 @@ def cmd_show(conn, prefix: str) -> int:
         """, (parsed_id,))
         row = cur.fetchone()
 
-    (venue, title, logic, source, source_type, cutoff, cutoff_basis, tie,
-     revision, threshold, conf, reviewed, is_stale, raw_rules, fetched_at) = row
+    (venue, title, logic, source, source_type, fallback, cutoff, cutoff_basis,
+     tie, revision, threshold, conf, reviewed, is_stale, raw_rules,
+     fetched_at) = row
 
     print(f"parse {parsed_id}")
     print(f"  market:    [{venue}] {title}")
@@ -91,6 +93,7 @@ def cmd_show(conn, prefix: str) -> int:
     print( "  ── parsed interpretation ──")
     print(f"  logic:     {logic}")
     print(f"  source:    {source} ({source_type})")
+    print(f"  fallback:  {fallback}")
     print(f"  cutoff:    {cutoff}  basis: {cutoff_basis}")
     print(f"  tie:       {tie}")
     print(f"  revision:  {revision}")

@@ -85,7 +85,8 @@ CREATE TABLE parsed_rules (
     parsed_id        UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     market_id        UUID NOT NULL REFERENCES markets(market_id),
     snapshot_id      UUID NOT NULL REFERENCES rule_snapshots(snapshot_id),
-    source_id        UUID REFERENCES sources(source_id),  -- authoritative settlement source
+    source_id        UUID REFERENCES sources(source_id),  -- PRIMARY authority (short canonical entity)
+    source_fallback  TEXT,         -- secondary/fallback procedure if primary is unavailable
     resolution_logic TEXT,         -- plain-language normalized "resolves YES if ..."
     cutoff_time      TIMESTAMPTZ,  -- the actual settlement cutoff (may differ from closes_at)
     cutoff_basis     TEXT,         -- how cutoff is defined: 'event_time' | 'data_release' | 'venue_stated'
