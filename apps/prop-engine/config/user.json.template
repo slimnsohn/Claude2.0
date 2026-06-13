@@ -1,0 +1,8 @@
+{
+  "bankroll": null,
+  "min_edge_pct": 0.03,
+  "kelly_fraction": 0.25,
+  "max_stake_pct": 0.02,
+  "min_bet_amount": 5.00,
+  "books_to_consider": ["pinnacle", "fanduel", "bookmaker", "betonline", "draftkings"]
+}

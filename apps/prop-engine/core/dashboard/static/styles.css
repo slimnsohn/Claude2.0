@@ -1,0 +1,18 @@
+body { margin: 0; font-family: ui-sans-serif, system-ui, sans-serif; background: #0f1115; color: #e6e8ee; }
+.topbar { padding: 1rem 1.25rem; display: flex; align-items: center; gap: 1rem; border-bottom: 1px solid #20232b; }
+.topbar h1 { font-size: 1.1rem; margin: 0; letter-spacing: 0.02em; }
+.topbar nav { display: flex; gap: 0.5rem; }
+.topbar nav button { background: #1c1f27; color: #e6e8ee; border: 1px solid #2a2e39; padding: 0.4rem 0.75rem; border-radius: 6px; cursor: pointer; }
+.topbar nav button.active { background: #2b4a8c; border-color: #2b4a8c; }
+.topbar nav button.secondary { background: transparent; }
+#meta { margin-left: auto; color: #8a92a6; font-size: 0.85rem; }
+main { padding: 1rem 1.25rem; }
+#filters { display: flex; gap: 1rem; margin-bottom: 1rem; align-items: end; }
+#filters label { display: flex; flex-direction: column; font-size: 0.8rem; color: #8a92a6; }
+#filters input, #filters select { background: #1c1f27; color: #e6e8ee; border: 1px solid #2a2e39; padding: 0.35rem; border-radius: 4px; }
+table { width: 100%; border-collapse: collapse; }
+th, td { padding: 0.55rem 0.75rem; text-align: left; font-size: 0.9rem; border-bottom: 1px solid #20232b; }
+th { color: #8a92a6; font-weight: 500; }
+td.edge { color: #6bd56b; font-weight: 600; }
+.log-btn { background: #2b4a8c; color: #fff; border: 0; padding: 0.3rem 0.6rem; border-radius: 4px; cursor: pointer; }
+.empty { color: #8a92a6; padding: 2rem; text-align: center; }

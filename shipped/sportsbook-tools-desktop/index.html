@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sportsbook Tools</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=DM+Sans:wght@400;500;600&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
+  *:focus { outline: none; }
+  input { user-select: text; }
+
+  :root {
+    --bg: #0a0a0f;
+    --surface: #141420;
+    --surface2: #1c1c2e;
+    --border: #2a2a3e;
+    --border-hover: #3a3a5e;
+    --text: #e8e8f0;
+    --text-dim: #6e6e8a;
+    --green: #22c55e;
+    --green-bg: rgba(34,197,94,0.12);
+    --red: #ef4444;
+    --red-bg: rgba(239,68,68,0.12);
+    --accent: #818cf8;
+    --accent-bg: rgba(129,140,248,0.12);
+    --yellow: #eab308;
+    --yellow-bg: rgba(234,179,8,0.12);
+    --cyan: #06b6d4;
+    --cyan-bg: rgba(6,182,212,0.12);
+    --orange: #f97316;
+    --orange-bg: rgba(249,115,22,0.12);
+  }
+
+  body {
+    font-family: 'DM Sans', -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    -webkit-app-region: drag;
+  }
+
+  /* === DRAG BAR === */
+  .drag-bar {
+    height: 32px;
+    -webkit-app-region: drag;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--text-dim);
+    letter-spacing: 1px;
+    gap: 12px;
+  }
+  .header-clock { display: flex; gap: 8px; align-items: center; -webkit-app-region: no-drag; }
+  .clock { font-size: 11px; font-weight: 700; color: var(--text); font-variant-numeric: tabular-nums; }
+  .last-updated { font-size: 10px; color: var(--text-dim); }
+  .last-updated.stale { color: var(--orange); }
+
+  /* === NAV === */
+  .nav-tabs {
+    display: flex;
+    border-bottom: 1px solid var(--border);
+    -webkit-app-region: no-drag;
+    padding: 0 12px;
+  }
+  .nav-tab {
+    flex: 1;
+    padding: 12px 4px;
+    text-align: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-dim);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all 0.15s;
+  }
+  .nav-tab:hover { color: var(--text); }
+  .nav-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  /* === PAGES === */
+  .page { display: none; padding: 20px; padding-bottom: 40px; -webkit-app-region: no-drag; overflow-y: auto; max-height: calc(100vh - 88px); }
+  .page.active { display: block; }
+
+  .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+  .header h1 { font-family: 'JetBrains Mono', monospace; font-size: 16px; font-weight: 700; letter-spacing: -0.5px; }
+  .section-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 1.5px; color: var(--text-dim); margin-bottom: 8px; }
+  .section { margin-bottom: 18px; }
+
+  /* === SHARED INPUTS === */
+  .input-base {
+    width: 100%;
+    border: 2px solid var(--border);
+    border-radius: 10px;
+    background: var(--surface);
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .input-base:hover { border-color: var(--border-hover); }
+
+  /* === RESULT CARDS === */
+  .result-card {
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    background: var(--surface);
+    padding: 16px;
+    margin-bottom: 10px;
+  }
+  .result-card .label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 1.5px; color: var(--text-dim); margin-bottom: 4px; }
+  .result-card .value { font-family: 'JetBrains Mono', monospace; font-weight: 700; }
+  .result-card .sub { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--text-dim); margin-top: 4px; }
+  .result-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .result-row .result-card .value { font-size: 20px; }
+
+  /* === KALSHI === */
+  .kalshi-input-wrap { position: relative; margin-bottom: 12px; }
+  .kalshi-input-wrap .suffix { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); font-family: 'JetBrains Mono', monospace; font-size: 16px; color: var(--text-dim); pointer-events: none; }
+  .kalshi-input {
+    width: 100%; padding: 16px 44px 16px 16px;
+    border: 2px solid var(--border); border-radius: 12px;
+    background: var(--surface); color: var(--yellow);
+    font-family: 'JetBrains Mono', monospace; font-size: 32px; font-weight: 700;
+    text-align: center; outline: none;
+  }
+  .kalshi-input:focus { border-color: var(--yellow); }
+  .kalshi-input:hover { border-color: var(--border-hover); }
+  .kalshi-input:focus:hover { border-color: var(--yellow); }
+
+  .cents-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; margin-top: 6px; }
+  .cent-btn {
+    padding: 8px 2px; border: 1px solid var(--border); border-radius: 6px;
+    background: var(--surface2); color: var(--text-dim);
+    font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 600;
+    text-align: center; cursor: pointer; transition: all 0.12s;
+  }
+  .cent-btn:hover { border-color: var(--yellow); color: var(--yellow); background: var(--yellow-bg); }
+
+  /* === TABLE DROPDOWN === */
+  .table-toggle {
+    padding: 10px 16px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--surface2);
+    color: var(--text-dim);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.12s;
+    text-align: center;
+    width: 100%;
+  }
+  .table-toggle:hover { border-color: var(--yellow); color: var(--yellow); }
+  .table-toggle.open { border-color: var(--yellow); color: var(--yellow); background: var(--yellow-bg); }
+
+  .conv-table {
+    display: none;
+    margin-top: 10px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--surface);
+    overflow: hidden;
+    max-height: 400px;
+    overflow-y: auto;
+  }
+  .conv-table.open { display: block; }
+  .conv-table table { width: 100%; border-collapse: collapse; }
+  .conv-table th {
+    padding: 8px 12px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-dim);
+    background: var(--surface2);
+    text-align: center;
+    position: sticky;
+    top: 0;
+  }
+  .conv-table td {
+    padding: 5px 12px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    font-weight: 600;
+    text-align: center;
+    border-top: 1px solid var(--border);
+  }
+  .conv-table td.cents-col { color: var(--yellow); }
+  .conv-table td.fee-col { color: var(--text-dim); }
+  .conv-table td.odds-pos { color: var(--green); }
+  .conv-table td.odds-neg { color: var(--red); }
+
+  /* === WAGER === */
+  .w-input {
+    width: 100%; padding: 12px;
+    border: 2px solid var(--border); border-radius: 10px;
+    background: var(--surface); color: var(--text);
+    font-family: 'JetBrains Mono', monospace; font-size: 20px; font-weight: 700;
+    text-align: center; outline: none;
+  }
+  .w-input:focus { border-color: var(--cyan); }
+  .w-input:hover { border-color: var(--border-hover); }
+  .w-input:focus:hover { border-color: var(--cyan); }
+  .w-input.dog { color: var(--green); } .w-input.dog:focus { border-color: var(--green); }
+  .w-input.fav { color: var(--red); } .w-input.fav:focus { border-color: var(--red); }
+  .w-input.wager { color: var(--cyan); }
+  .w-input.wager.fav-selected { color: var(--red); }
+  .w-input.wager.fav-selected:focus { border-color: var(--red); }
+  .w-input.wager.fav-selected:focus:hover { border-color: var(--red); }
+  .w-input.wager.dog-selected { color: var(--green); }
+  .w-input.wager.dog-selected:focus { border-color: var(--green); }
+  .w-input.wager.dog-selected:focus:hover { border-color: var(--green); }
+
+  .w-side-toggle { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .w-side-btn {
+    padding: 10px 6px; border: 2px solid var(--border); border-radius: 8px;
+    background: var(--surface); color: var(--text-dim);
+    font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 600;
+    text-align: center; cursor: pointer; transition: all 0.12s;
+  }
+  .w-side-btn:hover { border-color: var(--border-hover); color: var(--text); }
+  .w-side-btn.active-dog { border-color: var(--green); background: var(--green-bg); color: var(--green); }
+  .w-side-btn.active-fav { border-color: var(--red); background: var(--red-bg); color: var(--red); }
+
+  .w-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+  .quick-amounts { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; margin-top: 6px; }
+  .quick-btn {
+    padding: 8px; border: 1px solid var(--border); border-radius: 6px;
+    background: var(--surface2); color: var(--text-dim);
+    font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 600;
+    text-align: center; cursor: pointer; transition: all 0.12s;
+  }
+  .quick-btn:hover { border-color: var(--cyan); color: var(--cyan); }
+
+  /* === XBETS === */
+  .x-input {
+    width: 100%; padding: 12px;
+    border: 2px solid var(--border); border-radius: 10px;
+    background: var(--surface); color: var(--text);
+    font-family: 'JetBrains Mono', monospace; font-size: 20px; font-weight: 700;
+    text-align: center; outline: none;
+  }
+  .x-input:focus { border-color: var(--orange); }
+  .x-input:hover { border-color: var(--border-hover); }
+  .x-input:focus:hover { border-color: var(--orange); }
+  .x-input.a { color: var(--green); } .x-input.a:focus { border-color: var(--green); }
+  .x-input.b { color: var(--red); } .x-input.b:focus { border-color: var(--red); }
+
+  .mode-toggle { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .mode-btn {
+    padding: 10px 6px; border: 2px solid var(--border); border-radius: 8px;
+    background: var(--surface); color: var(--text-dim);
+    font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 600;
+    text-align: center; cursor: pointer; transition: all 0.12s;
+  }
+  .mode-btn:hover { border-color: var(--border-hover); color: var(--text); }
+  .mode-btn.active { border-color: var(--orange); background: var(--orange-bg); color: var(--orange); }
+
+  .x-clear-btn {
+    width: 100%;
+    padding: 10px 6px;
+    border: 2px solid var(--border);
+    border-radius: 8px;
+    background: var(--surface);
+    color: var(--text-dim);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 600;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.12s;
+  }
+  .x-clear-btn:hover { border-color: var(--orange); color: var(--orange); background: var(--orange-bg); }
+
+  /* === SCROLLBAR === */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--border-hover); }
+</style>
+</head>
+<body>
+
+<div class="drag-bar">
+  SPORTSBOOK TOOLS
+  <div class="header-clock">
+    <span class="clock" id="systemClock"></span>
+    <span class="last-updated" id="lastUpdated">Not yet updated</span>
+  </div>
+</div>
+
+<div class="nav-tabs">
+  <div class="nav-tab active" onclick="switchTab('kalshi')">KALSHI</div>
+  <div class="nav-tab" onclick="switchTab('xbets')">XBETS</div>
+  <div class="nav-tab" onclick="switchTab('wager')">WAGER</div>
+</div>
+
+<!-- KALSHI -->
+<div class="page active" id="page-kalshi">
+  <div class="header"><h1>KALSHI <span style="display: inline-block; transform: translateY(-3px);">→</span> ODDS</h1></div>
+
+  <div class="section">
+    <div class="section-label">Contract Price (cents)</div>
+    <div class="kalshi-input-wrap">
+      <input class="kalshi-input" id="kalshi-cents" type="number" min="1" max="99" placeholder="50" value="50">
+      <span class="suffix">¢</span>
+    </div>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 6px;">
+      <div class="cent-btn" onclick="nudgeKalshi(-1)" style="padding: 10px; font-size: 20px; border-radius: 10px;">−</div>
+      <div class="cent-btn" onclick="nudgeKalshi(1)" style="padding: 10px; font-size: 20px; border-radius: 10px;">+</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">Quick Select</div>
+    <div class="cents-grid">
+      <div class="cent-btn" onclick="setKalshiCents(10)">10¢</div>
+      <div class="cent-btn" onclick="setKalshiCents(20)">20¢</div>
+      <div class="cent-btn" onclick="setKalshiCents(30)">30¢</div>
+      <div class="cent-btn" onclick="setKalshiCents(40)">40¢</div>
+      <div class="cent-btn" onclick="setKalshiCents(50)">50¢</div>
+      <div class="cent-btn" onclick="setKalshiCents(60)">60¢</div>
+      <div class="cent-btn" onclick="setKalshiCents(70)">70¢</div>
+      <div class="cent-btn" onclick="setKalshiCents(75)">75¢</div>
+      <div class="cent-btn" onclick="setKalshiCents(85)">85¢</div>
+      <div class="cent-btn" onclick="setKalshiCents(95)">95¢</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="result-card" style="text-align: center; padding: 24px 16px;">
+      <div class="label">American Odds (post-fee)</div>
+      <div class="value" id="k-odds" style="color: var(--yellow); font-size: 44px;">-107</div>
+      <div class="sub" id="k-odds-sub">fee: 1.75¢ · eff. prob: 51.8%</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="table-toggle" id="table-toggle" onclick="toggleTable()">▼ FULL CONVERSION TABLE</div>
+    <div class="conv-table" id="conv-table"></div>
+  </div>
+</div>
+
+<!-- XBETS -->
+<div class="page" id="page-xbets">
+  <div class="header"><h1>XBETS</h1></div>
+
+  <div class="section">
+    <div class="section-label">Side A Payout Type</div>
+    <div class="mode-toggle">
+      <div class="mode-btn active" id="xmode-win" onclick="setXMode('win')">TO WIN</div>
+      <div class="mode-btn" id="xmode-tot" onclick="setXMode('tot')">TOTAL</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="x-clear-btn" onclick="clearXbets()">CLEAR ALL</div>
+  </div>
+
+  <div class="section">
+    <div class="section-label" style="color: var(--green);">Side A</div>
+    <div class="w-row">
+      <div><div class="section-label">Wager</div><input class="x-input a" id="x-a-wager" type="number" placeholder="0" oninput="updateXbets()"></div>
+      <div><div class="section-label" id="x-a-label">To Win</div><input class="x-input a" id="x-a-payout" type="number" placeholder="0" oninput="updateXbets()"></div>
+    </div>
+  </div>
+
+  <div style="height: 1px; background: var(--border); margin: 4px 0 14px 0;"></div>
+
+  <div class="section">
+    <div class="section-label" style="color: var(--red);">Side B (Total Return)</div>
+    <div class="w-row">
+      <div><div class="section-label">Wager</div><input class="x-input b" id="x-b-wager" type="number" placeholder="0" oninput="updateXbets()"></div>
+      <div><div class="section-label">Total Return</div><input class="x-input b" id="x-b-payout" type="number" placeholder="0" oninput="updateXbets()"></div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="result-row">
+      <div class="result-card" style="text-align: center;"><div class="label">If A Wins</div><div class="value" id="x-a-win" style="font-size: 26px;">--</div></div>
+      <div class="result-card" style="text-align: center;"><div class="label">If B Wins</div><div class="value" id="x-b-win" style="font-size: 26px;">--</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- WAGER -->
+<div class="page" id="page-wager">
+  <div class="header"><h1>WAGER CALC</h1></div>
+
+  <div class="section">
+    <div class="section-label">Your Side</div>
+    <div class="w-side-toggle">
+      <div class="w-side-btn active-dog" id="wside-dog" onclick="setWagerSide('dog')">DOG</div>
+      <div class="w-side-btn" id="wside-fav" onclick="setWagerSide('fav')">FAV</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="w-row">
+      <div><div class="section-label" style="color: var(--green);">Dog Odds</div><input class="w-input dog" id="w-dog" type="number" placeholder="+100" oninput="updateWager()"></div>
+      <div><div class="section-label" style="color: var(--red);">Fav Odds</div><input class="w-input fav" id="w-fav" type="number" placeholder="-110" oninput="updateWager()"></div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-label" style="color: var(--cyan);">Your Wager ($)</div>
+    <input class="w-input wager dog-selected" id="w-wager" type="number" placeholder="100" oninput="updateWager()">
+    <div class="quick-amounts" style="margin-top: 6px;">
+      <div class="quick-btn" onclick="document.getElementById('w-wager').value=100;updateWager()">100</div>
+      <div class="quick-btn" onclick="document.getElementById('w-wager').value=250;updateWager()">250</div>
+      <div class="quick-btn" onclick="document.getElementById('w-wager').value=500;updateWager()">500</div>
+      <div class="quick-btn" onclick="document.getElementById('w-wager').value=1000;updateWager()">1K</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="result-card" style="text-align: center; padding: 24px 16px;">
+      <div class="label">Cross Bet (other side)</div>
+      <div class="value" id="w-cross" style="color: var(--cyan); font-size: 40px;">--</div>
+      <div class="sub" id="w-cross-sub"></div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="result-row">
+      <div class="result-card" style="text-align: center;"><div class="label">P&L</div><div class="value" id="w-pnl" style="font-size: 24px;">--</div></div>
+      <div class="result-card" style="text-align: center;"><div class="label">Juice %</div><div class="value" id="w-juice-pct" style="font-size: 24px;">--</div></div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // === TABS ===
+  var TABS = ['kalshi', 'xbets', 'wager'];
+  function switchTab(tab) {
+    document.querySelectorAll('.nav-tab').forEach(function(t) { t.classList.remove('active'); });
+    document.querySelectorAll('.page').forEach(function(p) { p.classList.remove('active'); });
+    document.querySelectorAll('.nav-tab')[TABS.indexOf(tab)].classList.add('active');
+    document.getElementById('page-' + tab).classList.add('active');
+  }
+
+  // === KALSHI ===
+  function kalshiFee(c) { return 0.0007 * c * (100 - c); }
+  function centsToAmerican(c) {
+    var f = kalshiFee(c), a = c + f;
+    return a >= 50 ? Math.round(-100 * a / (100 - a)) : Math.round(100 * (100 - a) / a);
+  }
+  function fmtOdds(o) { return o > 0 ? '+' + o : '' + o; }
+
+  function updateKalshi() {
+    var c = parseInt(document.getElementById('kalshi-cents').value);
+    if (isNaN(c) || c < 1 || c > 99) return;
+    var f = kalshiFee(c), a = c + f, o = centsToAmerican(c);
+    document.getElementById('k-odds').textContent = fmtOdds(o);
+    document.getElementById('k-odds').style.color = o > 0 ? 'var(--green)' : 'var(--red)';
+    document.getElementById('k-odds-sub').textContent = 'fee: ' + f.toFixed(2) + '\u00a2 \u00b7 eff. prob: ' + a.toFixed(1) + '%';
+  }
+
+  function setKalshiCents(c) {
+    document.getElementById('kalshi-cents').value = c;
+    updateKalshi();
+  }
+
+  function nudgeKalshi(delta) {
+    var c = parseInt(document.getElementById('kalshi-cents').value) || 50;
+    c = Math.max(1, Math.min(99, c + delta));
+    setKalshiCents(c);
+  }
+
+  document.getElementById('kalshi-cents').addEventListener('input', updateKalshi);
+
+  // === KALSHI TABLE ===
+  var tableOpen = false;
+  function toggleTable() {
+    tableOpen = !tableOpen;
+    var btn = document.getElementById('table-toggle');
+    var tbl = document.getElementById('conv-table');
+    btn.classList.toggle('open', tableOpen);
+    tbl.classList.toggle('open', tableOpen);
+    btn.textContent = tableOpen ? '\u25B2 HIDE TABLE' : '\u25BC FULL CONVERSION TABLE';
+    if (tableOpen && tbl.innerHTML === '') buildTable();
+  }
+
+  function buildTable() {
+    var html = '<table><tr><th>Cents</th><th>Fee</th><th>Odds</th></tr>';
+    for (var c = 1; c <= 99; c++) {
+      var f = kalshiFee(c);
+      var o = centsToAmerican(c);
+      var cls = o > 0 ? 'odds-pos' : 'odds-neg';
+      html += '<tr><td class="cents-col">' + c + '\u00a2</td><td class="fee-col">' + f.toFixed(2) + '\u00a2</td><td class="' + cls + '">' + fmtOdds(o) + '</td></tr>';
+    }
+    html += '</table>';
+    document.getElementById('conv-table').innerHTML = html;
+  }
+
+  // === WAGER ===
+  var wSide = 'dog';
+  function toDecimal(am) { if (am > 0) return am / 100; if (am < 0) return 100 / Math.abs(am); return 0; }
+
+  function setWagerSide(side) {
+    wSide = side;
+    document.getElementById('wside-dog').classList.toggle('active-dog', side === 'dog');
+    document.getElementById('wside-fav').classList.toggle('active-fav', side === 'fav');
+    var wInput = document.getElementById('w-wager');
+    wInput.classList.toggle('dog-selected', side === 'dog');
+    wInput.classList.toggle('fav-selected', side === 'fav');
+    updateWager();
+  }
+
+  function updateWager() {
+    var d = parseInt(document.getElementById('w-dog').value);
+    var f = parseInt(document.getElementById('w-fav').value);
+    var w = parseFloat(document.getElementById('w-wager').value);
+    if (isNaN(d) || isNaN(f) || isNaN(w) || w <= 0 || d === 0 || f === 0) {
+      document.getElementById('w-cross').textContent = '--';
+      document.getElementById('w-cross-sub').textContent = '';
+      document.getElementById('w-pnl').textContent = '--';
+      document.getElementById('w-juice-pct').textContent = '--';
+      return;
+    }
+    var dd = toDecimal(d), fd = toDecimal(f);
+    var myOdds = wSide === 'dog' ? dd : fd;
+    var otherOdds = wSide === 'dog' ? fd : dd;
+    var cb = w * (myOdds + 1) / (otherOdds + 1);
+    var pnl = w * myOdds - cb;
+    var pct = pnl / w * 100;
+
+    document.getElementById('w-cross').textContent = '$' + Math.round(cb);
+    document.getElementById('w-cross-sub').textContent = '$' + Math.round(w) + ' + $' + Math.round(cb) + ' = $' + Math.round(w + cb) + ' total';
+    document.getElementById('w-pnl').textContent = (pnl >= 0 ? '+' : '') + pnl.toFixed(2);
+    document.getElementById('w-pnl').style.color = pnl >= 0 ? 'var(--green)' : 'var(--red)';
+    document.getElementById('w-juice-pct').textContent = (pct >= 0 ? '+' : '') + pct.toFixed(1) + '%';
+    document.getElementById('w-juice-pct').style.color = pct >= 0 ? 'var(--green)' : 'var(--red)';
+  }
+
+  // === XBETS ===
+  var xAMode = 'win';
+
+  function setXMode(mode) {
+    xAMode = mode;
+    document.getElementById('xmode-win').classList.toggle('active', mode === 'win');
+    document.getElementById('xmode-tot').classList.toggle('active', mode === 'tot');
+    document.getElementById('x-a-label').textContent = mode === 'win' ? 'To Win' : 'Total Return';
+    updateXbets();
+  }
+
+  function updateXbets() {
+    var aW = parseFloat(document.getElementById('x-a-wager').value);
+    var aP = parseFloat(document.getElementById('x-a-payout').value);
+    var bW = parseFloat(document.getElementById('x-b-wager').value);
+    var bP = parseFloat(document.getElementById('x-b-payout').value);
+    if (isNaN(aW) || isNaN(aP) || isNaN(bW) || isNaN(bP)) {
+      document.getElementById('x-a-win').textContent = '--';
+      document.getElementById('x-b-win').textContent = '--';
+      return;
+    }
+    var aProfit = xAMode === 'win' ? aP : aP - aW;
+    var bProfit = bP - bW;
+
+    var aWinPnl = aProfit - bW;
+    var bWinPnl = bProfit - aW;
+
+    document.getElementById('x-a-win').textContent = (aWinPnl >= 0 ? '+' : '') + '$' + aWinPnl.toFixed(2);
+    document.getElementById('x-a-win').style.color = aWinPnl >= 0 ? 'var(--green)' : 'var(--red)';
+    document.getElementById('x-b-win').textContent = (bWinPnl >= 0 ? '+' : '') + '$' + bWinPnl.toFixed(2);
+    document.getElementById('x-b-win').style.color = bWinPnl >= 0 ? 'var(--green)' : 'var(--red)';
+  }
+
+  function clearXbets() {
+    document.getElementById('x-a-wager').value = '';
+    document.getElementById('x-a-payout').value = '';
+    document.getElementById('x-b-wager').value = '';
+    document.getElementById('x-b-payout').value = '';
+    updateXbets();
+  }
+
+  // === ENTER TO NEXT FIELD ===
+  var xbetsFields = ['x-a-wager', 'x-a-payout', 'x-b-wager', 'x-b-payout'];
+  var wagerFields = ['w-dog', 'w-fav', 'w-wager'];
+
+  function focusAndSelect(id) {
+    var el = document.getElementById(id);
+    el.focus();
+    el.select();
+  }
+
+  document.addEventListener('keydown', function(e) {
+    if (e.key !== 'Enter') return;
+    var id = document.activeElement && document.activeElement.id;
+    var xi = xbetsFields.indexOf(id);
+    if (xi !== -1) { focusAndSelect(xbetsFields[(xi + 1) % xbetsFields.length]); return; }
+    var wi = wagerFields.indexOf(id);
+    if (wi !== -1) { focusAndSelect(wagerFields[(wi + 1) % wagerFields.length]); return; }
+  });
+
+  // === SELECT-ALL ON FOCUS (click or tab) ===
+  // setTimeout defers past the click's mouseup so the selection isn't immediately cleared.
+  document.addEventListener('focusin', function(e) {
+    if (e.target.tagName === 'INPUT' && e.target.type === 'number') {
+      setTimeout(function() { e.target.select(); }, 0);
+    }
+  });
+
+  // === CLOCK ===
+  let _lastUpdateTime = null;
+  function tickClock() {
+    const now = new Date();
+    document.getElementById('systemClock').textContent = now.toLocaleTimeString([], {hour:'numeric', minute:'2-digit', second:'2-digit'});
+    if (_lastUpdateTime) {
+      const ago = Math.floor((now - _lastUpdateTime) / 60000);
+      const el = document.getElementById('lastUpdated');
+      if (ago >= 5) el.classList.add('stale');
+      else el.classList.remove('stale');
+    }
+  }
+  function setLastUpdated() {
+    _lastUpdateTime = new Date();
+    const el = document.getElementById('lastUpdated');
+    el.textContent = 'Updated ' + _lastUpdateTime.toLocaleTimeString([], {hour:'numeric', minute:'2-digit', second:'2-digit'});
+    el.classList.remove('stale');
+  }
+  tickClock();
+  setInterval(tickClock, 1000);
+
+  // === INIT ===
+  updateKalshi();
+</script>
+</body>
+</html>

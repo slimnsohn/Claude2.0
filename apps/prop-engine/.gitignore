@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+.pytest_cache/
+.coverage
+htmlcov/
+data/prop_engine.db
+data/cache/
+data/raw/
+config/user.json
+core/dashboard/static/data/today.json

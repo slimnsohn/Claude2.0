@@ -1,0 +1,1747 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#0f0f14">
+  <meta name="mobile-web-app-capable" content="yes">
+  <title>Maple House Tracker</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0f0f14;
+      --surface: #1a1a24;
+      --surface-2: #22222e;
+      --border: #2a2a3a;
+      --border-light: #3a3a4a;
+      --text: #e8e8ed;
+      --text-secondary: #8888a0;
+      --text-muted: #555568;
+      --accent: #4a8cff;
+      --accent-dim: rgba(74,140,255,0.15);
+      --green: #34c759;
+      --green-dim: rgba(52,199,89,0.15);
+      --red: #ff453a;
+      --red-dim: rgba(255,69,58,0.15);
+      --orange: #ff9f0a;
+      --orange-dim: rgba(255,159,10,0.15);
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+      --safe-left: env(safe-area-inset-left, 0px);
+      --safe-right: env(safe-area-inset-right, 0px);
+    }
+
+    html, body, #root {
+      height: 100%;
+      width: 100%;
+      overflow: hidden;
+    }
+
+    body {
+      font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .app {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      padding-top: var(--safe-top);
+      padding-left: var(--safe-left);
+      padding-right: var(--safe-right);
+    }
+
+    /* Tab Bar */
+    .tab-bar {
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      padding: 8px 0;
+      padding-bottom: calc(8px + var(--safe-bottom));
+      flex-shrink: 0;
+    }
+
+    .tab-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 10px;
+      font-weight: 500;
+      padding: 6px 20px;
+      min-height: 44px;
+      min-width: 44px;
+      cursor: pointer;
+      transition: color 0.2s;
+    }
+
+    .tab-btn.active { color: var(--accent); }
+    .tab-btn .tab-icon { font-size: 22px; }
+    .tab-btn .tab-label { margin-top: 1px; }
+
+    /* Header */
+    .app-header {
+      padding: 16px 20px 8px;
+      flex-shrink: 0;
+    }
+
+    .app-header h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .app-header .subtitle {
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-top: 2px;
+    }
+
+    /* Carousel */
+    .carousel-container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+      touch-action: pan-y;
+      padding: 0 20px;
+    }
+
+    .carousel-card-wrapper {
+      width: 100%;
+      max-width: 360px;
+      cursor: grab;
+      will-change: transform;
+      transition: none;
+    }
+
+    .carousel-card-wrapper.snapping {
+      transition: transform 0.3s ease, opacity 0.3s ease;
+    }
+
+    .room-card {
+      background: var(--surface);
+      border-radius: 20px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+    }
+
+    .room-card-hero {
+      width: 100%;
+      height: 200px;
+      object-fit: cover;
+      display: block;
+      background: var(--surface-2);
+    }
+
+    .room-card-hero-placeholder {
+      width: 100%;
+      height: 200px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, var(--surface-2), var(--border));
+      font-family: 'Playfair Display', serif;
+      font-size: 64px;
+      color: var(--text-muted);
+    }
+
+    .room-card-body {
+      padding: 20px;
+    }
+
+    .room-card-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+
+    .room-card-name {
+      font-family: 'Playfair Display', serif;
+      font-size: 24px;
+      font-weight: 700;
+    }
+
+    .floor-pill {
+      background: var(--accent-dim);
+      color: var(--accent);
+      font-size: 11px;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: 99px;
+    }
+
+    .progress-bar-track {
+      width: 100%;
+      height: 6px;
+      background: var(--border);
+      border-radius: 3px;
+      overflow: hidden;
+      margin-bottom: 14px;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      background: var(--green);
+      border-radius: 3px;
+      transition: width 0.4s ease;
+    }
+
+    .room-card-stats {
+      display: flex;
+      justify-content: space-between;
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+
+    .room-card-stats .stat-value {
+      font-family: 'DM Mono', monospace;
+      font-weight: 500;
+      color: var(--text);
+    }
+
+    .room-card-stats .must-do-count {
+      color: var(--red);
+    }
+
+    /* Dots */
+    .dots {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+      padding: 16px 0;
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--border);
+      transition: background 0.2s, transform 0.2s;
+    }
+
+    .dot.active {
+      background: var(--accent);
+      transform: scale(1.3);
+    }
+
+    /* Nav Arrows */
+    .nav-arrow {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-size: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      z-index: 10;
+      transition: background 0.2s;
+      min-height: 44px;
+      min-width: 44px;
+    }
+
+    .nav-arrow:hover { background: rgba(255,255,255,0.14); }
+    .nav-arrow.left { left: 4px; }
+    .nav-arrow.right { right: 4px; }
+
+    /* Room Detail */
+    .room-detail {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    .room-detail-header {
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    .back-btn {
+      background: none;
+      border: none;
+      color: var(--accent);
+      font-size: 22px;
+      cursor: pointer;
+      min-width: 44px;
+      min-height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .room-detail-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 20px;
+      font-weight: 700;
+      flex: 1;
+    }
+
+    .room-detail-meta {
+      font-size: 12px;
+      color: var(--text-secondary);
+      text-align: right;
+    }
+
+    /* Filter Bar */
+    .filter-bar {
+      display: flex;
+      gap: 8px;
+      padding: 12px 16px;
+      overflow-x: auto;
+      flex-shrink: 0;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+    }
+
+    .filter-bar::-webkit-scrollbar { display: none; }
+
+    .filter-pill {
+      flex-shrink: 0;
+      padding: 6px 14px;
+      border-radius: 99px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--text-secondary);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      min-height: 34px;
+      white-space: nowrap;
+      transition: all 0.2s;
+    }
+
+    .filter-pill.active {
+      background: var(--accent-dim);
+      color: var(--accent);
+      border-color: var(--accent);
+    }
+
+    /* Item List */
+    .item-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 0 16px 16px;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .item-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 14px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      margin-bottom: 10px;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .item-row:active { background: var(--surface-2); }
+
+    .checkbox {
+      width: 26px;
+      height: 26px;
+      min-width: 26px;
+      border-radius: 50%;
+      border: 2px solid var(--border-light);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-top: 2px;
+      min-height: 44px;
+      min-width: 44px;
+      background: transparent;
+      /* visual circle is 26px, but tap area is 44px */
+      position: relative;
+    }
+
+    .checkbox::before {
+      content: '';
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      border: 2px solid var(--border-light);
+      position: absolute;
+      transition: all 0.2s;
+    }
+
+    .checkbox.checked::before {
+      background: var(--green);
+      border-color: var(--green);
+    }
+
+    .checkbox.checked::after {
+      content: '✓';
+      position: absolute;
+      color: #fff;
+      font-size: 14px;
+      font-weight: 700;
+      z-index: 1;
+    }
+
+    .item-content {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .item-desc {
+      font-size: 15px;
+      font-weight: 500;
+      line-height: 1.3;
+      word-wrap: break-word;
+    }
+
+    .item-desc.completed {
+      text-decoration: line-through;
+      color: var(--text-muted);
+    }
+
+    .item-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 6px;
+      align-items: center;
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      padding: 2px 8px;
+      border-radius: 99px;
+      font-size: 11px;
+      font-weight: 500;
+    }
+
+    .chip.category {
+      background: var(--surface-2);
+      color: var(--text-secondary);
+      border: 1px solid var(--border);
+    }
+
+    .chip.priority-must {
+      background: var(--red-dim);
+      color: var(--red);
+    }
+
+    .chip.priority-should {
+      background: var(--orange-dim);
+      color: var(--orange);
+    }
+
+    .chip.priority-nice {
+      background: var(--green-dim);
+      color: var(--green);
+    }
+
+    .item-cost {
+      font-family: 'DM Mono', monospace;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      margin-top: 4px;
+    }
+
+    .item-delete {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 16px;
+      cursor: pointer;
+      min-width: 44px;
+      min-height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: color 0.2s;
+      flex-shrink: 0;
+    }
+
+    .item-delete:hover { color: var(--red); }
+
+    .empty-state {
+      text-align: center;
+      padding: 48px 20px;
+      color: var(--text-muted);
+      font-size: 14px;
+    }
+
+    .empty-state .empty-icon {
+      font-size: 40px;
+      margin-bottom: 12px;
+    }
+
+    /* Add Item Bar */
+    .add-item-bar {
+      display: flex;
+      gap: 8px;
+      padding: 12px 16px;
+      padding-bottom: calc(12px + var(--safe-bottom));
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      flex-shrink: 0;
+      align-items: center;
+    }
+
+    .add-item-bar input,
+    .add-item-bar select {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      padding: 0 12px;
+      min-height: 44px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .add-item-bar input:focus,
+    .add-item-bar select:focus {
+      border-color: var(--accent);
+    }
+
+    .add-item-bar input { flex: 1; min-width: 0; }
+    .add-item-bar select { width: auto; max-width: 100px; }
+
+    .add-btn {
+      width: 44px;
+      height: 44px;
+      min-width: 44px;
+      border-radius: 12px;
+      background: var(--accent);
+      border: none;
+      color: #fff;
+      font-size: 22px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: opacity 0.2s;
+    }
+
+    .add-btn:disabled { opacity: 0.4; cursor: default; }
+
+    /* Modal */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.6);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      z-index: 100;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      animation: fadeIn 0.2s ease;
+    }
+
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+    .modal-sheet {
+      background: var(--surface);
+      border-radius: 20px 20px 0 0;
+      width: 100%;
+      max-width: 500px;
+      max-height: 85vh;
+      overflow-y: auto;
+      padding: 24px 20px;
+      padding-bottom: calc(24px + var(--safe-bottom));
+      animation: slideUp 0.3s ease;
+    }
+
+    @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+
+    .modal-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 22px;
+      font-weight: 700;
+      margin-bottom: 20px;
+    }
+
+    .form-field {
+      margin-bottom: 16px;
+    }
+
+    .form-field label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 6px;
+    }
+
+    .form-field input,
+    .form-field select,
+    .form-field textarea {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 15px;
+      padding: 10px 14px;
+      min-height: 44px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .form-field input:focus,
+    .form-field select:focus,
+    .form-field textarea:focus {
+      border-color: var(--accent);
+    }
+
+    .form-field textarea {
+      min-height: 80px;
+      resize: vertical;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 12px;
+      margin-top: 24px;
+    }
+
+    .modal-actions button {
+      flex: 1;
+      min-height: 48px;
+      border-radius: 12px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: opacity 0.2s;
+    }
+
+    .btn-cancel {
+      background: var(--border);
+      color: var(--text);
+    }
+
+    .btn-save {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    /* Summary */
+    .summary-view {
+      flex: 1;
+      overflow-y: auto;
+      padding: 0 16px 24px;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .section-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 18px;
+      font-weight: 700;
+      margin: 24px 0 12px;
+    }
+
+    .stat-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 16px;
+    }
+
+    .stat-card .stat-label {
+      font-size: 12px;
+      color: var(--text-secondary);
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+
+    .stat-card .stat-value {
+      font-family: 'DM Mono', monospace;
+      font-size: 28px;
+      font-weight: 500;
+      margin-top: 6px;
+      color: var(--text);
+    }
+
+    .stat-card .stat-value.red { color: var(--red); }
+    .stat-card .stat-value.green { color: var(--green); }
+
+    .shopping-list-category {
+      margin-top: 16px;
+    }
+
+    .shopping-list-category-header {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .shopping-list-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 14px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      margin-bottom: 6px;
+      font-size: 14px;
+    }
+
+    .shopping-list-item .room-tag {
+      font-size: 11px;
+      color: var(--text-muted);
+      background: var(--surface-2);
+      padding: 2px 8px;
+      border-radius: 99px;
+      flex-shrink: 0;
+      margin-left: 8px;
+    }
+
+    .cost-summary {
+      margin-top: 20px;
+    }
+
+    .cost-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 15px;
+    }
+
+    .cost-row .cost-amount {
+      font-family: 'DM Mono', monospace;
+      font-weight: 500;
+    }
+
+    .export-btn {
+      width: 100%;
+      min-height: 48px;
+      border-radius: 12px;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 24px;
+      transition: opacity 0.2s;
+    }
+
+    .export-btn:active { opacity: 0.8; }
+
+    /* Settings */
+    .settings-view {
+      flex: 1;
+      overflow-y: auto;
+      padding: 0 16px 24px;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .settings-group {
+      margin-top: 24px;
+    }
+
+    .settings-group-title {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 10px;
+    }
+
+    .settings-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 14px 16px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      margin-bottom: 8px;
+      font-size: 14px;
+    }
+
+    .settings-row .settings-value {
+      color: var(--text-secondary);
+      font-size: 13px;
+    }
+
+    .danger-btn {
+      width: 100%;
+      min-height: 48px;
+      border-radius: 12px;
+      background: var(--red-dim);
+      color: var(--red);
+      border: 1px solid rgba(255,69,58,0.3);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 12px;
+      transition: opacity 0.2s;
+    }
+
+    .danger-btn:active { opacity: 0.8; }
+
+    .refresh-btn {
+      width: 100%;
+      min-height: 48px;
+      border-radius: 12px;
+      background: var(--accent-dim);
+      color: var(--accent);
+      border: 1px solid rgba(74,140,255,0.3);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 12px;
+      transition: opacity 0.2s;
+    }
+
+    .refresh-btn:active { opacity: 0.8; }
+
+    /* Toast */
+    .toast {
+      position: fixed;
+      bottom: calc(80px + var(--safe-bottom));
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--surface-2);
+      color: var(--text);
+      border: 1px solid var(--border);
+      padding: 12px 20px;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 500;
+      z-index: 200;
+      animation: toastIn 0.3s ease;
+      white-space: nowrap;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+    }
+
+    @keyframes toastIn {
+      from { opacity: 0; transform: translateX(-50%) translateY(20px); }
+      to { opacity: 1; transform: translateX(-50%) translateY(0); }
+    }
+
+    /* Skeleton */
+    .skeleton {
+      background: linear-gradient(90deg, var(--surface) 25%, var(--surface-2) 50%, var(--surface) 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s infinite;
+      border-radius: 12px;
+    }
+
+    @keyframes shimmer {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+
+    .skeleton-card {
+      width: 100%;
+      max-width: 360px;
+      height: 360px;
+      border-radius: 20px;
+    }
+
+    /* Error state */
+    .error-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      flex: 1;
+      padding: 40px 20px;
+      text-align: center;
+    }
+
+    .error-state .error-icon { font-size: 48px; margin-bottom: 16px; }
+
+    .error-state .error-msg {
+      color: var(--text-secondary);
+      font-size: 14px;
+      margin-bottom: 20px;
+      max-width: 280px;
+    }
+
+    .retry-btn {
+      min-height: 44px;
+      padding: 0 24px;
+      border-radius: 12px;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script>
+    // ── Config (hardcoded — fill in after deploying Apps Script) ────────
+    const CONFIG = {
+      API_URL: 'PASTE_YOUR_APPS_SCRIPT_WEB_APP_URL_HERE',
+      AUTH_TOKEN: 'PASTE_YOUR_AUTH_TOKEN_HERE'
+    };
+
+    const { createElement: h, useState, useEffect, useRef, useCallback } = React;
+
+    // ── API ──────────────────────────────────────────────────────────────
+    const api = {
+      async bootstrap() {
+        const res = await fetch(CONFIG.API_URL + '?token=' + encodeURIComponent(CONFIG.AUTH_TOKEN));
+        const data = await res.json();
+        if (!data.ok) throw new Error(data.error || 'Bootstrap failed');
+        return data;
+      },
+      async post(action, payload) {
+        const res = await fetch(CONFIG.API_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain' },
+          body: JSON.stringify({ ...payload, action, token: CONFIG.AUTH_TOKEN })
+        });
+        const data = await res.json();
+        if (!data.ok) throw new Error(data.error || action + ' failed');
+        return data;
+      },
+      createItem(item) { return this.post('create_item', { item }); },
+      updateItem(itemId, fields) { return this.post('update_item', { item_id: itemId, fields }); },
+      deleteItem(itemId) { return this.post('delete_item', { item_id: itemId }); },
+      bulkUpdate(itemIds, fields) { return this.post('bulk_update_items', { item_ids: itemIds, fields }); }
+    };
+
+    // ── Helpers ──────────────────────────────────────────────────────────
+    function uuid() {
+      return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+        var r = Math.random() * 16 | 0;
+        return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+      });
+    }
+
+    function formatCost(n) {
+      if (!n && n !== 0) return '';
+      var num = Number(n);
+      if (isNaN(num) || num === 0) return '';
+      return '$' + num.toLocaleString('en-US', { maximumFractionDigits: 0 });
+    }
+
+    function getDriveImageUrl(url) {
+      if (!url) return null;
+      var match = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
+      if (match) return 'https://drive.google.com/thumbnail?id=' + match[1] + '&sz=w800';
+      return url;
+    }
+
+    // ── Toast Context ───────────────────────────────────────────────────
+    var toastTimeout = null;
+
+    // ── RoomCard ─────────────────────────────────────────────────────────
+    function RoomCard(props) {
+      var room = props.room, items = props.items, onTap = props.onTap, style = props.style;
+      var roomItems = items.filter(function(i) { return i.room_id === room.id; });
+      var total = roomItems.length;
+      var completed = roomItems.filter(function(i) { return i.status === 'completed'; }).length;
+      var pct = total > 0 ? Math.round((completed / total) * 100) : 0;
+      var mustDos = roomItems.filter(function(i) { return i.priority === 'must' && i.status !== 'completed'; }).length;
+      var costRemaining = roomItems
+        .filter(function(i) { return i.status !== 'completed'; })
+        .reduce(function(sum, i) { return sum + (Number(i.cost_estimate) || 0); }, 0);
+
+      var imgUrl = getDriveImageUrl(room.image_url);
+
+      return h('div', { className: 'room-card', onClick: onTap, style: style },
+        imgUrl
+          ? h('img', { className: 'room-card-hero', src: imgUrl, alt: room.name, loading: 'lazy' })
+          : h('div', { className: 'room-card-hero-placeholder' }, room.name ? room.name[0] : '?'),
+        h('div', { className: 'room-card-body' },
+          h('div', { className: 'room-card-top' },
+            h('span', { className: 'room-card-name' }, room.name),
+            h('span', { className: 'floor-pill' }, room.floor || 'Main')
+          ),
+          h('div', { className: 'progress-bar-track' },
+            h('div', { className: 'progress-bar-fill', style: { width: pct + '%' } })
+          ),
+          h('div', { className: 'room-card-stats' },
+            h('span', null, h('span', { className: 'stat-value' }, completed), '/' + total + ' done'),
+            mustDos > 0 && h('span', null, h('span', { className: 'stat-value must-do-count' }, mustDos), ' must-do'),
+            costRemaining > 0 && h('span', null, h('span', { className: 'stat-value' }, formatCost(costRemaining)), ' est.')
+          )
+        )
+      );
+    }
+
+    // ── Carousel ─────────────────────────────────────────────────────────
+    function Carousel(props) {
+      var rooms = props.rooms, items = props.items, onSelectRoom = props.onSelectRoom;
+      var _idx = useState(0), idx = _idx[0], setIdx = _idx[1];
+      var _offset = useState(0), dragOffset = _offset[0], setDragOffset = _offset[1];
+      var _snapping = useState(false), snapping = _snapping[0], setSnapping = _snapping[1];
+
+      var isDragging = useRef(false);
+      var startX = useRef(0);
+      var startY = useRef(0);
+      var currentX = useRef(0);
+      var isHorizontal = useRef(null);
+
+      // Clamp idx if rooms change
+      useEffect(function() {
+        if (idx >= rooms.length && rooms.length > 0) setIdx(rooms.length - 1);
+      }, [rooms.length]);
+
+      var handleStart = useCallback(function(e) {
+        var touch = e.touches ? e.touches[0] : e;
+        startX.current = touch.clientX;
+        startY.current = touch.clientY;
+        currentX.current = touch.clientX;
+        isDragging.current = true;
+        isHorizontal.current = null;
+        setSnapping(false);
+      }, []);
+
+      var handleMove = useCallback(function(e) {
+        if (!isDragging.current) return;
+        var touch = e.touches ? e.touches[0] : e;
+        var dx = touch.clientX - startX.current;
+        var dy = touch.clientY - startY.current;
+
+        if (isHorizontal.current === null) {
+          if (Math.abs(dx) > 6 || Math.abs(dy) > 6) {
+            isHorizontal.current = Math.abs(dx) > Math.abs(dy);
+          }
+          return;
+        }
+
+        if (!isHorizontal.current) return;
+
+        if (e.cancelable) e.preventDefault();
+        currentX.current = touch.clientX;
+        setDragOffset(dx);
+      }, []);
+
+      var handleEnd = useCallback(function() {
+        if (!isDragging.current) return;
+        isDragging.current = false;
+        var dx = currentX.current - startX.current;
+
+        if (isHorizontal.current && Math.abs(dx) > 60) {
+          if (dx < 0 && idx < rooms.length - 1) {
+            setIdx(function(i) { return i + 1; });
+          } else if (dx > 0 && idx > 0) {
+            setIdx(function(i) { return i - 1; });
+          }
+        }
+
+        setSnapping(true);
+        setDragOffset(0);
+      }, [idx, rooms.length]);
+
+      if (rooms.length === 0) {
+        return h('div', { className: 'empty-state' },
+          h('div', { className: 'empty-icon' }, '\uD83C\uDFE0'),
+          h('p', null, 'No rooms yet. Add rooms in your Google Sheet.')
+        );
+      }
+
+      var cardStyle = {
+        transform: 'translateX(' + dragOffset + 'px) rotate(' + (dragOffset * 0.03) + 'deg)',
+        opacity: 1 - Math.abs(dragOffset) * 0.001
+      };
+
+      return h('div', { className: 'carousel-container' },
+        idx > 0 && h('button', {
+          className: 'nav-arrow left',
+          onClick: function(e) { e.stopPropagation(); setSnapping(true); setIdx(idx - 1); }
+        }, '\u2039'),
+        idx < rooms.length - 1 && h('button', {
+          className: 'nav-arrow right',
+          onClick: function(e) { e.stopPropagation(); setSnapping(true); setIdx(idx + 1); }
+        }, '\u203A'),
+        h('div', {
+          className: 'carousel-card-wrapper' + (snapping ? ' snapping' : ''),
+          style: cardStyle,
+          onMouseDown: handleStart,
+          onMouseMove: handleMove,
+          onMouseUp: handleEnd,
+          onMouseLeave: handleEnd,
+          onTouchStart: handleStart,
+          onTouchMove: handleMove,
+          onTouchEnd: handleEnd
+        },
+          h(RoomCard, {
+            room: rooms[idx],
+            items: items,
+            onTap: function() { onSelectRoom(rooms[idx]); }
+          })
+        ),
+        h('div', { className: 'dots' },
+          rooms.map(function(r, i) {
+            return h('div', { key: r.id, className: 'dot' + (i === idx ? ' active' : '') });
+          })
+        )
+      );
+    }
+
+    // ── ItemRow ──────────────────────────────────────────────────────────
+    function ItemRow(props) {
+      var item = props.item, categories = props.categories, onToggle = props.onToggle, onEdit = props.onEdit, onDelete = props.onDelete;
+      var isDone = item.status === 'completed';
+      var cat = categories[item.category] || {};
+      var priorityClass = item.priority ? 'chip priority-' + item.priority : '';
+
+      return h('div', { className: 'item-row' },
+        h('button', {
+          className: 'checkbox' + (isDone ? ' checked' : ''),
+          onClick: function(e) { e.stopPropagation(); onToggle(item); }
+        }),
+        h('div', { className: 'item-content', onClick: function() { onEdit(item); } },
+          h('div', { className: 'item-desc' + (isDone ? ' completed' : '') }, item.description),
+          h('div', { className: 'item-meta' },
+            item.category && h('span', { className: 'chip category' }, (cat.icon_emoji || '') + ' ' + item.category),
+            item.priority && h('span', { className: priorityClass }, item.priority)
+          ),
+          (item.cost_estimate || item.cost_actual) && h('div', { className: 'item-cost' },
+            item.cost_actual ? formatCost(item.cost_actual) + ' actual' : formatCost(item.cost_estimate) + ' est.'
+          )
+        ),
+        h('button', {
+          className: 'item-delete',
+          onClick: function(e) { e.stopPropagation(); onDelete(item); }
+        }, '\u2715')
+      );
+    }
+
+    // ── ItemEditModal ────────────────────────────────────────────────────
+    function ItemEditModal(props) {
+      var item = props.item, categories = props.categories, onSave = props.onSave, onClose = props.onClose;
+      var _form = useState({
+        description: item.description || '',
+        category: item.category || '',
+        status: item.status || 'not_started',
+        priority: item.priority || 'should',
+        cost_estimate: item.cost_estimate || '',
+        cost_actual: item.cost_actual || '',
+        vendor: item.vendor || '',
+        notes: item.notes || ''
+      });
+      var form = _form[0], setForm = _form[1];
+
+      function update(field, val) {
+        setForm(function(f) { var n = Object.assign({}, f); n[field] = val; return n; });
+      }
+
+      var catNames = Object.keys(categories);
+      var statuses = ['not_started', 'in_progress', 'completed', 'deferred', 'needs_quote'];
+      var priorities = ['must', 'should', 'nice'];
+
+      return h('div', { className: 'modal-overlay', onClick: onClose },
+        h('div', { className: 'modal-sheet', onClick: function(e) { e.stopPropagation(); } },
+          h('div', { className: 'modal-title' }, 'Edit Item'),
+          h('div', { className: 'form-field' },
+            h('label', null, 'Description'),
+            h('input', { value: form.description, onChange: function(e) { update('description', e.target.value); } })
+          ),
+          h('div', { className: 'form-row' },
+            h('div', { className: 'form-field' },
+              h('label', null, 'Category'),
+              h('select', { value: form.category, onChange: function(e) { update('category', e.target.value); } },
+                h('option', { value: '' }, '—'),
+                catNames.map(function(c) {
+                  return h('option', { key: c, value: c }, (categories[c].icon_emoji || '') + ' ' + c);
+                })
+              )
+            ),
+            h('div', { className: 'form-field' },
+              h('label', null, 'Priority'),
+              h('select', { value: form.priority, onChange: function(e) { update('priority', e.target.value); } },
+                priorities.map(function(p) {
+                  return h('option', { key: p, value: p }, p);
+                })
+              )
+            )
+          ),
+          h('div', { className: 'form-field' },
+            h('label', null, 'Status'),
+            h('select', { value: form.status, onChange: function(e) { update('status', e.target.value); } },
+              statuses.map(function(s) {
+                return h('option', { key: s, value: s }, s.replace(/_/g, ' '));
+              })
+            )
+          ),
+          h('div', { className: 'form-row' },
+            h('div', { className: 'form-field' },
+              h('label', null, 'Est. Cost'),
+              h('input', { type: 'number', value: form.cost_estimate, onChange: function(e) { update('cost_estimate', e.target.value); } })
+            ),
+            h('div', { className: 'form-field' },
+              h('label', null, 'Actual Cost'),
+              h('input', { type: 'number', value: form.cost_actual, onChange: function(e) { update('cost_actual', e.target.value); } })
+            )
+          ),
+          h('div', { className: 'form-field' },
+            h('label', null, 'Vendor'),
+            h('input', { value: form.vendor, onChange: function(e) { update('vendor', e.target.value); } })
+          ),
+          h('div', { className: 'form-field' },
+            h('label', null, 'Notes'),
+            h('textarea', { value: form.notes, onChange: function(e) { update('notes', e.target.value); } })
+          ),
+          h('div', { className: 'modal-actions' },
+            h('button', { className: 'btn-cancel', onClick: onClose }, 'Cancel'),
+            h('button', { className: 'btn-save', onClick: function() { onSave(form); } }, 'Save')
+          )
+        )
+      );
+    }
+
+    // ── RoomDetail ───────────────────────────────────────────────────────
+    function RoomDetail(props) {
+      var room = props.room, categories = props.categories, onBack = props.onBack, onItemsChanged = props.onItemsChanged;
+      var _items = useState(props.items.filter(function(i) { return i.room_id === room.id; }));
+      var localItems = _items[0], setLocalItems = _items[1];
+      var _filter = useState('all');
+      var filter = _filter[0], setFilter = _filter[1];
+      var _editing = useState(null);
+      var editing = _editing[0], setEditing = _editing[1];
+      var _toast = useState(null);
+      var toast = _toast[0], setToast = _toast[1];
+      var _newDesc = useState('');
+      var newDesc = _newDesc[0], setNewDesc = _newDesc[1];
+      var _newCat = useState('');
+      var newCat = _newCat[0], setNewCat = _newCat[1];
+      var _newPri = useState('should');
+      var newPri = _newPri[0], setNewPri = _newPri[1];
+
+      // Sync with parent items
+      useEffect(function() {
+        setLocalItems(props.items.filter(function(i) { return i.room_id === room.id; }));
+      }, [props.items, room.id]);
+
+      function showToast(msg) {
+        setToast(msg);
+        if (toastTimeout) clearTimeout(toastTimeout);
+        toastTimeout = setTimeout(function() { setToast(null); }, 2500);
+      }
+
+      // Sort: not_started first, completed last
+      var statusOrder = { not_started: 0, needs_quote: 1, in_progress: 2, deferred: 3, completed: 4 };
+      var sorted = localItems.slice().sort(function(a, b) {
+        return (statusOrder[a.status] || 0) - (statusOrder[b.status] || 0);
+      });
+
+      // Filter
+      var filtered = sorted;
+      if (filter === 'open') filtered = sorted.filter(function(i) { return i.status !== 'completed'; });
+      else if (filter === 'done') filtered = sorted.filter(function(i) { return i.status === 'completed'; });
+      else if (filter === 'must') filtered = sorted.filter(function(i) { return i.priority === 'must' && i.status !== 'completed'; });
+      else if (filter !== 'all') filtered = sorted.filter(function(i) { return i.category === filter; });
+
+      var completed = localItems.filter(function(i) { return i.status === 'completed'; }).length;
+      var catNames = Object.keys(categories);
+
+      function handleToggle(item) {
+        var newStatus = item.status === 'completed' ? 'not_started' : 'completed';
+        var prev = localItems.slice();
+        setLocalItems(function(list) {
+          return list.map(function(i) { return i.id === item.id ? Object.assign({}, i, { status: newStatus }) : i; });
+        });
+        api.updateItem(item.id, { status: newStatus }).then(function() {
+          onItemsChanged(item.id, { status: newStatus });
+        }).catch(function(err) {
+          setLocalItems(prev);
+          showToast('Failed to update: ' + err.message);
+        });
+      }
+
+      function handleDelete(item) {
+        var prev = localItems.slice();
+        setLocalItems(function(list) { return list.filter(function(i) { return i.id !== item.id; }); });
+        showToast('Item deleted');
+        api.deleteItem(item.id).then(function() {
+          onItemsChanged(item.id, null); // null = deleted
+        }).catch(function(err) {
+          setLocalItems(prev);
+          showToast('Delete failed: ' + err.message);
+        });
+      }
+
+      function handleEditSave(fields) {
+        var itemId = editing.id;
+        var prev = localItems.slice();
+        setLocalItems(function(list) {
+          return list.map(function(i) { return i.id === itemId ? Object.assign({}, i, fields) : i; });
+        });
+        setEditing(null);
+        api.updateItem(itemId, fields).then(function() {
+          onItemsChanged(itemId, fields);
+        }).catch(function(err) {
+          setLocalItems(prev);
+          showToast('Save failed: ' + err.message);
+        });
+      }
+
+      function handleAdd() {
+        if (!newDesc.trim()) return;
+        var newItem = {
+          id: uuid(),
+          room_id: room.id,
+          description: newDesc.trim(),
+          category: newCat,
+          priority: newPri,
+          status: 'not_started',
+          cost_estimate: '',
+          cost_actual: '',
+          vendor: '',
+          notes: ''
+        };
+        setLocalItems(function(list) { return list.concat([newItem]); });
+        setNewDesc('');
+        api.createItem(newItem).then(function(res) {
+          if (res.item_id) {
+            setLocalItems(function(list) {
+              return list.map(function(i) { return i.id === newItem.id ? Object.assign({}, i, { id: res.item_id }) : i; });
+            });
+          }
+          onItemsChanged(null, newItem); // null id = new
+        }).catch(function(err) {
+          setLocalItems(function(list) { return list.filter(function(i) { return i.id !== newItem.id; }); });
+          showToast('Add failed: ' + err.message);
+        });
+      }
+
+      function handleKeyDown(e) {
+        if (e.key === 'Enter') handleAdd();
+      }
+
+      return h('div', { className: 'room-detail' },
+        h('div', { className: 'room-detail-header' },
+          h('button', { className: 'back-btn', onClick: onBack }, '\u2190'),
+          h('div', { style: { flex: 1 } },
+            h('div', { className: 'room-detail-title' }, room.name),
+            h('div', { className: 'room-detail-meta' }, (room.floor || 'Main') + ' \u00B7 ' + completed + '/' + localItems.length + ' done')
+          )
+        ),
+        h('div', { className: 'filter-bar' },
+          h('button', { className: 'filter-pill' + (filter === 'all' ? ' active' : ''), onClick: function() { setFilter('all'); } }, 'All'),
+          h('button', { className: 'filter-pill' + (filter === 'open' ? ' active' : ''), onClick: function() { setFilter('open'); } }, 'Open'),
+          h('button', { className: 'filter-pill' + (filter === 'done' ? ' active' : ''), onClick: function() { setFilter('done'); } }, 'Done'),
+          h('button', { className: 'filter-pill' + (filter === 'must' ? ' active' : ''), onClick: function() { setFilter('must'); } }, '\uD83D\uDD34 Must-Do'),
+          catNames.map(function(c) {
+            var cat = categories[c];
+            return h('button', {
+              key: c,
+              className: 'filter-pill' + (filter === c ? ' active' : ''),
+              onClick: function() { setFilter(c); }
+            }, (cat.icon_emoji || '') + ' ' + c);
+          })
+        ),
+        h('div', { className: 'item-list' },
+          filtered.length === 0
+            ? h('div', { className: 'empty-state' },
+                h('div', { className: 'empty-icon' }, '\uD83D\uDCCB'),
+                h('p', null, 'No items match this filter')
+              )
+            : filtered.map(function(item) {
+                return h(ItemRow, {
+                  key: item.id,
+                  item: item,
+                  categories: categories,
+                  onToggle: handleToggle,
+                  onEdit: function(i) { setEditing(i); },
+                  onDelete: handleDelete
+                });
+              })
+        ),
+        h('div', { className: 'add-item-bar' },
+          h('input', {
+            placeholder: 'Add item...',
+            value: newDesc,
+            onChange: function(e) { setNewDesc(e.target.value); },
+            onKeyDown: handleKeyDown
+          }),
+          h('select', { value: newCat, onChange: function(e) { setNewCat(e.target.value); } },
+            h('option', { value: '' }, 'Cat.'),
+            catNames.map(function(c) { return h('option', { key: c, value: c }, c); })
+          ),
+          h('select', { value: newPri, onChange: function(e) { setNewPri(e.target.value); } },
+            h('option', { value: 'must' }, 'Must'),
+            h('option', { value: 'should' }, 'Should'),
+            h('option', { value: 'nice' }, 'Nice')
+          ),
+          h('button', { className: 'add-btn', onClick: handleAdd, disabled: !newDesc.trim() }, '+')
+        ),
+        editing && h(ItemEditModal, {
+          item: editing,
+          categories: categories,
+          onSave: handleEditSave,
+          onClose: function() { setEditing(null); }
+        }),
+        toast && h('div', { className: 'toast' }, toast)
+      );
+    }
+
+    // ── SummaryView ──────────────────────────────────────────────────────
+    function SummaryView(props) {
+      var rooms = props.rooms, items = props.items, categories = props.categories;
+
+      var totalItems = items.length;
+      var openItems = items.filter(function(i) { return i.status !== 'completed'; });
+      var mustDoOpen = items.filter(function(i) { return i.priority === 'must' && i.status !== 'completed'; });
+      var estRemaining = openItems.reduce(function(s, i) { return s + (Number(i.cost_estimate) || 0); }, 0);
+      var totalEst = items.reduce(function(s, i) { return s + (Number(i.cost_estimate) || 0); }, 0);
+      var totalActual = items.reduce(function(s, i) { return s + (Number(i.cost_actual) || 0); }, 0);
+
+      // Group open items by category
+      var grouped = {};
+      openItems.forEach(function(item) {
+        var cat = item.category || 'Uncategorized';
+        if (!grouped[cat]) grouped[cat] = [];
+        grouped[cat].push(item);
+      });
+
+      var roomMap = {};
+      rooms.forEach(function(r) { roomMap[r.id] = r.name; });
+
+      function exportCsv() {
+        var headers = ['Room', 'Category', 'Description', 'Status', 'Priority', 'Est. Cost', 'Actual Cost', 'Vendor', 'Notes'];
+        var rows = items.map(function(item) {
+          return [
+            roomMap[item.room_id] || '',
+            item.category || '',
+            (item.description || '').replace(/"/g, '""'),
+            item.status || '',
+            item.priority || '',
+            item.cost_estimate || '',
+            item.cost_actual || '',
+            (item.vendor || '').replace(/"/g, '""'),
+            (item.notes || '').replace(/"/g, '""')
+          ].map(function(v) { return '"' + v + '"'; }).join(',');
+        });
+        var csv = headers.join(',') + '\n' + rows.join('\n');
+        var blob = new Blob([csv], { type: 'text/csv' });
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement('a');
+        var date = new Date().toISOString().slice(0, 10);
+        a.href = url;
+        a.download = 'maple-tracker-' + date + '.csv';
+        a.click();
+        URL.revokeObjectURL(url);
+      }
+
+      return h('div', { className: 'summary-view' },
+        h('div', { className: 'section-title' }, 'Overview'),
+        h('div', { className: 'stat-grid' },
+          h('div', { className: 'stat-card' },
+            h('div', { className: 'stat-label' }, 'Total Items'),
+            h('div', { className: 'stat-value' }, totalItems)
+          ),
+          h('div', { className: 'stat-card' },
+            h('div', { className: 'stat-label' }, 'Open'),
+            h('div', { className: 'stat-value' }, openItems.length)
+          ),
+          h('div', { className: 'stat-card' },
+            h('div', { className: 'stat-label' }, 'Must-Do'),
+            h('div', { className: 'stat-value red' }, mustDoOpen.length)
+          ),
+          h('div', { className: 'stat-card' },
+            h('div', { className: 'stat-label' }, 'Est. Remaining'),
+            h('div', { className: 'stat-value' }, formatCost(estRemaining) || '$0')
+          )
+        ),
+        h('div', { className: 'section-title' }, 'Shopping List'),
+        Object.keys(grouped).length === 0
+          ? h('div', { className: 'empty-state' }, h('p', null, 'All items completed!'))
+          : Object.keys(grouped).map(function(cat) {
+              var catObj = categories[cat] || {};
+              return h('div', { key: cat, className: 'shopping-list-category' },
+                h('div', { className: 'shopping-list-category-header' },
+                  h('span', null, (catObj.icon_emoji || '') + ' ' + cat),
+                  h('span', null, '(' + grouped[cat].length + ')')
+                ),
+                grouped[cat].map(function(item) {
+                  return h('div', { key: item.id, className: 'shopping-list-item' },
+                    h('span', null, item.description),
+                    h('span', { className: 'room-tag' }, roomMap[item.room_id] || '')
+                  );
+                })
+              );
+            }),
+        h('div', { className: 'cost-summary' },
+          h('div', { className: 'section-title' }, 'Costs'),
+          h('div', { className: 'cost-row' },
+            h('span', null, 'Total Estimated'),
+            h('span', { className: 'cost-amount' }, formatCost(totalEst) || '$0')
+          ),
+          h('div', { className: 'cost-row' },
+            h('span', null, 'Spent So Far'),
+            h('span', { className: 'cost-amount' }, formatCost(totalActual) || '$0')
+          )
+        ),
+        h('button', { className: 'export-btn', onClick: exportCsv }, '\uD83D\uDCE5 Export CSV')
+      );
+    }
+
+    // ── SettingsView ─────────────────────────────────────────────────────
+    function SettingsView(props) {
+      var lastSync = props.lastSync, onRefresh = props.onRefresh;
+
+      function clearCache() {
+        if (confirm('Clear all cached data? The app will reload and fetch fresh data.')) {
+          localStorage.removeItem('maple-tracker-data');
+          window.location.reload();
+        }
+      }
+
+      return h('div', { className: 'settings-view' },
+        h('div', { className: 'settings-group' },
+          h('div', { className: 'settings-group-title' }, 'General'),
+          h('div', { className: 'settings-row' },
+            h('span', null, 'House'),
+            h('span', { className: 'settings-value' }, 'Maple')
+          ),
+          h('div', { className: 'settings-row' },
+            h('span', null, 'Last Synced'),
+            h('span', { className: 'settings-value' }, lastSync ? new Date(lastSync).toLocaleString() : 'Never')
+          )
+        ),
+        h('div', { className: 'settings-group' },
+          h('div', { className: 'settings-group-title' }, 'Data'),
+          h('button', { className: 'refresh-btn', onClick: onRefresh }, '\uD83D\uDD04 Refresh Data')
+        ),
+        h('div', { className: 'settings-group' },
+          h('div', { className: 'settings-group-title' }, 'Danger Zone'),
+          h('button', { className: 'danger-btn', onClick: clearCache }, '\uD83D\uDDD1 Clear Local Cache')
+        )
+      );
+    }
+
+    // ── App ──────────────────────────────────────────────────────────────
+    function App() {
+      var _tab = useState('rooms');
+      var tab = _tab[0], setTab = _tab[1];
+      var _rooms = useState([]);
+      var rooms = _rooms[0], setRooms = _rooms[1];
+      var _items = useState([]);
+      var items = _items[0], setItems = _items[1];
+      var _categories = useState({});
+      var categories = _categories[0], setCategories = _categories[1];
+      var _selectedRoom = useState(null);
+      var selectedRoom = _selectedRoom[0], setSelectedRoom = _selectedRoom[1];
+      var _loading = useState(true);
+      var loading = _loading[0], setLoading = _loading[1];
+      var _error = useState(null);
+      var error = _error[0], setError = _error[1];
+      var _lastSync = useState(null);
+      var lastSync = _lastSync[0], setLastSync = _lastSync[1];
+
+      var loadData = useCallback(function() {
+        setLoading(true);
+        setError(null);
+        api.bootstrap().then(function(data) {
+          var sortedRooms = (data.rooms || [])
+            .filter(function(r) { return !r.archived; })
+            .sort(function(a, b) { return (a.sort_order || 0) - (b.sort_order || 0); });
+          var catLookup = {};
+          (data.categories || []).forEach(function(c) {
+            catLookup[c.name] = { icon_emoji: c.icon_emoji || '', default_items: c.default_items || '' };
+          });
+          setRooms(sortedRooms);
+          setItems(data.items || []);
+          setCategories(catLookup);
+          setLastSync(Date.now());
+          setLoading(false);
+          // Cache
+          try {
+            localStorage.setItem('maple-tracker-data', JSON.stringify({
+              rooms: sortedRooms,
+              items: data.items || [],
+              categories: catLookup,
+              timestamp: Date.now()
+            }));
+          } catch(e) {}
+        }).catch(function(err) {
+          // Try cache
+          try {
+            var cached = JSON.parse(localStorage.getItem('maple-tracker-data'));
+            if (cached && cached.rooms) {
+              setRooms(cached.rooms);
+              setItems(cached.items || []);
+              setCategories(cached.categories || {});
+              setLastSync(cached.timestamp);
+              setLoading(false);
+              return;
+            }
+          } catch(e) {}
+          setError(err.message);
+          setLoading(false);
+        });
+      }, []);
+
+      useEffect(function() { loadData(); }, [loadData]);
+
+      function handleItemsChanged(itemId, fieldsOrItem) {
+        if (fieldsOrItem === null) {
+          // Deleted
+          setItems(function(list) { return list.filter(function(i) { return i.id !== itemId; }); });
+        } else if (itemId === null) {
+          // New item
+          setItems(function(list) { return list.concat([fieldsOrItem]); });
+        } else {
+          // Updated
+          setItems(function(list) {
+            return list.map(function(i) { return i.id === itemId ? Object.assign({}, i, fieldsOrItem) : i; });
+          });
+        }
+      }
+
+      // Tab content
+      var content;
+      if (loading) {
+        content = h('div', { className: 'carousel-container' },
+          h('div', { className: 'skeleton skeleton-card' })
+        );
+      } else if (error) {
+        content = h('div', { className: 'error-state' },
+          h('div', { className: 'error-icon' }, '\u26A0\uFE0F'),
+          h('div', { className: 'error-msg' }, error),
+          h('button', { className: 'retry-btn', onClick: loadData }, 'Retry')
+        );
+      } else if (tab === 'rooms') {
+        if (selectedRoom) {
+          content = h(RoomDetail, {
+            room: selectedRoom,
+            items: items,
+            categories: categories,
+            onBack: function() { setSelectedRoom(null); },
+            onItemsChanged: handleItemsChanged
+          });
+        } else {
+          content = [
+            h('div', { key: 'header', className: 'app-header' },
+              h('h1', null, 'Maple'),
+              h('div', { className: 'subtitle' }, rooms.length + ' rooms \u00B7 ' + items.filter(function(i) { return i.status !== 'completed'; }).length + ' open items')
+            ),
+            h(Carousel, {
+              key: 'carousel',
+              rooms: rooms,
+              items: items,
+              onSelectRoom: function(r) { setSelectedRoom(r); }
+            })
+          ];
+        }
+      } else if (tab === 'summary') {
+        content = [
+          h('div', { key: 'header', className: 'app-header' },
+            h('h1', null, 'Summary')
+          ),
+          h(SummaryView, { key: 'summary', rooms: rooms, items: items, categories: categories })
+        ];
+      } else if (tab === 'settings') {
+        content = [
+          h('div', { key: 'header', className: 'app-header' },
+            h('h1', null, 'Settings')
+          ),
+          h(SettingsView, { key: 'settings', lastSync: lastSync, onRefresh: loadData })
+        ];
+      }
+
+      return h('div', { className: 'app' },
+        content,
+        h('div', { className: 'tab-bar' },
+          h('button', { className: 'tab-btn' + (tab === 'rooms' ? ' active' : ''), onClick: function() { setTab('rooms'); setSelectedRoom(null); } },
+            h('span', { className: 'tab-icon' }, '\uD83C\uDFE0'),
+            h('span', { className: 'tab-label' }, 'Rooms')
+          ),
+          h('button', { className: 'tab-btn' + (tab === 'summary' ? ' active' : ''), onClick: function() { setTab('summary'); } },
+            h('span', { className: 'tab-icon' }, '\uD83D\uDCCA'),
+            h('span', { className: 'tab-label' }, 'Summary')
+          ),
+          h('button', { className: 'tab-btn' + (tab === 'settings' ? ' active' : ''), onClick: function() { setTab('settings'); } },
+            h('span', { className: 'tab-icon' }, '\u2699\uFE0F'),
+            h('span', { className: 'tab-label' }, 'Settings')
+          )
+        )
+      );
+    }
+
+    // ── Mount ────────────────────────────────────────────────────────────
+    ReactDOM.createRoot(document.getElementById('root')).render(h(App));
+  </script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('service-worker.js');
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Resolution Mismatch Detector</title>
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Resolution Mismatch Detector</h1>
+      <div class="header-right">
+        <a href="/dashboard" class="dash-link">Open Dashboard &rarr;</a>
+      </div>
+    </header>
+
+    <!-- Top info strip -->
+    <div class="info-strip">
+      <span id="cacheInfo">Loading...</span>
+      <div class="odds-toggle">
+        <span class="odds-label">Odds:</span>
+        <button class="otog active" data-fmt="pct">%</button>
+        <button class="otog" data-fmt="american">US</button>
+        <button class="otog" data-fmt="decimal">Dec</button>
+      </div>
+    </div>
+
+    <!-- Action buttons -->
+    <div class="actions">
+      <button class="action-btn" data-mode="fetch-polymarket" id="btn-fetch-poly">
+        <span class="ab-label">Fetch Polymarket</span>
+      </button>
+      <button class="action-btn" data-mode="fetch-kalshi" id="btn-fetch-kalshi">
+        <span class="ab-label">Fetch Kalshi</span>
+      </button>
+      <div class="action-divider"></div>
+      <button class="action-btn accent" data-mode="analyze" id="btn-analyze">
+        <span class="ab-label">Analyze</span>
+      </button>
+      <button class="action-btn" data-mode="report" id="btn-report">
+        <span class="ab-label">Report</span>
+      </button>
+    </div>
+
+    <!-- Progress (hidden when idle) -->
+    <div class="progress-strip" id="progressStrip" style="display:none">
+      <div class="ps-top">
+        <span class="ps-mode" id="psMode">--</span>
+        <span class="ps-phase" id="psPhase">Starting...</span>
+        <span class="ps-pct" id="psPct">0%</span>
+        <button class="ps-cancel" id="psCancel">Cancel</button>
+      </div>
+      <div class="ps-track"><div class="ps-fill" id="psFill"></div></div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tabs">
+      <button class="tab active" data-tab="log">Log</button>
+      <button class="tab" data-tab="markets">Markets</button>
+      <button class="tab" data-tab="results">Mismatches</button>
+      <button class="tab" data-tab="report">Report</button>
+    </div>
+
+    <!-- Tab: Log -->
+    <div class="tab-content active" id="tab-log">
+      <div class="log-panel" id="logPanel">
+        <div class="log-entry info">Ready.</div>
+      </div>
+    </div>
+
+    <!-- Tab: Markets Explorer -->
+    <div class="tab-content" id="tab-markets">
+      <div class="markets-panel">
+        <div class="markets-toolbar">
+          <input type="text" id="marketSearch" class="search-input" placeholder="Search markets...">
+          <div class="platform-tabs">
+            <button class="ptab active" data-platform="">All</button>
+            <button class="ptab" data-platform="polymarket">Polymarket</button>
+            <button class="ptab" data-platform="kalshi">Kalshi</button>
+          </div>
+          <select id="marketSort" class="sort-select">
+            <option value="volume">Volume</option>
+            <option value="price">Price</option>
+            <option value="title">Title A-Z</option>
+            <option value="end_date">End Date</option>
+            <option value="recent">Recently Updated</option>
+          </select>
+        </div>
+        <div class="markets-meta" id="marketsMeta"></div>
+        <div class="markets-list" id="marketsList">
+          <p class="muted">Click "Markets" tab to browse cached data.</p>
+        </div>
+        <div class="markets-pager" id="marketsPager"></div>
+      </div>
+      <div class="market-detail-overlay" id="marketDetailOverlay" style="display:none">
+        <div class="market-detail-panel">
+          <button class="detail-close" id="detailClose">&times;</button>
+          <div id="marketDetailContent"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab: Mismatches -->
+    <div class="tab-content" id="tab-results">
+      <div class="results-panel">
+        <div class="results-toolbar">
+          <div class="results-filter-tabs">
+            <button class="rfilt active" data-sev="all">All</button>
+            <button class="rfilt" data-sev="high">High</button>
+            <button class="rfilt" data-sev="medium">Medium</button>
+            <button class="rfilt" data-sev="low">Low</button>
+          </div>
+          <span class="results-count" id="resultsCount"></span>
+        </div>
+        <div id="resultsContent">
+          <p class="muted">Run "Analyze" to find mismatches.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab: Report -->
+    <div class="tab-content" id="tab-report">
+      <div id="reportContent">
+        <p class="muted">No report loaded.</p>
+      </div>
+    </div>
+  </div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>

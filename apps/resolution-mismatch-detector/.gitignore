@@ -1,0 +1,8 @@
+.env
+*.pem
+kalshi key.txt
+db/mismatch.db
+reports/
+__pycache__/
+*.pyc
+.pytest_cache/

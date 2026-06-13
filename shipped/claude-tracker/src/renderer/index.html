@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; connect-src 'none'; frame-src 'none'; object-src 'none'; base-uri 'self'; form-action 'none'">
+  <title>Claude Tracker</title>
+  <script src="vendor/chart.umd.min.js"></script>
+  <script src="vendor/chartjs-adapter-date-fns.bundle.min.js"></script>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <!-- ===== TITLE BAR ===== -->
+  <div id="titleBar">
+    <div id="dragRegion">
+      <span class="logo-text">▲ CLAUDE TRACKER</span>
+      <span id="statusDot" class="dot dot-off" title="Disconnected"></span>
+    </div>
+    <div class="titlebar-controls">
+      <button id="btnRefresh" class="tb-btn" title="Refresh">⟳</button>
+      <button id="btnExpand" class="tb-btn" title="Toggle dashboard">◳</button>
+      <button id="btnSettings" class="tb-btn" title="Settings">⚙</button>
+      <button id="btnMin" class="tb-btn" title="Minimize to tray">−</button>
+      <button id="btnClose" class="tb-btn btn-close" title="Exit">×</button>
+    </div>
+  </div>
+
+  <!-- ===== LOGIN ===== -->
+  <div id="viewLogin" class="view hidden">
+    <div class="login-box">
+      <p class="login-msg">Connect your Claude account to start tracking.</p>
+      <button id="btnLoginAuto" class="btn-primary">Log in to Claude</button>
+      <p class="login-hint">Opens a browser window — log in normally, then it auto-captures your session.</p>
+    </div>
+  </div>
+
+  <!-- ===== COMPACT VIEW ===== -->
+  <div id="viewCompact" class="view hidden">
+    <div class="usage-row">
+      <div class="usage-label">SESSION</div>
+      <div class="bar-wrap">
+        <div id="barSession" class="bar"><div class="bar-fill"></div></div>
+      </div>
+      <div id="pctSession" class="usage-pct">—</div>
+      <div id="timerSession" class="usage-timer session-timer">—</div>
+    </div>
+    <div class="usage-row">
+      <div class="usage-label">WEEKLY</div>
+      <div class="bar-wrap">
+        <div id="barWeekly" class="bar"><div class="bar-fill"></div></div>
+      </div>
+      <div id="pctWeekly" class="usage-pct">—</div>
+      <div id="timerWeekly" class="usage-timer">—</div>
+    </div>
+  </div>
+
+  <!-- ===== EXPANDED DASHBOARD ===== -->
+  <div id="viewDashboard" class="view hidden">
+    <div class="dash-grid">
+      <!-- Mini stats cards -->
+      <div class="stat-card">
+        <div class="stat-label">SESSION</div>
+        <div id="dashSessionPct" class="stat-value">—</div>
+        <div id="dashSessionTimer" class="stat-sub session-timer">resets —</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">WEEKLY</div>
+        <div id="dashWeeklyPct" class="stat-value">—</div>
+        <div id="dashWeeklyTimer" class="stat-sub">resets —</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">EXTRA USAGE</div>
+        <div id="dashExtraPct" class="stat-value">—</div>
+        <div id="dashExtraSub" class="stat-sub">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">DATA POINTS</div>
+        <div id="dashPoints" class="stat-value">0</div>
+        <div id="dashSpan" class="stat-sub">—</div>
+      </div>
+    </div>
+
+    <!-- Chart time range selector -->
+    <div class="chart-controls">
+      <span class="chart-title">USAGE HISTORY</span>
+      <div class="range-btns">
+        <button class="range-btn active" data-hours="1">1H</button>
+        <button class="range-btn" data-hours="6">6H</button>
+        <button class="range-btn" data-hours="24">24H</button>
+        <button class="range-btn" data-hours="168">7D</button>
+        <button class="range-btn" data-hours="">ALL</button>
+      </div>
+    </div>
+
+    <!-- Chart -->
+    <div class="chart-container">
+      <canvas id="usageChart"></canvas>
+    </div>
+  </div>
+
+  <!-- ===== SETTINGS OVERLAY ===== -->
+  <div id="viewSettings" class="overlay hidden">
+    <div class="overlay-inner">
+      <div class="overlay-title">SETTINGS</div>
+
+      <label class="setting-row">
+        <span>Always on top</span>
+        <input type="checkbox" id="setAlwaysOnTop" checked>
+      </label>
+      <label class="setting-row">
+        <span>Poll interval (min)</span>
+        <input type="number" id="setPollMin" value="5" min="1" max="60" class="input-sm">
+      </label>
+      <label class="setting-row">
+        <span>Warn threshold %</span>
+        <input type="number" id="setWarn" value="75" min="1" max="99" class="input-sm">
+      </label>
+      <label class="setting-row">
+        <span>Danger threshold %</span>
+        <input type="number" id="setDanger" value="90" min="1" max="99" class="input-sm">
+      </label>
+
+      <div class="setting-actions">
+        <button id="btnClearHistory" class="btn-text btn-danger-text">Clear history</button>
+        <button id="btnLogout" class="btn-text btn-danger-text">Log out</button>
+      </div>
+
+      <div class="overlay-footer">
+        <button id="btnSettingsDone" class="btn-primary btn-sm">Done</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== RESIZE HANDLE ===== -->
+  <div id="resizeHandle" class="resize-handle"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>

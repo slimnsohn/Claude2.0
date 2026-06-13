@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mismatch Dashboard</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --bg: #0d1117; --surface: #161b22; --surface2: #1c2333;
+      --border: #30363d; --text: #e6edf3; --muted: #8b949e;
+      --accent: #58a6ff; --green: #3fb950; --yellow: #d29922;
+      --red: #f85149; --orange: #db6d28;
+    }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); line-height: 1.5; }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    .page { max-width: 1100px; margin: 0 auto; padding: 24px 20px; }
+
+    /* Header */
+    .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+    .header h1 { font-size: 22px; }
+    .header .nav { display: flex; gap: 12px; font-size: 13px; }
+    .back-link { color: var(--muted); font-size: 13px; }
+
+    /* Summary cards */
+    .summary-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 28px; }
+    .summary-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; }
+    .summary-card .num { font-size: 28px; font-weight: 700; }
+    .summary-card .label { font-size: 12px; color: var(--muted); margin-top: 2px; }
+    .summary-card.high .num { color: var(--red); }
+    .summary-card.medium .num { color: var(--yellow); }
+    .summary-card.low .num { color: var(--green); }
+    .summary-card.total .num { color: var(--accent); }
+
+    /* How scoring works */
+    .explainer { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 16px 20px; margin-bottom: 24px; }
+    .explainer h2 { font-size: 14px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; }
+    .explainer-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; }
+    .exp-item .exp-title { font-weight: 600; font-size: 13px; margin-bottom: 2px; }
+    .exp-item .exp-desc { font-size: 12px; color: var(--muted); line-height: 1.5; }
+    .formula { font-family: 'Consolas', monospace; font-size: 13px; color: var(--accent); background: var(--bg); padding: 8px 12px; border-radius: 6px; margin-top: 10px; }
+
+    /* Filters */
+    .filters { display: flex; gap: 10px; align-items: center; margin-bottom: 16px; flex-wrap: wrap; }
+    .filter-group { display: flex; gap: 0; }
+    .fbtn { background: var(--surface); border: 1px solid var(--border); color: var(--muted); padding: 6px 14px; font-size: 13px; cursor: pointer; }
+    .fbtn:first-child { border-radius: 6px 0 0 6px; }
+    .fbtn:last-child { border-radius: 0 6px 6px 0; }
+    .fbtn:not(:first-child) { border-left: none; }
+    .fbtn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+    .filter-search { flex: 1; min-width: 180px; background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 7px 12px; color: var(--text); font-size: 13px; outline: none; }
+    .filter-search:focus { border-color: var(--accent); }
+    .filter-search::placeholder { color: var(--muted); }
+    .filter-count { font-size: 12px; color: var(--muted); }
+
+    /* Table */
+    .table-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+    .tbl { width: 100%; border-collapse: collapse; }
+    .tbl th { text-align: left; font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; padding: 10px 12px; border-bottom: 1px solid var(--border); background: var(--surface2); cursor: pointer; user-select: none; }
+    .tbl th:hover { color: var(--text); }
+    .tbl td { padding: 10px 12px; border-bottom: 1px solid var(--border); font-size: 13px; vertical-align: top; }
+    .tbl tr:last-child td { border-bottom: none; }
+    .tbl tr:hover td { background: var(--surface2); }
+    .tbl tr.expandable { cursor: pointer; }
+
+    /* Severity dot */
+    .sev-dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 4px; vertical-align: middle; }
+    .sev-dot.high { background: var(--red); }
+    .sev-dot.medium { background: var(--yellow); }
+    .sev-dot.low { background: var(--green); }
+
+    /* Platform badge */
+    .plat { font-size: 10px; font-weight: 700; text-transform: uppercase; padding: 2px 6px; border-radius: 3px; }
+    .plat.polymarket { background: #8b5cf622; color: #8b5cf6; }
+    .plat.kalshi { background: #06b6d422; color: #06b6d4; }
+
+    /* Priority bar */
+    .priority-bar { display: flex; align-items: center; gap: 6px; }
+    .priority-track { width: 50px; height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; }
+    .priority-fill { height: 100%; border-radius: 3px; }
+    .priority-num { font-size: 12px; color: var(--muted); min-width: 30px; }
+
+    /* Expanded row */
+    .expanded-row { display: none; }
+    .expanded-row.open { display: table-row; }
+    .expanded-row td { background: var(--bg); padding: 16px 20px; }
+    .exp-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .exp-block h4 { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+    .exp-block p { font-size: 13px; line-height: 1.6; }
+    .exp-block .rules-text { background: var(--surface); border-radius: 6px; padding: 10px; font-size: 12px; max-height: 150px; overflow-y: auto; white-space: pre-wrap; color: var(--muted); line-height: 1.5; }
+    .exp-cats { display: flex; gap: 6px; flex-wrap: wrap; }
+    .cat-tag { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 2px 8px; font-size: 11px; color: var(--accent); }
+
+    .empty-state { text-align: center; padding: 60px 20px; color: var(--muted); }
+    .empty-state .big { font-size: 40px; margin-bottom: 12px; }
+
+    /* Odds toggle */
+    .otog { background: var(--bg); border: 1px solid var(--border); color: var(--muted); padding: 3px 10px; font-size: 11px; cursor: pointer; font-weight: 600; }
+    .otog:first-of-type { border-radius: 4px 0 0 4px; }
+    .otog:last-of-type { border-radius: 0 4px 4px 0; }
+    .otog:not(:first-of-type) { border-left: none; }
+    .otog.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="header">
+      <div>
+        <a href="/" class="back-link">&larr; Back to Control Panel</a>
+        <h1>Mismatch Dashboard</h1>
+      </div>
+      <div class="nav">
+        <div class="odds-toggle" style="display:flex;align-items:center;gap:0;margin-right:12px">
+          <span style="color:var(--muted);font-size:12px;margin-right:6px">Odds:</span>
+          <button class="otog active" data-fmt="pct">%</button>
+          <button class="otog" data-fmt="american">US</button>
+          <button class="otog" data-fmt="decimal">Dec</button>
+        </div>
+        <span id="lastUpdated" style="color:var(--muted);font-size:12px"></span>
+      </div>
+    </div>
+
+    <!-- Freshness bar -->
+    <div id="freshnessBar" style="display:flex;gap:20px;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px 16px;margin-bottom:16px;font-size:13px;color:var(--muted)"></div>
+
+    <!-- Summary -->
+    <div class="summary-row" id="summaryRow"></div>
+
+    <!-- How scoring works -->
+    <div class="explainer" id="explainerPanel">
+      <h2>How Scoring Works</h2>
+      <div class="explainer-grid">
+        <div class="exp-item">
+          <div class="exp-title">Severity</div>
+          <div class="exp-desc">How much the title misleads vs what the rules actually say. <strong>High</strong> = retail traders would likely bet wrong. <strong>Medium</strong> = subtle but material gap. <strong>Low</strong> = minor technicality.</div>
+        </div>
+        <div class="exp-item">
+          <div class="exp-title">Priority Score</div>
+          <div class="exp-desc">Combines severity, market liquidity, and how extreme the price is. Higher = more actionable. Markets at 90% or 10% with a mismatch matter more than 50/50 ones.</div>
+        </div>
+        <div class="exp-item">
+          <div class="exp-title">Categories</div>
+          <div class="exp-desc"><strong>DATE_BOUNDARY</strong> = different deadline. <strong>SOURCE_SPECIFIC</strong> = resolves on one source only. <strong>CONDITIONAL_LOGIC</strong> = hidden conditions. <strong>HIDDEN_TECHNICALITY</strong> = fine print changes outcome.</div>
+        </div>
+        <div class="exp-item">
+          <div class="exp-title">Edge Direction</div>
+          <div class="exp-desc">Which side benefits from the mismatch. <strong>YES</strong> = rules favor YES resolving more than title implies. <strong>NO</strong> = opposite. <strong>UNCLEAR</strong> = ambiguous.</div>
+        </div>
+      </div>
+      <div class="formula">priority = severity_weight &times; log(volume) &times; |price - 0.5| &times; position_multiplier</div>
+    </div>
+
+    <!-- Filters -->
+    <div class="filters">
+      <div class="filter-group">
+        <button class="fbtn active" data-sev="all">All</button>
+        <button class="fbtn" data-sev="high">High</button>
+        <button class="fbtn" data-sev="medium">Medium</button>
+        <button class="fbtn" data-sev="low">Low</button>
+      </div>
+      <div class="filter-group">
+        <button class="fbtn active" data-plat="">Both</button>
+        <button class="fbtn" data-plat="polymarket">Polymarket</button>
+        <button class="fbtn" data-plat="kalshi">Kalshi</button>
+      </div>
+      <input type="text" class="filter-search" id="dashSearch" placeholder="Search title or rules...">
+      <span class="filter-count" id="filterCount"></span>
+    </div>
+
+    <!-- Table -->
+    <div class="table-wrap">
+      <table class="tbl" id="resultsTable">
+        <thead>
+          <tr>
+            <th style="width:30px"></th>
+            <th>Market</th>
+            <th style="width:70px">Platform</th>
+            <th style="width:70px" id="priceColHead">Price</th>
+            <th style="width:100px">Priority</th>
+            <th style="width:70px">Severity</th>
+            <th style="width:80px">Fetched</th>
+            <th style="width:80px">Analyzed</th>
+            <th style="width:30px"></th>
+          </tr>
+        </thead>
+        <tbody id="resultsBody"></tbody>
+      </table>
+      <div class="empty-state" id="emptyState" style="display:none">
+        <div class="big">&#128269;</div>
+        <p>No mismatches found yet.<br>Go to the <a href="/">Control Panel</a> and run <strong>Analyze New</strong>.</p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let allResults = [];
+    let sevFilter = 'all';
+    let platFilter = '';
+    let searchQuery = '';
+    let oddsFormat = localStorage.getItem('oddsFormat') || 'pct';
+
+    // Odds conversion
+    function toAmerican(prob) {
+      if (prob == null || isNaN(prob)) return '--';
+      prob = parseFloat(prob);
+      if (prob <= 0 || prob >= 1) return '--';
+      if (prob >= 0.5) return Math.round(-(prob / (1 - prob)) * 100);
+      return '+' + Math.round(((1 - prob) / prob) * 100);
+    }
+    function toDecimal(prob) {
+      if (prob == null || isNaN(prob)) return '--';
+      prob = parseFloat(prob);
+      if (prob <= 0) return '--';
+      return (1 / prob).toFixed(2);
+    }
+    function fmtPrice(prob) {
+      if (prob == null || isNaN(prob)) return '--';
+      prob = parseFloat(prob);
+      if (oddsFormat === 'american') return toAmerican(prob);
+      if (oddsFormat === 'decimal') return toDecimal(prob);
+      return `${(prob * 100).toFixed(0)}%`;
+    }
+    function priceColHeader() {
+      if (oddsFormat === 'american') return 'Odds';
+      if (oddsFormat === 'decimal') return 'Decimal';
+      return 'Price';
+    }
+
+    // Load data
+    function loadDashboard() {
+      fetch('/api/results')
+        .then(r => r.json())
+        .then(data => {
+          allResults = [
+            ...data.high.map(a => ({...a, _sev: 'high'})),
+            ...data.medium.map(a => ({...a, _sev: 'medium'})),
+            ...data.low.map(a => ({...a, _sev: 'low'})),
+          ];
+          renderSummary(data);
+          renderTable();
+          loadFreshness();
+          document.getElementById('lastUpdated').textContent = `${allResults.length} analyzed`;
+        });
+    }
+
+    function renderSummary(data) {
+      document.getElementById('summaryRow').innerHTML = `
+        <div class="summary-card total"><div class="num">${data.high.length + data.medium.length + data.low.length}</div><div class="label">Total Mismatches</div></div>
+        <div class="summary-card high"><div class="num">${data.high.length}</div><div class="label">High Severity</div></div>
+        <div class="summary-card medium"><div class="num">${data.medium.length}</div><div class="label">Medium Severity</div></div>
+        <div class="summary-card low"><div class="num">${data.low.length}</div><div class="label">Low Severity</div></div>
+      `;
+    }
+
+    function renderTable() {
+      let filtered = allResults;
+      if (sevFilter !== 'all') filtered = filtered.filter(a => a._sev === sevFilter);
+      if (platFilter) filtered = filtered.filter(a => a.market_platform === platFilter);
+      if (searchQuery) {
+        const q = searchQuery.toLowerCase();
+        filtered = filtered.filter(a =>
+          (a.market_title || '').toLowerCase().includes(q) ||
+          (a.retail_assumption || '').toLowerCase().includes(q) ||
+          (a.actual_resolution || '').toLowerCase().includes(q) ||
+          (a.resolution_rules || '').toLowerCase().includes(q)
+        );
+      }
+      filtered.sort((a, b) => (b.priority_score || 0) - (a.priority_score || 0));
+
+      document.getElementById('filterCount').textContent = `${filtered.length} result${filtered.length !== 1 ? 's' : ''}`;
+
+      const tbody = document.getElementById('resultsBody');
+      const emptyState = document.getElementById('emptyState');
+
+      if (!filtered.length) {
+        tbody.innerHTML = '';
+        emptyState.style.display = 'block';
+        return;
+      }
+      emptyState.style.display = 'none';
+
+      tbody.innerHTML = filtered.map((a, i) => {
+        const price = fmtPrice(a.market_price);
+        const priority = a.priority_score || 0;
+        const maxP = 1.0;
+        const pPct = Math.min(100, (priority / maxP) * 100);
+        const pColor = priority > 0.5 ? 'var(--red)' : priority > 0.2 ? 'var(--yellow)' : 'var(--green)';
+
+        let cats = [];
+        try { cats = JSON.parse(a.mismatch_categories || '[]'); } catch(e) {}
+
+        const rules = a.resolution_rules || '';
+        const rulesPreview = rules.length > 500 ? rules.substring(0, 500) + '...' : rules;
+
+        const fetchedAgo = a.fetched_at ? shortAgo(a.fetched_at) : '--';
+        const analyzedAgo = a.analyzed_at ? shortAgo(a.analyzed_at) : '--';
+        const fetchColor = freshDotColor(a.fetched_at);
+        const analyzeColor = freshDotColor(a.analyzed_at);
+
+        return `
+          <tr class="expandable" data-idx="${i}">
+            <td><span class="sev-dot ${a._sev}"></span></td>
+            <td>
+              <div style="font-weight:500">${esc(a.market_title)}</div>
+              <div style="font-size:11px;color:var(--muted);margin-top:2px">${esc(a.retail_assumption || '')}</div>
+            </td>
+            <td><span class="plat ${a.market_platform}">${a.market_platform === 'polymarket' ? 'Poly' : 'Kalshi'}</span></td>
+            <td>${price}</td>
+            <td>
+              <div class="priority-bar">
+                <div class="priority-track"><div class="priority-fill" style="width:${pPct}%;background:${pColor}"></div></div>
+                <span class="priority-num">${priority.toFixed(2)}</span>
+              </div>
+            </td>
+            <td><span class="sev-dot ${a._sev}"></span>${a._sev}</td>
+            <td style="font-size:11px"><span style="color:${fetchColor}">&#9679;</span> ${fetchedAgo}</td>
+            <td style="font-size:11px"><span style="color:${analyzeColor}">&#9679;</span> ${analyzedAgo}</td>
+            <td style="color:var(--muted)">&#9660;</td>
+          </tr>
+          <tr class="expanded-row" data-expand="${i}">
+            <td colspan="9">
+              <div class="exp-grid">
+                <div class="exp-block">
+                  <h4>What Retail Assumes</h4>
+                  <p>${esc(a.retail_assumption || 'N/A')}</p>
+                </div>
+                <div class="exp-block">
+                  <h4>What Rules Actually Say</h4>
+                  <p>${esc(a.actual_resolution || 'N/A')}</p>
+                </div>
+                <div class="exp-block">
+                  <h4>Categories</h4>
+                  <div class="exp-cats">${cats.length ? cats.map(c => `<span class="cat-tag">${esc(c)}</span>`).join('') : '<span style="color:var(--muted)">None</span>'}</div>
+                </div>
+                <div class="exp-block">
+                  <h4>Details</h4>
+                  <p>
+                    <strong>End date:</strong> ${a.market_end_date ? a.market_end_date.split('T')[0] : 'N/A'}<br>
+                    <strong>Volume:</strong> ${a.market_volume ? '$' + Number(a.market_volume).toLocaleString(undefined,{maximumFractionDigits:0}) : 'N/A'}<br>
+                    <strong>Analyzed:</strong> ${a.analyzed_at ? a.analyzed_at.split('T')[0] : 'N/A'}<br>
+                    <strong>Prompt:</strong> ${a.prompt_version || 'N/A'}
+                  </p>
+                </div>
+              </div>
+              ${rulesPreview ? `<div class="exp-block" style="margin-top:12px"><h4>Resolution Rules</h4><div class="rules-text">${esc(rulesPreview)}</div></div>` : ''}
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+      // Click to expand
+      tbody.querySelectorAll('.expandable').forEach(row => {
+        row.addEventListener('click', () => {
+          const idx = row.dataset.idx;
+          const exp = tbody.querySelector(`[data-expand="${idx}"]`);
+          exp.classList.toggle('open');
+          const arrow = row.querySelector('td:last-child');
+          arrow.innerHTML = exp.classList.contains('open') ? '&#9650;' : '&#9660;';
+        });
+      });
+    }
+
+    function esc(text) {
+      const d = document.createElement('div');
+      d.textContent = text || '';
+      return d.innerHTML;
+    }
+
+    function shortAgo(isoStr) {
+      if (!isoStr) return '--';
+      const d = new Date(isoStr + (isoStr.endsWith('Z') ? '' : 'Z'));
+      const mins = Math.floor((new Date() - d) / 60000);
+      if (mins < 1) return 'now';
+      if (mins < 60) return `${mins}m`;
+      const hrs = Math.floor(mins / 60);
+      if (hrs < 24) return `${hrs}h`;
+      const days = Math.floor(hrs / 24);
+      return `${days}d`;
+    }
+
+    function freshDotColor(isoStr) {
+      if (!isoStr) return 'var(--muted)';
+      const mins = Math.floor((new Date() - new Date(isoStr + (isoStr.endsWith('Z') ? '' : 'Z'))) / 60000);
+      if (mins < 60) return 'var(--green)';
+      if (mins < 360) return 'var(--yellow)';
+      return 'var(--red)';
+    }
+
+    // Filters
+    document.querySelectorAll('[data-sev]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('[data-sev]').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        sevFilter = btn.dataset.sev;
+        renderTable();
+      });
+    });
+    document.querySelectorAll('[data-plat]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('[data-plat]').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        platFilter = btn.dataset.plat;
+        renderTable();
+      });
+    });
+    let searchTimer = null;
+    document.getElementById('dashSearch').addEventListener('input', (e) => {
+      clearTimeout(searchTimer);
+      searchTimer = setTimeout(() => { searchQuery = e.target.value; renderTable(); }, 250);
+    });
+
+    // Freshness bar
+    function loadFreshness() {
+      fetch('/api/status')
+        .then(r => r.json())
+        .then(data => {
+          const c = data.cache || {};
+          const bar = document.getElementById('freshnessBar');
+          const fetchedAgo = c.last_fetched ? timeAgo(c.last_fetched) : 'never';
+
+          // Find most recent analysis time from results
+          let lastAnalyzed = null;
+          if (allResults.length) {
+            const times = allResults.map(a => a.analyzed_at).filter(Boolean).sort().reverse();
+            if (times.length) lastAnalyzed = times[0];
+          }
+          const analyzedAgo = lastAnalyzed ? timeAgo(lastAnalyzed) : 'never';
+
+          const fetchColor = freshColor(c.last_fetched);
+          const analyzeColor = freshColor(lastAnalyzed);
+
+          bar.innerHTML = `
+            <span><strong style="color:var(--text)">Markets fetched:</strong> <span style="color:${fetchColor}">${fetchedAgo}</span></span>
+            <span><strong style="color:var(--text)">Last analyzed:</strong> <span style="color:${analyzeColor}">${analyzedAgo}</span></span>
+            <span><strong style="color:var(--text)">Cached:</strong> ${c.total_markets || 0} markets (${c.polymarket || 0} Poly / ${c.kalshi || 0} Kalshi)</span>
+            <span><strong style="color:var(--text)">Unanalyzed:</strong> <span style="color:${c.unanalyzed > 0 ? 'var(--yellow)' : 'var(--green)'}">${c.unanalyzed || 0}</span></span>
+          `;
+        });
+    }
+
+    function timeAgo(isoStr) {
+      if (!isoStr) return 'never';
+      const d = new Date(isoStr + (isoStr.endsWith('Z') ? '' : 'Z'));
+      const now = new Date();
+      const mins = Math.floor((now - d) / 60000);
+      if (mins < 1) return 'just now';
+      if (mins < 60) return `${mins}m ago`;
+      const hrs = Math.floor(mins / 60);
+      if (hrs < 24) return `${hrs}h ${mins % 60}m ago`;
+      const days = Math.floor(hrs / 24);
+      return `${days}d ago`;
+    }
+
+    function freshColor(isoStr) {
+      if (!isoStr) return 'var(--red)';
+      const d = new Date(isoStr + (isoStr.endsWith('Z') ? '' : 'Z'));
+      const mins = Math.floor((new Date() - d) / 60000);
+      if (mins < 60) return 'var(--green)';      // < 1hr = fresh
+      if (mins < 360) return 'var(--yellow)';     // < 6hr = getting stale
+      return 'var(--red)';                         // > 6hr = stale
+    }
+
+    // Odds toggle
+    document.querySelectorAll('.otog').forEach(btn => {
+      if (btn.dataset.fmt === oddsFormat) {
+        document.querySelectorAll('.otog').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+      }
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.otog').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        oddsFormat = btn.dataset.fmt;
+        localStorage.setItem('oddsFormat', oddsFormat);
+        document.getElementById('priceColHead').textContent = priceColHeader();
+        renderTable();
+      });
+    });
+    document.getElementById('priceColHead').textContent = priceColHeader();
+
+    loadDashboard();
+  </script>
+</body>
+</html>

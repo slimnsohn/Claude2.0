@@ -1,0 +1,145 @@
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: #0a0a0a;
+  color: #e5e5e5;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  padding: 24px 16px;
+}
+
+.container {
+  width: 100%;
+  max-width: 480px;
+}
+
+h1 {
+  font-size: 1.4rem;
+  margin-bottom: 4px;
+  text-align: center;
+  color: #fff;
+}
+
+.version {
+  text-align: center;
+  font-size: 0.75rem;
+  color: #555;
+  margin-bottom: 24px;
+}
+
+#url-input {
+  width: 100%;
+  padding: 16px;
+  font-size: 16px;
+  border: 1px solid #333;
+  border-radius: 8px;
+  background: #1a1a1a;
+  color: #e5e5e5;
+  margin-bottom: 12px;
+}
+
+#url-input:focus {
+  outline: none;
+  border-color: #1d9bf0;
+}
+
+button {
+  padding: 16px;
+  font-size: 1rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+#fetch-btn, #copy-btn {
+  width: 100%;
+  background: #1d9bf0;
+  color: #fff;
+}
+
+#fetch-btn:active, #copy-btn:active {
+  background: #1a8cd8;
+}
+
+#fetch-btn:disabled {
+  background: #333;
+  color: #666;
+  cursor: not-allowed;
+}
+
+.secondary {
+  background: #333;
+  color: #e5e5e5;
+}
+
+.secondary:active {
+  background: #444;
+}
+
+.error {
+  color: #f4212e;
+  margin-top: 12px;
+  font-size: 0.9rem;
+}
+
+.confirm {
+  color: #00ba7c;
+  text-align: center;
+  margin-top: 12px;
+  font-size: 0.9rem;
+}
+
+.author {
+  font-size: 0.9rem;
+  color: #999;
+  margin-bottom: 12px;
+}
+
+.top-actions {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.top-actions button {
+  flex: 1;
+}
+
+#author-name {
+  font-weight: 600;
+  color: #e5e5e5;
+}
+
+#author-handle {
+  margin-left: 6px;
+}
+
+#clear-btn {
+  padding: 8px 16px;
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+
+#tweet-text {
+  background: #1a1a1a;
+  border: 1px solid #333;
+  border-radius: 8px;
+  padding: 16px;
+  font-size: 1rem;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  margin-bottom: 16px;
+  user-select: all;
+}
+
+#result-section {
+  margin-top: 24px;
+}

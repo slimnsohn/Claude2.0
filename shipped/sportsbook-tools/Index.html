@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=DM+Sans:wght@400;500;600&display=swap');
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  :root {
+    --bg: #0a0a0f; --surface: #141420; --surface2: #1c1c2e; --border: #2a2a3e;
+    --text: #e8e8f0; --text-dim: #6e6e8a;
+    --green: #22c55e; --green-bg: rgba(34,197,94,0.12);
+    --red: #ef4444; --red-bg: rgba(239,68,68,0.12);
+    --accent: #818cf8; --accent-bg: rgba(129,140,248,0.12);
+    --yellow: #eab308; --yellow-bg: rgba(234,179,8,0.12);
+    --cyan: #06b6d4; --cyan-bg: rgba(6,182,212,0.12);
+    --orange: #f97316; --orange-bg: rgba(249,115,22,0.12);
+  }
+  body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; padding: 0; }
+  .nav-tabs { display: flex; border-top: 1px solid var(--border); position: fixed; bottom: 0; left: 0; right: 0; background: var(--bg); z-index: 50; padding-bottom: env(safe-area-inset-bottom); }
+  .nav-tab { flex: 1; padding: 28px 2px; text-align: center; font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 600; color: var(--text-dim); cursor: pointer; border-top: 2px solid transparent; transition: all 0.15s; }
+  .nav-tab.active { color: var(--accent); border-top-color: var(--accent); }
+  .page { display: none; padding: 16px; padding-bottom: 110px; padding-top: 16px; }
+  .page.active { display: block; }
+  .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+  .header h1 { font-family: 'JetBrains Mono', monospace; font-size: 18px; font-weight: 700; letter-spacing: -0.5px; }
+  .header-clock { display: flex; flex-direction: column; align-items: flex-end; gap: 1px; }
+  .clock { font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 700; color: var(--text); font-variant-numeric: tabular-nums; }
+  .last-updated { font-size: 10px; color: var(--text-dim); }
+  .last-updated.stale { color: var(--orange); }
+  .balances { display: flex; gap: 12px; font-family: 'JetBrains Mono', monospace; font-size: 13px; }
+  .bal { padding: 4px 8px; border-radius: 6px; }
+  .bal.neg { background: var(--red-bg); color: var(--red); }
+  .bal.pos { background: var(--green-bg); color: var(--green); }
+  .section-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 1.5px; color: var(--text-dim); margin-bottom: 8px; }
+  .section { margin-bottom: 20px; }
+  .user-toggle { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 20px; }
+  .user-btn { padding: 14px; border: 2px solid var(--border); border-radius: 12px; background: var(--surface); color: var(--text-dim); font-family: 'JetBrains Mono', monospace; font-size: 16px; font-weight: 700; text-align: center; cursor: pointer; transition: all 0.15s; }
+  .user-btn.active { border-color: var(--accent); background: var(--accent-bg); color: var(--accent); }
+  .book-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  .book-btn { padding: 14px 8px; border: 2px solid var(--border); border-radius: 12px; background: var(--surface); color: var(--text); font-family: 'JetBrains Mono', monospace; font-size: 15px; font-weight: 600; text-align: center; cursor: pointer; transition: all 0.15s; text-transform: uppercase; }
+  .book-btn.active { border-color: var(--accent); background: var(--accent-bg); color: var(--accent); }
+  .amount-row { display: flex; gap: 8px; align-items: center; }
+  .direction-toggle { display: flex; flex-direction: column; gap: 6px; }
+  .dir-btn { width: 56px; height: 44px; border: 2px solid var(--border); border-radius: 10px; background: var(--surface); font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 700; cursor: pointer; transition: all 0.15s; display: flex; align-items: center; justify-content: center; }
+  .dir-btn.dep { color: var(--text-dim); } .dir-btn.dep.active { border-color: var(--green); background: var(--green-bg); color: var(--green); }
+  .dir-btn.wdl { color: var(--text-dim); } .dir-btn.wdl.active { border-color: var(--red); background: var(--red-bg); color: var(--red); }
+  .amount-input-wrap { flex: 1; position: relative; }
+  .amount-input-wrap .prefix { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); font-family: 'JetBrains Mono', monospace; font-size: 22px; font-weight: 600; color: var(--text-dim); pointer-events: none; }
+  .amount-input { width: 100%; padding: 16px 16px 16px 32px; border: 2px solid var(--border); border-radius: 12px; background: var(--surface); color: var(--text); font-family: 'JetBrains Mono', monospace; font-size: 28px; font-weight: 700; text-align: right; outline: none; -webkit-appearance: none; }
+  .amount-input:focus { border-color: var(--accent); } .amount-input.negative { color: var(--red); } .amount-input.positive { color: var(--green); }
+  .quick-amounts { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: 8px; }
+  .quick-btn { padding: 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface2); color: var(--text-dim); font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 600; text-align: center; cursor: pointer; transition: all 0.15s; }
+  .quick-btn:active { background: var(--accent-bg); color: var(--accent); }
+  .submit-btn { width: 100%; padding: 18px; border: none; border-radius: 14px; background: var(--accent); color: #fff; font-family: 'DM Sans', sans-serif; font-size: 17px; font-weight: 600; cursor: pointer; transition: all 0.15s; }
+  .submit-btn:active { transform: scale(0.98); opacity: 0.9; } .submit-btn:disabled { opacity: 0.3; }
+  .recent-list { margin-top: 8px; }
+  .recent-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; border-bottom: 1px solid var(--border); font-family: 'JetBrains Mono', monospace; font-size: 13px; }
+  .recent-item .date-book { color: var(--text-dim); } .recent-item .amt-val { font-weight: 700; }
+  .recent-item .amt-val.pos { color: var(--green); } .recent-item .amt-val.neg { color: var(--red); }
+  /* compact cashflow */
+  #page-cashflow .header h1 { font-size: 15px; }
+  #page-cashflow .section { margin-bottom: 12px; }
+  #page-cashflow .user-toggle { gap: 6px; margin-bottom: 12px; }
+  #page-cashflow .user-btn { padding: 10px; font-size: 13px; }
+  #page-cashflow .book-btn { padding: 10px 6px; font-size: 12px; border-radius: 10px; }
+  #page-cashflow .book-grid { gap: 6px; }
+  #page-cashflow .dir-btn { width: 44px; height: 36px; font-size: 11px; }
+  #page-cashflow .amount-input { font-size: 22px; padding: 12px 12px 12px 28px; }
+  #page-cashflow .amount-input-wrap .prefix { font-size: 18px; left: 10px; }
+  #page-cashflow .quick-btn { padding: 7px; font-size: 11px; }
+  #page-cashflow .submit-btn { padding: 14px; font-size: 15px; }
+  #page-cashflow .section-label { font-size: 9px; margin-bottom: 6px; }
+  #page-cashflow .recent-item { padding: 7px 10px; font-size: 11px; }
+  #page-cashflow { padding-bottom: 140px; }
+  .spinner { display: inline-block; width: 18px; height: 18px; border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: spin 0.6s linear infinite; vertical-align: middle; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .kalshi-input-wrap { position: relative; margin-bottom: 16px; }
+  .kalshi-input-wrap .suffix { position: absolute; right: 16px; top: 50%; transform: translateY(-50%); font-family: 'JetBrains Mono', monospace; font-size: 18px; color: var(--text-dim); pointer-events: none; }
+  .kalshi-input { width: 100%; padding: 20px 50px 20px 20px; border: 2px solid var(--border); border-radius: 14px; background: var(--surface); color: var(--yellow); font-family: 'JetBrains Mono', monospace; font-size: 36px; font-weight: 700; text-align: center; outline: none; -webkit-appearance: none; }
+  .kalshi-input:focus { border-color: var(--yellow); }
+  .result-card { border: 2px solid var(--border); border-radius: 14px; background: var(--surface); padding: 20px; margin-bottom: 12px; }
+  .result-card .label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 1.5px; color: var(--text-dim); margin-bottom: 6px; }
+  .result-card .value { font-family: 'JetBrains Mono', monospace; font-size: 32px; font-weight: 700; }
+  .result-card .sub { font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--text-dim); margin-top: 4px; }
+  .result-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .result-row .result-card .value { font-size: 22px; }
+  .cents-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin-top: 8px; }
+  .cent-btn { padding: 12px 4px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface2); color: var(--text-dim); font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 600; text-align: center; cursor: pointer; transition: all 0.15s; }
+  .cent-btn:active { background: var(--yellow-bg); color: var(--yellow); }
+  .w-input { width: 100%; padding: 14px; border: 2px solid var(--border); border-radius: 12px; background: var(--surface); color: var(--text); font-family: 'JetBrains Mono', monospace; font-size: 22px; font-weight: 700; text-align: center; outline: none; -webkit-appearance: none; }
+  .w-input:focus { border-color: var(--cyan); }
+  .w-input.dog { color: var(--green); } .w-input.fav { color: var(--red); } .w-input.wager { color: var(--cyan); }
+  .w-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .x-input { width: 100%; padding: 14px; border: 2px solid var(--border); border-radius: 12px; background: var(--surface); color: var(--text); font-family: 'JetBrains Mono', monospace; font-size: 22px; font-weight: 700; text-align: center; outline: none; -webkit-appearance: none; }
+  .x-input:focus { border-color: var(--orange); }
+  .x-input.a { color: var(--green); } .x-input.b { color: var(--red); }
+  .mode-toggle { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .mode-btn { padding: 12px 8px; border: 2px solid var(--border); border-radius: 10px; background: var(--surface); color: var(--text-dim); font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 600; text-align: center; cursor: pointer; transition: all 0.15s; }
+  .mode-btn.active { border-color: var(--orange); background: var(--orange-bg); color: var(--orange); }
+  .toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(100px); padding: 14px 24px; border-radius: 12px; font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 600; transition: transform 0.3s cubic-bezier(0.16,1,0.3,1); z-index: 100; max-width: 90vw; text-align: center; }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+  .toast.success { background: var(--green); color: #fff; }
+  .toast.error { background: var(--red); color: #fff; }
+</style>
+</head>
+<body>
+
+<div class="nav-tabs">
+  <div class="nav-tab active" onclick="switchTab('kalshi')">KALSHI</div>
+  <div class="nav-tab" onclick="switchTab('xbets')">XBETS</div>
+  <div class="nav-tab" onclick="switchTab('wager')">WAGER</div>
+  <div class="nav-tab" onclick="switchTab('cashflow')">CASH</div>
+</div>
+
+<!-- KALSHI -->
+<div class="page active" id="page-kalshi">
+  <div class="header"><h1>KALSHI → ODDS</h1><div class="header-clock"><span class="clock systemClock"></span><span class="last-updated lastUpdated">Not yet updated</span></div></div>
+  <div class="section"><div class="result-card" style="text-align: center; padding: 28px 20px;">
+    <div class="label">American Odds (post-fee)</div>
+    <div class="value" id="k-odds" style="color: var(--yellow); font-size: 48px;">-107</div>
+    <div class="sub" id="k-odds-sub">fee: 1.75¢ · eff. prob: 51.8%</div>
+  </div></div>
+  <div class="section">
+    <div class="section-label">Contract Price (cents)</div>
+    <div class="kalshi-input-wrap" style="margin-bottom: 8px;"><input class="kalshi-input" id="kalshi-cents" type="number" inputmode="numeric" min="1" max="99" placeholder="50" value="50"><span class="suffix" style="top: calc(50% - 3px);">¢</span></div>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+      <div onclick="stepKalshi(-1)" style="height: 48px; border: 2px solid var(--border); border-radius: 12px; background: var(--surface); color: var(--text); font-family: 'JetBrains Mono', monospace; font-size: 22px; font-weight: 700; display: flex; align-items: center; justify-content: center; cursor: pointer; padding-bottom: 3px;">−</div>
+      <div onclick="stepKalshi(1)" style="height: 48px; border: 2px solid var(--border); border-radius: 12px; background: var(--surface); color: var(--text); font-family: 'JetBrains Mono', monospace; font-size: 22px; font-weight: 700; display: flex; align-items: center; justify-content: center; cursor: pointer; padding-bottom: 3px;">+</div>
+    </div>
+  </div>
+  <div class="section"><div class="section-label">Quick Select</div>
+    <div class="cents-grid">
+      <div class="cent-btn" onclick="setKalshiCents(10)">10¢</div><div class="cent-btn" onclick="setKalshiCents(20)">20¢</div>
+      <div class="cent-btn" onclick="setKalshiCents(30)">30¢</div><div class="cent-btn" onclick="setKalshiCents(40)">40¢</div>
+      <div class="cent-btn" onclick="setKalshiCents(50)">50¢</div><div class="cent-btn" onclick="setKalshiCents(60)">60¢</div>
+      <div class="cent-btn" onclick="setKalshiCents(70)">70¢</div><div class="cent-btn" onclick="setKalshiCents(75)">75¢</div>
+      <div class="cent-btn" onclick="setKalshiCents(85)">85¢</div><div class="cent-btn" onclick="setKalshiCents(95)">95¢</div>
+    </div>
+  </div>
+</div>
+
+<!-- WAGER -->
+<div class="page" id="page-wager">
+  <div class="header"><h1>WAGER CALC</h1><div class="header-clock"><span class="clock systemClock"></span><span class="last-updated lastUpdated">Not yet updated</span></div></div>
+  <div class="section"><div class="w-row">
+    <div><div class="section-label" style="color: var(--green);">Dog Odds</div><input class="w-input dog" id="w-dog" type="number" inputmode="numeric" placeholder="+100" oninput="updateWager()"></div>
+    <div><div class="section-label" style="color: var(--red);">Fav Odds</div><input class="w-input fav" id="w-fav" type="number" inputmode="numeric" placeholder="-110" oninput="updateWager()"></div>
+  </div></div>
+  <div class="section">
+    <div class="section-label" style="color: var(--cyan);">Your Wager ($)</div>
+    <input class="w-input wager" id="w-wager" type="number" inputmode="numeric" placeholder="100" oninput="updateWager()">
+    <div class="quick-amounts" style="margin-top: 8px;">
+      <div class="quick-btn" onclick="document.getElementById('w-wager').value=100;updateWager()">100</div>
+      <div class="quick-btn" onclick="document.getElementById('w-wager').value=250;updateWager()">250</div>
+      <div class="quick-btn" onclick="document.getElementById('w-wager').value=500;updateWager()">500</div>
+      <div class="quick-btn" onclick="document.getElementById('w-wager').value=1000;updateWager()">1K</div>
+    </div>
+  </div>
+  <div class="section"><div class="result-card" style="text-align: center; padding: 28px 20px;">
+    <div class="label">Cross Bet (other side)</div>
+    <div class="value" id="w-cross" style="color: var(--cyan); font-size: 44px;">--</div>
+    <div class="sub" id="w-cross-sub"></div>
+  </div></div>
+  <div class="section"><div class="result-row">
+    <div class="result-card" style="text-align: center;"><div class="label">P&L</div><div class="value" id="w-pnl" style="font-size: 28px;">--</div></div>
+    <div class="result-card" style="text-align: center;"><div class="label">Juice %</div><div class="value" id="w-juice-pct" style="font-size: 28px;">--</div></div>
+  </div></div>
+</div>
+
+<!-- XBETS -->
+<div class="page" id="page-xbets">
+  <div class="header"><h1>XBETS</h1><div class="header-clock"><span class="clock systemClock"></span><span class="last-updated lastUpdated">Not yet updated</span></div></div>
+
+  <div class="section">
+    <div class="section-label">Side A Payout Type</div>
+    <div class="mode-toggle">
+      <div class="mode-btn active" id="xmode-win" onclick="setXMode('win')">TO WIN</div>
+      <div class="mode-btn" id="xmode-tot" onclick="setXMode('tot')">TOTAL</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-label" style="color: var(--green);">Side A</div>
+    <div class="w-row">
+      <div><div class="section-label">Wager</div><input class="x-input a" id="x-a-wager" type="number" inputmode="decimal" enterkeyhint="next" placeholder="0" oninput="updateXbets()"></div>
+      <div><div class="section-label" id="x-a-label">To Win</div><input class="x-input a" id="x-a-payout" type="number" inputmode="decimal" enterkeyhint="next" placeholder="0" oninput="updateXbets()"></div>
+    </div>
+  </div>
+
+  <div style="height: 1px; background: var(--border); margin: 4px 0 16px 0;"></div>
+
+  <div class="section">
+    <div class="section-label" style="color: var(--red);">Side B (Total Return)</div>
+    <div class="w-row">
+      <div><div class="section-label">Wager</div><input class="x-input b" id="x-b-wager" type="number" inputmode="decimal" enterkeyhint="next" placeholder="0" oninput="updateXbets()"></div>
+      <div><div class="section-label">Total Return</div><input class="x-input b" id="x-b-payout" type="number" inputmode="decimal" enterkeyhint="done" placeholder="0" oninput="updateXbets()"></div>
+    </div>
+  </div>
+
+  <div class="section"><div class="result-row">
+    <div class="result-card" style="text-align: center;"><div class="label">If A Wins</div><div class="value" id="x-a-win" style="font-size: 28px;">--</div></div>
+    <div class="result-card" style="text-align: center;"><div class="label">If B Wins</div><div class="value" id="x-b-win" style="font-size: 28px;">--</div></div>
+  </div></div>
+</div>
+
+<!-- CASHFLOW -->
+<div class="page" id="page-cashflow">
+  <div class="header">
+    <h1>$ CASHFLOW</h1>
+    <div class="header-clock"><span class="clock systemClock"></span><span class="last-updated lastUpdated">Not yet updated</span></div>
+    <div class="balances" id="balances"><div class="bal neg" id="bal-ss">SS: --</div><div class="bal neg" id="bal-nk">NK: --</div></div>
+  </div>
+  <div class="user-toggle">
+    <div class="user-btn active" data-user="SS" onclick="selectUser('SS')">SS</div>
+    <div class="user-btn" data-user="NK" onclick="selectUser('NK')">NK</div>
+  </div>
+  <div class="section"><div class="section-label">Book</div><div class="book-grid" id="book-grid"></div></div>
+  <div class="section">
+    <div class="section-label">Amount</div>
+    <div class="amount-row">
+      <div class="direction-toggle"><div class="dir-btn dep active" onclick="setDirection('dep')">IN</div><div class="dir-btn wdl" onclick="setDirection('wdl')">OUT</div></div>
+      <div class="amount-input-wrap"><span class="prefix">$</span><input class="amount-input positive" id="amount" type="number" inputmode="numeric" pattern="[0-9]*" placeholder="0"></div>
+    </div>
+    <div class="quick-amounts">
+      <div class="quick-btn" onclick="setAmount(500)">500</div><div class="quick-btn" onclick="setAmount(1000)">1K</div>
+      <div class="quick-btn" onclick="setAmount(5000)">5K</div><div class="quick-btn" onclick="setAmount(10000)">10K</div>
+    </div>
+  </div>
+  <div class="section"><button class="submit-btn" id="submit-btn" onclick="submitEntry()">LOG ENTRY</button></div>
+  <div class="section"><div class="section-label">Recent</div><div class="recent-list" id="recent-list"><div style="color: var(--text-dim); font-size: 13px; padding: 10px 0;">Loading...</div></div></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  var TABS = ['kalshi','xbets','wager','cashflow'];
+  function switchTab(tab) {
+    document.querySelectorAll('.nav-tab').forEach(function(t){t.classList.remove('active');});
+    document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active');});
+    document.querySelectorAll('.nav-tab')[TABS.indexOf(tab)].classList.add('active');
+    document.getElementById('page-'+tab).classList.add('active');
+  }
+
+  // === CASHFLOW ===
+  var state={user:'SS',book:null,direction:'dep'};
+  var BOOKS=['bo','bk','nv','px','py','fd','ci','cs','ka'];
+  function initCashflow(){renderBooks();loadBalances();loadRecent();}
+  function selectUser(u){state.user=u;document.querySelectorAll('.user-btn').forEach(function(b){b.classList.toggle('active',b.dataset.user===u);});loadRecent();}
+  function renderBooks(){var g=document.getElementById('book-grid');g.innerHTML='';BOOKS.forEach(function(bk){var b=document.createElement('div');b.className='book-btn';b.textContent=bk;b.onclick=function(){selectBook(bk);};g.appendChild(b);});}
+  function selectBook(bk){state.book=bk;document.querySelectorAll('.book-btn').forEach(function(b){b.classList.toggle('active',b.textContent===bk);});}
+  function setDirection(d){state.direction=d;document.querySelector('.dir-btn.dep').classList.toggle('active',d==='dep');document.querySelector('.dir-btn.wdl').classList.toggle('active',d==='wdl');var i=document.getElementById('amount');i.classList.toggle('negative',d==='wdl');i.classList.toggle('positive',d==='dep');}
+  function setAmount(v){document.getElementById('amount').value=v;}
+  function submitEntry(){
+    var a=parseInt(document.getElementById('amount').value);
+    if(!state.book){showToast('Pick a book','error');return;}if(!a||a<=0){showToast('Enter amount','error');return;}
+    var n=new Date(),d=(n.getMonth()+1)+'/'+n.getDate();
+    var f=state.direction==='wdl'?-a:a,btn=document.getElementById('submit-btn');btn.disabled=true;btn.innerHTML='<span class="spinner"></span>';
+    google.script.run.withSuccessHandler(function(r){btn.disabled=false;btn.textContent='LOG ENTRY';if(r.success){showToast(r.message,'success');document.getElementById('amount').value='';state.book=null;document.querySelectorAll('.book-btn').forEach(function(b){b.classList.remove('active');});loadRecent();loadBalances();}else{showToast(r.error,'error');}}).withFailureHandler(function(e){btn.disabled=false;btn.textContent='LOG ENTRY';showToast('Error: '+e.message,'error');}).addEntry(state.user,d,f,state.book);
+  }
+  function loadRecent(){google.script.run.withSuccessHandler(function(entries){var l=document.getElementById('recent-list');if(!entries||entries.length===0){l.innerHTML='<div style="color:var(--text-dim);font-size:13px;padding:10px 0">No entries yet</div>';return;}l.innerHTML='';entries.forEach(function(e){var it=document.createElement('div');it.className='recent-item';var a=Number(e.amt),p=a>=0;var db=document.createElement('span');db.className='date-book';db.textContent=e.date+' \u00b7 '+(e.book||'').toUpperCase();var av=document.createElement('span');av.className='amt-val '+(p?'pos':'neg');av.textContent=(p?'+':'')+a.toLocaleString();it.appendChild(db);it.appendChild(av);l.appendChild(it);});}).withFailureHandler(function(){document.getElementById('recent-list').innerHTML='<div style="color:var(--text-dim);font-size:13px;padding:10px 0">Could not load</div>';}).getRecentEntries(state.user,8);}
+  function loadBalances(){google.script.run.withSuccessHandler(function(b){if(!b)return;var s=document.getElementById('bal-ss'),n=document.getElementById('bal-nk');s.textContent='SS: '+Number(b.SS).toLocaleString();n.textContent='NK: '+Number(b.NK).toLocaleString();s.className='bal '+(b.SS>=0?'pos':'neg');n.className='bal '+(b.NK>=0?'pos':'neg');}).withFailureHandler(function(){}).getBalances();}
+
+  // === KALSHI ===
+  function kalshiFee(c){return 0.0007*c*(100-c);}
+  function centsToAmerican(c){var f=kalshiFee(c),a=c+f;return a>=50?Math.round(-100*a/(100-a)):Math.round(100*(100-a)/a);}
+  function fmtOdds(o){return o>0?'+'+o:''+o;}
+  function updateKalshi(){var c=parseInt(document.getElementById('kalshi-cents').value);if(isNaN(c)||c<1||c>99)return;var f=kalshiFee(c),a=c+f,o=centsToAmerican(c);document.getElementById('k-odds').textContent=fmtOdds(o);document.getElementById('k-odds').style.color=o>0?'var(--green)':'var(--yellow)';document.getElementById('k-odds-sub').textContent='fee: '+f.toFixed(2)+'\u00a2 \u00b7 eff. prob: '+a.toFixed(1)+'%';}
+  function setKalshiCents(c){document.getElementById('kalshi-cents').value=c;updateKalshi();}
+  function stepKalshi(dir){var c=parseInt(document.getElementById('kalshi-cents').value)||50;c=Math.min(99,Math.max(1,c+dir));document.getElementById('kalshi-cents').value=c;updateKalshi();}
+  document.getElementById('kalshi-cents').addEventListener('input',updateKalshi);
+
+  // === WAGER ===
+  function toDecimal(am){if(am>0)return am/100;if(am<0)return 100/Math.abs(am);return 0;}
+  function updateWager(){
+    var d=parseInt(document.getElementById('w-dog').value),f=parseInt(document.getElementById('w-fav').value),w=parseFloat(document.getElementById('w-wager').value);
+    if(isNaN(d)||isNaN(f)||isNaN(w)||w<=0||d===0||f===0){document.getElementById('w-cross').textContent='--';document.getElementById('w-cross-sub').textContent='';document.getElementById('w-pnl').textContent='--';document.getElementById('w-juice-pct').textContent='--';return;}
+    var dd=toDecimal(d),fd=toDecimal(f),cb=w*(dd+1)/(fd+1);
+    var pnl=w*dd-cb;
+    var pct=pnl/w*100;
+    document.getElementById('w-cross').textContent='$'+Math.round(cb);
+    document.getElementById('w-cross-sub').textContent='$'+Math.round(w)+' + $'+Math.round(cb)+' = $'+Math.round(w+cb)+' total';
+    document.getElementById('w-pnl').textContent=(pnl>=0?'+':'')+pnl.toFixed(2);
+    document.getElementById('w-pnl').style.color=pnl>=0?'var(--green)':'var(--red)';
+    document.getElementById('w-juice-pct').textContent=(pct>=0?'+':'')+pct.toFixed(1)+'%';
+    document.getElementById('w-juice-pct').style.color=pct>=0?'var(--green)':'var(--red)';
+  }
+
+  // === XBETS ===
+  // Side A: toggle between To Win and Total Return
+  // Side B: always Total Return
+  var xAMode = 'win'; // 'win' or 'tot'
+
+  function setXMode(mode) {
+    xAMode = mode;
+    document.getElementById('xmode-win').classList.toggle('active', mode === 'win');
+    document.getElementById('xmode-tot').classList.toggle('active', mode === 'tot');
+    document.getElementById('x-a-label').textContent = mode === 'win' ? 'To Win' : 'Total Return';
+    updateXbets();
+  }
+
+  function updateXbets() {
+    var aW = parseFloat(document.getElementById('x-a-wager').value);
+    var aP = parseFloat(document.getElementById('x-a-payout').value);
+    var bW = parseFloat(document.getElementById('x-b-wager').value);
+    var bP = parseFloat(document.getElementById('x-b-payout').value);
+    if (isNaN(aW) || isNaN(aP) || isNaN(bW) || isNaN(bP)) {
+      document.getElementById('x-a-win').textContent = '--';
+      document.getElementById('x-b-win').textContent = '--';
+      return;
+    }
+    // Normalize to profit
+    var aProfit = xAMode === 'win' ? aP : aP - aW;  // Side A
+    var bProfit = bP - bW;                            // Side B always total return
+
+    var aWinPnl = aProfit - bW;  // win A profit, lose B wager
+    var bWinPnl = bProfit - aW;  // win B profit, lose A wager
+
+    document.getElementById('x-a-win').textContent = (aWinPnl >= 0 ? '+' : '') + '$' + aWinPnl.toFixed(2);
+    document.getElementById('x-a-win').style.color = aWinPnl >= 0 ? 'var(--green)' : 'var(--red)';
+    document.getElementById('x-b-win').textContent = (bWinPnl >= 0 ? '+' : '') + '$' + bWinPnl.toFixed(2);
+    document.getElementById('x-b-win').style.color = bWinPnl >= 0 ? 'var(--green)' : 'var(--red)';
+  }
+
+  // Xbets: advance focus on Enter/Done
+  var xInputOrder = ['x-a-wager','x-a-payout','x-b-wager','x-b-payout'];
+  xInputOrder.forEach(function(id, i) {
+    document.getElementById(id).addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        if (i < xInputOrder.length - 1) {
+          var next = document.getElementById(xInputOrder[i + 1]);
+          next.focus();
+          next.select();
+        } else {
+          document.activeElement.blur();
+        }
+      }
+    });
+  });
+
+  // === SHARED ===
+  function showToast(msg,type){var t=document.getElementById('toast');t.textContent=msg;t.className='toast '+type+' show';setTimeout(function(){t.classList.remove('show');},2500);}
+
+  // === CLOCK ===
+  let _lastUpdateTime = null;
+  function tickClock() {
+    const now = new Date();
+    const t = now.toLocaleTimeString([], {hour:'numeric', minute:'2-digit', second:'2-digit'});
+    document.querySelectorAll('.systemClock').forEach(el => el.textContent = t);
+    if (_lastUpdateTime) {
+      const ago = Math.floor((now - _lastUpdateTime) / 60000);
+      document.querySelectorAll('.lastUpdated').forEach(el => {
+        if (ago >= 5) el.classList.add('stale');
+        else el.classList.remove('stale');
+      });
+    }
+  }
+  function setLastUpdated() {
+    _lastUpdateTime = new Date();
+    const t = 'Updated ' + _lastUpdateTime.toLocaleTimeString([], {hour:'numeric', minute:'2-digit', second:'2-digit'});
+    document.querySelectorAll('.lastUpdated').forEach(el => {
+      el.textContent = t;
+      el.classList.remove('stale');
+    });
+  }
+  tickClock();
+  setInterval(tickClock, 1000);
+
+  initCashflow();
+  updateKalshi();
+</script>
+</body>
+</html>

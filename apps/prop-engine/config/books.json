@@ -1,0 +1,11 @@
+{
+  "consensus_weights": {
+    "pinnacle":   0.50,
+    "fanduel":    0.25,
+    "bookmaker":  0.15,
+    "betonline":  0.10,
+    "draftkings": 0.0
+  },
+  "staleness_seconds": 600,
+  "min_books_for_consensus": 2
+}

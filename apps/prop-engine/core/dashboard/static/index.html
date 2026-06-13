@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Prop Engine</title>
+  <link rel="stylesheet" href="/_shared/styles/base.css" />
+  <link rel="stylesheet" href="/static/styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <h1>Prop Engine</h1>
+    <nav>
+      <button data-view="board" class="active">Board</button>
+      <button data-view="bets">Bets</button>
+      <button id="refresh-btn" class="secondary">Refresh slate</button>
+    </nav>
+    <div id="meta"></div>
+  </header>
+  <main>
+    <section id="filters">
+      <label>Min edge: <input id="filter-edge" type="number" step="0.005" value="0.03" /></label>
+      <label>Books:
+        <select id="filter-book" multiple size="4">
+          <option value="pinnacle" selected>Pinnacle</option>
+          <option value="fanduel" selected>FanDuel</option>
+          <option value="bookmaker" selected>Bookmaker</option>
+          <option value="betonline" selected>BetOnline</option>
+          <option value="draftkings" selected>DraftKings</option>
+        </select>
+      </label>
+      <label>Stat:
+        <select id="filter-stat">
+          <option value="">all</option>
+          <option value="player_points">points</option>
+          <option value="player_rebounds">rebounds</option>
+          <option value="player_assists">assists</option>
+          <option value="player_threes">threes</option>
+        </select>
+      </label>
+    </section>
+    <section id="board"></section>
+    <section id="bets" hidden></section>
+  </main>
+  <script src="/_shared/fetch-wrapper.js"></script>
+  <script src="/static/app.js"></script>
+  <script src="/_skills/llm-chat-widget/dist/chat-widget.js"></script>
+</body>
+</html>

@@ -1,0 +1,134 @@
+[
+  {
+    "id": "test_001",
+    "platform": "polymarket",
+    "title": "Will Bitcoin reach $100,000 in 2026?",
+    "rules": "Resolves YES if Bitcoin price exceeds $100,000 USD on CoinGecko at any point before December 31, 2026 11:59 PM ET.",
+    "end_date": "2026-12-31",
+    "yes_price": 0.72,
+    "expected_mismatch": false,
+    "expected_categories": [],
+    "notes": "Clean — title and rules align"
+  },
+  {
+    "id": "test_002",
+    "platform": "polymarket",
+    "title": "Will inflation fall below 2% in 2026?",
+    "rules": "Resolves YES if the Bureau of Labor Statistics reports a 12-month CPI-U change below 2.0% for any month with a reference period in 2026. Based on seasonally adjusted figures.",
+    "end_date": "2026-12-31",
+    "yes_price": 0.35,
+    "expected_mismatch": true,
+    "expected_categories": ["SOURCE_SPECIFIC", "HIDDEN_TECHNICALITY"],
+    "notes": "Seasonally adjusted vs non-adjusted is a hidden technicality. BLS-specific source."
+  },
+  {
+    "id": "test_003",
+    "platform": "kalshi",
+    "title": "Will the Fed cut rates in March 2026?",
+    "rules": "Resolves YES if the Federal Open Market Committee announces a decrease in the target federal funds rate at its March 2026 meeting. Resolution is based on the FOMC statement released at the conclusion of the meeting.",
+    "end_date": "2026-03-20",
+    "yes_price": 0.45,
+    "expected_mismatch": false,
+    "expected_categories": [],
+    "notes": "Clean — specific meeting, specific action, clear source."
+  },
+  {
+    "id": "test_004",
+    "platform": "polymarket",
+    "title": "Will a Marvel movie gross $1B in 2026?",
+    "rules": "Resolves YES if any Marvel Cinematic Universe film released in 2026 reaches $1,000,000,000 in worldwide box office gross according to Box Office Mojo by January 15, 2027.",
+    "end_date": "2027-01-15",
+    "yes_price": 0.55,
+    "expected_mismatch": true,
+    "expected_categories": ["DATE_BOUNDARY", "SOURCE_SPECIFIC"],
+    "notes": "End date extends to Jan 15 2027 — retail assumes 2026 year-end. Box Office Mojo specific."
+  },
+  {
+    "id": "test_005",
+    "platform": "kalshi",
+    "title": "Will unemployment rise above 5%?",
+    "rules": "Resolves YES if the U.S. unemployment rate (U-3, seasonally adjusted) as reported by the Bureau of Labor Statistics exceeds 5.0% for any month in 2026. Initial release figures are used; revisions are not considered.",
+    "end_date": "2026-12-31",
+    "yes_price": 0.18,
+    "expected_mismatch": true,
+    "expected_categories": ["HIDDEN_TECHNICALITY", "SOURCE_SPECIFIC"],
+    "notes": "Initial release vs revised is a hidden technicality. BLS specific."
+  },
+  {
+    "id": "test_006",
+    "platform": "polymarket",
+    "title": "Will Trump win the 2028 Republican primary?",
+    "rules": "Resolves YES if Donald Trump is the Republican Party nominee for President in 2028 as determined by the Associated Press.",
+    "end_date": "2028-09-01",
+    "yes_price": 0.30,
+    "expected_mismatch": true,
+    "expected_categories": ["SOURCE_SPECIFIC"],
+    "notes": "AP-specific resolution. AP may take time to call. 'Win primary' vs 'be nominee' is subtle."
+  },
+  {
+    "id": "test_007",
+    "platform": "kalshi",
+    "title": "Will S&P 500 close above 6000 in Q1 2026?",
+    "rules": "Resolves YES if the S&P 500 Index closing price exceeds 6,000.00 on any trading day between January 1 and March 31, 2026, as reported by S&P Global.",
+    "end_date": "2026-03-31",
+    "yes_price": 0.82,
+    "expected_mismatch": false,
+    "expected_categories": [],
+    "notes": "Clean — closing price clearly specified, date range matches title."
+  },
+  {
+    "id": "test_008",
+    "platform": "polymarket",
+    "title": "Will California ban gas cars by 2030?",
+    "rules": "Resolves YES if the California Air Resources Board implements a regulation that prohibits the sale of new gasoline-powered passenger vehicles effective on or before December 31, 2030. The regulation must be formally adopted, not merely proposed.",
+    "end_date": "2030-12-31",
+    "yes_price": 0.25,
+    "expected_mismatch": true,
+    "expected_categories": ["CONDITIONAL_LOGIC", "AMBIGUOUS_LANGUAGE"],
+    "notes": "Ban vs regulate. 'New' only — not all gas cars. 'Formally adopted' vs 'proposed' distinction."
+  },
+  {
+    "id": "test_009",
+    "platform": "kalshi",
+    "title": "Will gas prices hit $5/gallon nationally?",
+    "rules": "Resolves YES if the U.S. Energy Information Administration's weekly retail gasoline price (regular grade, national average) reaches or exceeds $5.000 per gallon at any point in 2026.",
+    "end_date": "2026-12-31",
+    "yes_price": 0.08,
+    "expected_mismatch": true,
+    "expected_categories": ["SOURCE_SPECIFIC", "HIDDEN_TECHNICALITY"],
+    "notes": "EIA weekly average vs daily spot. Regular grade only. National average masks regional spikes."
+  },
+  {
+    "id": "test_010",
+    "platform": "polymarket",
+    "title": "Will Elon Musk become a trillionaire in 2026?",
+    "rules": "Resolves YES if Elon Musk's net worth exceeds $1,000,000,000,000 USD according to the Bloomberg Billionaires Index at any point before December 31, 2026 11:59 PM ET.",
+    "end_date": "2026-12-31",
+    "yes_price": 0.40,
+    "expected_mismatch": true,
+    "expected_categories": ["SOURCE_SPECIFIC"],
+    "notes": "Bloomberg Billionaires Index specific — Forbes or other sources won't count."
+  },
+  {
+    "id": "test_011",
+    "platform": "polymarket",
+    "title": "Will GPT-5 be released in 2026?",
+    "rules": "Resolves YES if OpenAI publicly releases a model officially designated as 'GPT-5' (or successor) to the general public before December 31, 2026. Limited previews, API-only access, or beta programs do not count.",
+    "end_date": "2026-12-31",
+    "yes_price": 0.60,
+    "expected_mismatch": true,
+    "expected_categories": ["CONDITIONAL_LOGIC", "AMBIGUOUS_LANGUAGE"],
+    "notes": "'General public' release vs API access. 'Or successor' is ambiguous. Beta exclusion matters."
+  },
+  {
+    "id": "test_012",
+    "platform": "kalshi",
+    "title": "Will there be a government shutdown in 2026?",
+    "rules": "Resolves YES if a lapse in appropriations causes a partial or full shutdown of the U.S. federal government lasting at least 24 hours during calendar year 2026.",
+    "end_date": "2026-12-31",
+    "yes_price": 0.55,
+    "expected_mismatch": true,
+    "expected_categories": ["HIDDEN_TECHNICALITY"],
+    "notes": "24-hour minimum — brief technical lapses that get resolved overnight won't count."
+  }
+]

@@ -1,0 +1,55 @@
+{
+  "id": "evt-aces-lib-20260519",
+  "sport_key": "basketball_wnba",
+  "commence_time": "2026-05-19T23:30:00Z",
+  "home_team": "Las Vegas Aces",
+  "away_team": "New York Liberty",
+  "bookmakers": [
+    {
+      "key": "pinnacle",
+      "title": "Pinnacle",
+      "last_update": "2026-05-19T18:00:00Z",
+      "markets": [
+        {
+          "key": "player_points",
+          "outcomes": [
+            {"name": "Over",  "description": "A'ja Wilson", "price": -115, "point": 22.5},
+            {"name": "Under", "description": "A'ja Wilson", "price": -105, "point": 22.5},
+            {"name": "Over",  "description": "Sabrina Ionescu", "price": -110, "point": 19.5},
+            {"name": "Under", "description": "Sabrina Ionescu", "price": -110, "point": 19.5}
+          ]
+        }
+      ]
+    },
+    {
+      "key": "fanduel",
+      "title": "FanDuel",
+      "last_update": "2026-05-19T18:00:30Z",
+      "markets": [
+        {
+          "key": "player_points",
+          "outcomes": [
+            {"name": "Over",  "description": "A'ja Wilson", "price": -120, "point": 22.5},
+            {"name": "Under", "description": "A'ja Wilson", "price": 100,  "point": 22.5},
+            {"name": "Over",  "description": "Sabrina Ionescu", "price": -115, "point": 19.5},
+            {"name": "Under", "description": "Sabrina Ionescu", "price": -105, "point": 19.5}
+          ]
+        }
+      ]
+    },
+    {
+      "key": "bookmaker",
+      "title": "Bookmaker.eu",
+      "last_update": "2026-05-19T17:59:00Z",
+      "markets": [
+        {
+          "key": "player_points",
+          "outcomes": [
+            {"name": "Over",  "description": "A'ja Wilson", "price": -110, "point": 22.5},
+            {"name": "Under", "description": "A'ja Wilson", "price": -110, "point": 22.5}
+          ]
+        }
+      ]
+    }
+  ]
+}
