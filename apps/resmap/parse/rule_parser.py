@@ -119,6 +119,7 @@ WITH latest AS (
     JOIN rule_snapshots s ON s.market_id = m.market_id
     WHERE m.status = 'open'
       AND s.raw_rules <> ''
+      {ids_filter}
       AND NOT EXISTS (SELECT 1 FROM parsed_rules p
                       WHERE p.market_id = m.market_id AND p.is_stale = FALSE)
     ORDER BY m.market_id, s.fetched_at DESC
@@ -147,15 +148,13 @@ def run(conn, limit: int | None = None, dry_run: bool = False,
     stats = {"parsed": 0, "failed": 0}
 
     with conn.cursor() as cur:
-        if ids:
-            sql = SELECT_UNPARSED.replace(
-                "WHERE m.status = 'open'",
-                "WHERE m.status = 'open' AND m.venue_market_id = ANY(%(ids)s)")
-            cur.execute(sql + (f" LIMIT {int(limit)}" if limit else ""),
-                        {"ids": list(ids)})
-        else:
-            sql = SELECT_UNPARSED + (f" LIMIT {int(limit)}" if limit else "")
-            cur.execute(sql)
+        # The ids predicate is a bound param (%(ids)s); only the clause's
+        # presence is templated, so there's no injection surface.
+        ids_filter = "AND m.venue_market_id = ANY(%(ids)s)" if ids else ""
+        sql = SELECT_UNPARSED.format(ids_filter=ids_filter)
+        if limit:
+            sql += f" LIMIT {int(limit)}"
+        cur.execute(sql, {"ids": list(ids)} if ids else None)
         rows = cur.fetchall()
 
     print(f"{len(rows)} snapshot(s) queued for parsing")

@@ -108,3 +108,28 @@ def test_unknown_venue_rejected(db_conn):
     rec.venue_code = "nonexistent"
     with pytest.raises(ValueError, match="unknown venue"):
         ingest(db_conn, [rec])
+
+
+def test_chunked_commit_survives_midstream_failure(db_conn):
+    """A late-stream error must keep everything committed before the last
+    batch boundary — the next run resumes idempotently."""
+    def failing_stream():
+        yield _record(market_id="0xA")
+        yield _record(market_id="0xB")   # commit boundary at 2
+        yield _record(market_id="0xC")
+        raise RuntimeError("simulated page-fetch failure")
+
+    with pytest.raises(RuntimeError, match="simulated"):
+        ingest(db_conn, failing_stream(), commit_every=2)
+
+    # mimic the run.py error handler discarding the in-flight transaction
+    db_conn.rollback()
+    with db_conn.cursor() as cur:
+        ids = {r[0] for r in
+               _all(cur, "SELECT venue_market_id FROM markets ORDER BY 1")}
+    assert ids == {"0xA", "0xB"}   # committed batch durable; 0xC rolled back
+
+
+def _all(cur, sql, params=()):
+    cur.execute(sql, params)
+    return cur.fetchall()

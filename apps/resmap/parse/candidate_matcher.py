@@ -45,7 +45,10 @@ def _dates_compatible(a: Optional[datetime], b: Optional[datetime],
                       window_days: int = DATE_WINDOW_DAYS) -> bool:
     if a is None or b is None:
         return True  # unknown close date must not exclude a market
-    return abs((a - b).days) <= window_days
+    # total_seconds, not timedelta.days: .days floors toward -inf, so abs()
+    # of a sub-day remainder is asymmetric (a 7d12h gap reads as 7 one way,
+    # 8 the other). Compare the real elapsed magnitude instead.
+    return abs((a - b).total_seconds()) <= window_days * 86400
 
 
 def find_candidates(conn, min_similarity: float = MIN_SIMILARITY,

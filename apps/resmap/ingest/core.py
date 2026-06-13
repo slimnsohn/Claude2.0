@@ -41,16 +41,24 @@ def content_hash(text: str) -> str:
 
 
 # ── core upsert + change-detection ──────────────────────────────────────────
-def ingest(conn, records: Iterable[MarketRecord]) -> dict:
+def ingest(conn, records: Iterable[MarketRecord], commit_every: int = 500) -> dict:
     """
     Returns counts: {'new_markets', 'rule_changes', 'unchanged'}.
-    `conn` is a psycopg connection. All work is one transaction per batch.
+    `conn` is a psycopg connection.
+
+    Commits every `commit_every` records (each record's work is self-contained,
+    so a batch boundary is always consistent). A mid-stream failure on a long
+    ingest therefore keeps everything before the last boundary — the next run
+    resumes idempotently rather than redoing tens of thousands of markets.
+    Pass commit_every=0 to commit only once at the end.
     """
     stats = {"new_markets": 0, "rule_changes": 0, "unchanged": 0}
     now = datetime.now(timezone.utc)
+    seen = 0
 
     with conn.cursor() as cur:
         for rec in records:
+            seen += 1
             cur.execute("SELECT venue_id FROM venues WHERE code = %s", (rec.venue_code,))
             row = cur.fetchone()
             if not row:
@@ -98,6 +106,8 @@ def ingest(conn, records: Iterable[MarketRecord]) -> dict:
 
             if prev and prev[1] == h:
                 stats["unchanged"] += 1
+                if commit_every and seen % commit_every == 0:
+                    conn.commit()
                 continue  # nothing changed; don't write a snapshot
 
             # rules are new or changed → append immutable snapshot
@@ -125,6 +135,9 @@ def ingest(conn, records: Iterable[MarketRecord]) -> dict:
                     "UPDATE parsed_rules SET is_stale = TRUE WHERE market_id = %s",
                     (market_id,),
                 )
+
+            if commit_every and seen % commit_every == 0:
+                conn.commit()  # batch boundary — durable, resumable
     conn.commit()
     return stats
 

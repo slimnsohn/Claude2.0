@@ -43,6 +43,19 @@ def test_dates_missing_treated_compatible():
     assert _dates_compatible(None, None, window_days=7)
 
 
+def test_dates_window_is_symmetric_for_subday_gaps():
+    # regression: timedelta.days floors toward -inf, so the old abs(.days)
+    # gave opposite verdicts for the same gap depending on argument order
+    gap = timedelta(days=7, hours=12)  # 7.5 days, just outside a 7-day window
+    assert _dates_compatible(NOW, NOW + gap, 7) == _dates_compatible(NOW + gap, NOW, 7)
+    assert not _dates_compatible(NOW, NOW + gap, 7)        # excluded both ways
+    assert not _dates_compatible(NOW + gap, NOW, 7)
+
+    inside = timedelta(days=6, hours=12)  # 6.5 days, inside the window
+    assert _dates_compatible(NOW, NOW + inside, 7)
+    assert _dates_compatible(NOW + inside, NOW, 7)         # included both ways
+
+
 # ── integration: find_candidates against seeded DB ───────────────────────────
 
 def _mk(venue, vid, title, closes_at=NOW, status="open"):

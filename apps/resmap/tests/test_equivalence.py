@@ -177,6 +177,26 @@ def test_run_persists_true_match(db_conn):
 
 
 @pytest.mark.integration
+def test_run_accepts_precomputed_pairs_without_matching(db_conn):
+    """The staged pipeline passes cached CandidatePairs straight to run(),
+    skipping the (slow) full-registry match."""
+    from parse.candidate_matcher import CandidatePair
+    _seed_pair(db_conn, source_b="AP race call")
+    with db_conn.cursor() as cur:
+        cur.execute("""
+            SELECT m.market_id, v.code FROM markets m JOIN venues v USING (venue_id)
+        """)
+        by_venue = {code: str(mid) for mid, code in cur.fetchall()}
+    pair = CandidatePair(by_venue["polymarket"], by_venue["kalshi"],
+                         "France?", "France?", 0.99)
+    stats = run(db_conn, judge=FakeJudge(), pairs=[pair])
+    assert stats == {"candidates": 1, "compared": 1, "skipped_unparsed": 0}
+    with db_conn.cursor() as cur:
+        cur.execute("SELECT match_type FROM equivalences")
+        assert cur.fetchone()[0] == "true_match"
+
+
+@pytest.mark.integration
 def test_run_persists_false_friend_on_source_divergence(db_conn):
     _seed_pair(db_conn, source_b="FIFA official feed")  # different source
     run(db_conn, judge=FakeJudge(), min_similarity=0.6)

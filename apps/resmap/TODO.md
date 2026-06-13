@@ -40,10 +40,22 @@ Work top to bottom. Each phase is independently testable. Check off as you go.
 - [ ] Calibration: curate `sources` rows so the source axis fires on real
       authority differences, not canonical-name granularity (currently
       inflates risk on pairs sharing a primary source with different
-      fallback chains)
+      fallback chains). NOTE: canonical_name is UNIQUE, so dedup is semantic —
+      a human curation step or a judge call on near-name sources, not a code
+      fix. Decide the approach before tuning weights.
 - [ ] Review the 51 ≥0.90 pairs; extend seed set; tune AXIS_WEIGHTS
 
-## Phase 4 — product surface
+## Hardening (audit 2026-06-13, fixed) ✅
+- [x] candidate_matcher date window symmetric (was abs(timedelta.days),
+      asymmetric on sub-day gaps); now total_seconds
+- [x] ingest commits per 500-record batch — a late-page failure on a long
+      ingest keeps completed work, resumes idempotently (was all-or-nothing)
+- [x] rule_parser --ids filter is a composable clause, not a brittle
+      str.replace on the WHERE text
+- [ ] `rule_change_events.severity` is always 'unknown' — wire re-parse to
+      classify cosmetic/material (Phase 2.5; the schema already has the column)
+
+## Phase 4 — product surface (NEXT)
 - [ ] `tool/api/`: read-only endpoints — markets, parsed rules, equivalences,
       rule-change feed
 - [ ] API auth + per-key rate limiting (this is the metered data product)

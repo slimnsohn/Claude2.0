@@ -2,6 +2,7 @@
 secrets/
 pairs.json
 __pycache__/
+.pytest_cache/
 *.pyc
 export/parquet/
 .venv/
