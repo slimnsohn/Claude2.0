@@ -29,6 +29,8 @@ python -m venv .venv
 # product surface (Phase 4): start.bat launches the API + opens the dashboard
 .\.venv\Scripts\python -m uvicorn tool.api.main:app --port 8077   # read-only metered API
 #   then open tool/web/dashboard.html (X-API-Key: a row in the api_keys table)
+
+.\.venv\Scripts\python -m export.to_parquet --out ./export/parquet   # Phase 5: analytical snapshot
 ```
 (docker-compose.yml remains as an alternative DB path for other machines.)
 

@@ -20,8 +20,7 @@ uvicorn[standard]>=0.29
 pytest>=8.0
 httpx>=0.27          # FastAPI TestClient
 
-# ── Phase 5 (analytical export) — install when that phase starts ──
-# pyarrow>=15
-# duckdb>=0.10
-# sqlglot>=23.0
+# Analytical export (Phase 5 — Postgres → Parquet snapshot)
+pyarrow>=15
+# duckdb is the *consumer's* tool for reading the exported parquet; not needed to produce it.
 

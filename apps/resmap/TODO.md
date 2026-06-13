@@ -71,9 +71,12 @@ Work top to bottom. Each phase is independently testable. Check off as you go.
       `start.bat` launches uvicorn + opens it.
 - [ ] Later: net-after-fees calc on pairs; auth via hashed keys (currently plaintext)
 
-## Phase 5 — data product
-- [ ] `export/to_parquet.py`: Postgres → partitioned Parquet for DuckDB consumers
-- [ ] Decide cadence (daily snapshot of resolved markets + rule history)
+## Phase 5 — data product ✅ 2026-06-13
+- [x] `export/to_parquet.py`: Postgres → Parquet snapshot (markets/parsed_rules/
+      rule_changes partitioned by venue; sources/equivalences flat). parsed_rules
+      resolves source through merged_into; all parses exported with is_stale flag
+      so buyers keep history. Verified live: 72,641 markets → 6.7 MB, DuckDB-readable.
+- [ ] Decide cadence + schedule (daily snapshot via Task Scheduler) — not yet wired
 
 ## Stretch / later
 - [ ] Schedule `ingest.run` (Task Scheduler, daily)
