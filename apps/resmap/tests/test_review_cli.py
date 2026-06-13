@@ -4,9 +4,73 @@ from datetime import datetime, timezone
 import pytest
 
 from ingest.core import MarketRecord, ingest
-from parse.review_cli import _resolve_prefix, cmd_approve, cmd_list, cmd_show
+from parse.review_cli import (_resolve_prefix, cmd_approve, cmd_list,
+                              cmd_list_sources, cmd_merge_source, cmd_show)
 
 pytestmark = pytest.mark.integration
+
+
+def _mk_source(cur, name):
+    cur.execute("INSERT INTO sources (canonical_name) VALUES (%s) RETURNING source_id",
+                (name,))
+    return cur.fetchone()[0]
+
+
+def test_merge_source_sets_merged_into(db_conn):
+    with db_conn.cursor() as cur:
+        canon = _mk_source(cur, "FIFA")
+        alias = _mk_source(cur, "Fifa official body")
+    db_conn.commit()
+    cmd_merge_source(db_conn, "Fifa official", "FIFA")
+    with db_conn.cursor() as cur:
+        cur.execute("SELECT merged_into FROM sources WHERE source_id=%s", (alias,))
+        assert cur.fetchone()[0] == canon
+
+
+def test_merge_source_rejects_self_merge(db_conn):
+    with db_conn.cursor() as cur:
+        _mk_source(cur, "FIFA")
+    db_conn.commit()
+    with pytest.raises(SystemExit, match="itself"):
+        cmd_merge_source(db_conn, "FIFA", "FIFA")
+
+
+def test_merge_source_rejects_noncanonical_target(db_conn):
+    # target that is itself already an alias would create a 2-level chain
+    with db_conn.cursor() as cur:
+        canon = _mk_source(cur, "FIFA")
+        mid = _mk_source(cur, "Fifa body")
+        _mk_source(cur, "FIFA association")
+        cur.execute("UPDATE sources SET merged_into=%s WHERE source_id=%s",
+                    (canon, mid))
+    db_conn.commit()
+    with pytest.raises(SystemExit, match="canonical"):
+        cmd_merge_source(db_conn, "FIFA association", "Fifa body")
+
+
+def test_merge_source_rejects_alias_with_dependents(db_conn):
+    # can't merge a row that other rows are already merged into (would chain)
+    with db_conn.cursor() as cur:
+        a = _mk_source(cur, "Authority A")
+        b = _mk_source(cur, "Authority B")
+        c = _mk_source(cur, "Authority C")
+        cur.execute("UPDATE sources SET merged_into=%s WHERE source_id=%s", (b, c))
+    db_conn.commit()
+    with pytest.raises(SystemExit, match="dependent|merged into"):
+        cmd_merge_source(db_conn, "Authority B", "Authority A")
+
+
+def test_list_sources_shows_merge_status(db_conn, capsys):
+    with db_conn.cursor() as cur:
+        canon = _mk_source(cur, "FIFA")
+        alias = _mk_source(cur, "Fifa official body")
+        cur.execute("UPDATE sources SET merged_into=%s WHERE source_id=%s",
+                    (canon, alias))
+    db_conn.commit()
+    cmd_list_sources(db_conn)
+    out = capsys.readouterr().out
+    assert "FIFA" in out
+    assert "→" in out or "->" in out      # alias shown pointing at canonical
 
 
 @pytest.fixture

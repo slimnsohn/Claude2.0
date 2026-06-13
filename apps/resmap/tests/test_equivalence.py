@@ -161,6 +161,30 @@ def _seed_pair(db_conn, source_b="AP race call"):
 
 
 @pytest.mark.integration
+def test_merged_into_resolves_source_axis(db_conn):
+    """Layer 2: two distinct source rows that name the same authority fire the
+    source axis until a curator merges one into the other; then it clears."""
+    _seed_pair(db_conn, source_b="AP race call (alt wording)")  # poly="AP race call"
+    run(db_conn, judge=FakeJudge(), min_similarity=0.6)
+    with db_conn.cursor() as cur:
+        cur.execute("SELECT divergence_axes FROM equivalences")
+        assert "source" in cur.fetchone()[0]   # distinct rows → fires
+
+        cur.execute("SELECT source_id, canonical_name FROM sources")
+        by_name = {name: sid for sid, name in cur.fetchall()}
+        cur.execute("UPDATE sources SET merged_into = %s WHERE source_id = %s",
+                    (by_name["AP race call"], by_name["AP race call (alt wording)"]))
+    db_conn.commit()
+
+    run(db_conn, judge=FakeJudge(), min_similarity=0.6)
+    with db_conn.cursor() as cur:
+        cur.execute("SELECT divergence_axes, match_type FROM equivalences")
+        axes, match_type = cur.fetchone()
+    assert "source" not in axes        # both resolve to the canonical authority
+    assert match_type == "true_match"
+
+
+@pytest.mark.integration
 def test_run_persists_true_match(db_conn):
     _seed_pair(db_conn, source_b="AP race call")  # same source both sides
     stats = run(db_conn, judge=FakeJudge(), min_similarity=0.6)

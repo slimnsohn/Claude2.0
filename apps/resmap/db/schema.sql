@@ -73,8 +73,10 @@ CREATE TABLE sources (
     source_id    UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     canonical_name TEXT NOT NULL UNIQUE,     -- 'AP race call', 'BLS CPI release', ...
     source_type  TEXT,                       -- official_data | media_call | exchange_discretion | onchain | other
+    merged_into  UUID REFERENCES sources(source_id),  -- NULL = canonical; set = alias of another row (curator-merged)
     notes        TEXT
 );
+CREATE INDEX idx_sources_merged ON sources(merged_into) WHERE merged_into IS NOT NULL;
 
 -- ─────────────────────────────────────────────────────────────────────────────
 -- Layer 2b: PARSED rules (derived, mutable, auditable to a snapshot)
@@ -85,7 +87,8 @@ CREATE TABLE parsed_rules (
     parsed_id        UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     market_id        UUID NOT NULL REFERENCES markets(market_id),
     snapshot_id      UUID NOT NULL REFERENCES rule_snapshots(snapshot_id),
-    source_id        UUID REFERENCES sources(source_id),  -- authoritative settlement source
+    source_id        UUID REFERENCES sources(source_id),  -- PRIMARY authority (short canonical entity)
+    source_fallback  TEXT,         -- secondary/fallback procedure if primary is unavailable
     resolution_logic TEXT,         -- plain-language normalized "resolves YES if ..."
     cutoff_time      TIMESTAMPTZ,  -- the actual settlement cutoff (may differ from closes_at)
     cutoff_basis     TEXT,         -- how cutoff is defined: 'event_time' | 'data_release' | 'venue_stated'
@@ -141,3 +144,15 @@ CREATE TABLE rule_change_events (
     diff_summary    TEXT
 );
 CREATE INDEX idx_rce_market ON rule_change_events(market_id, detected_at DESC);
+
+-- ─────────────────────────────────────────────────────────────────────────────
+-- API access: keys for the metered read-only product surface (tool/api).
+-- Rate limiting is enforced per key (sliding window, in-process — see auth.py).
+-- ─────────────────────────────────────────────────────────────────────────────
+CREATE TABLE api_keys (
+    api_key      TEXT PRIMARY KEY,
+    label        TEXT NOT NULL,                 -- who/what the key is for
+    rate_per_min INT  NOT NULL DEFAULT 60,
+    active       BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at   TIMESTAMPTZ NOT NULL DEFAULT now()
+);

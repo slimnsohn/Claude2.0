@@ -169,11 +169,18 @@ def compare(parsed_a: dict, parsed_b: dict, judge: Judge | None = None) -> dict:
     }
 
 
+# source_id/name resolve THROUGH sources.merged_into (Layer 2): a curator-merged
+# alias compares as its canonical authority, so two differently-worded source
+# rows for the same authority stop firing the source axis.
 FRESH_PARSE = """
-    SELECT p.parsed_id, p.source_id, s.canonical_name, p.cutoff_time,
-           p.cutoff_basis, p.tie_handling, p.threshold_def, p.resolution_logic
+    SELECT p.parsed_id,
+           COALESCE(s.merged_into, p.source_id)            AS source_id,
+           COALESCE(canon.canonical_name, s.canonical_name) AS canonical_name,
+           p.cutoff_time, p.cutoff_basis, p.tie_handling, p.threshold_def,
+           p.resolution_logic
     FROM parsed_rules p
-    LEFT JOIN sources s USING (source_id)
+    LEFT JOIN sources s     ON s.source_id = p.source_id
+    LEFT JOIN sources canon ON canon.source_id = s.merged_into
     WHERE p.market_id = %s AND p.is_stale = FALSE
     ORDER BY p.created_at DESC
     LIMIT 1
