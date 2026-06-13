@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Polymarket Trader</title>
+<link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+<header>
+  <h1>Polymarket Trader</h1>
+  <div id="mode-pill" class="pill">—</div>
+  <div id="halt-pill" class="pill hidden">HALTED</div>
+  <div class="spacer"></div>
+  <button id="kill-btn" class="danger">⛔ Kill Switch</button>
+  <button id="resume-btn" class="hidden">▶ Resume</button>
+</header>
+
+<main>
+  <section class="row">
+    <div class="card stat">
+      <div class="label">Equity</div>
+      <div class="value" id="equity">—</div>
+      <div class="sub" id="cash">cash —</div>
+    </div>
+    <div class="card stat">
+      <div class="label">Double-or-Bust Progress</div>
+      <div class="progress-track"><div id="progress-bar"></div></div>
+      <div class="sub" id="progress-label">—</div>
+    </div>
+    <div class="card stat">
+      <div class="label">Markets Tracked</div>
+      <div class="value" id="n-markets">—</div>
+      <div class="sub" id="last-update">—</div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>Equity Curve</h2>
+    <canvas id="equity-chart" height="120"></canvas>
+  </section>
+
+  <section class="row">
+    <div class="card half">
+      <h2>Strategies</h2>
+      <table id="strategies-table">
+        <thead><tr><th>Strategy</th><th>Gate</th><th>Backtest</th><th>Weight</th>
+          <th>Budget</th><th>Paper n</th><th>Live n</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <div class="card half">
+      <h2>Positions</h2>
+      <table id="positions-table">
+        <thead><tr><th>Token</th><th>Size</th><th>Avg Cost</th>
+          <th>Mark</th><th>Unrealized</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>Open Orders</h2>
+    <table id="orders-table">
+      <thead><tr><th>Strategy</th><th>Token</th><th>Side</th><th>Price</th>
+        <th>Size</th><th>Filled</th><th>Status</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </section>
+
+  <section class="card">
+    <h2>Decision Log <span class="sub">(every intent, approval, veto — with reasoning)</span></h2>
+    <div class="filter-row">
+      <select id="decision-filter">
+        <option value="">all</option>
+        <option value="risk">risk</option>
+        <option value="orchestrator">orchestrator</option>
+      </select>
+    </div>
+    <table id="decisions-table">
+      <thead><tr><th>Time</th><th>Source</th><th>Kind</th><th>Detail</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </section>
+</main>
+
+<script src="/static/app.js"></script>
+<script src="../../_skills/llm-chat-widget/dist/chat-widget.js"></script>
+</body>
+</html>

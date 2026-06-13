@@ -1,0 +1,95 @@
+/* Sidebar */
+.sidebar {
+    position: fixed; left: 0; top: 0; bottom: 0;
+    width: 220px;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex; flex-direction: column;
+    z-index: 100;
+}
+.sidebar-header { padding: 20px 16px; }
+.app-title { font-size: 16px; font-weight: 700; line-height: 1.3; color: var(--text); margin: 0; }
+.app-title .accent { color: var(--accent); }
+
+.sidebar-nav { flex: 1; padding: 8px; }
+.nav-link {
+    display: block; padding: 10px 16px; border-radius: 6px;
+    color: var(--text2); font-size: 13px; font-weight: 500;
+    cursor: pointer; text-decoration: none;
+    transition: all 0.15s;
+}
+.nav-link:hover { background: var(--surface2); color: var(--text); }
+.nav-link.active { background: var(--accent); color: #000; font-weight: 600; }
+
+.sidebar-stats {
+    padding: 16px; border-top: 1px solid var(--border);
+    display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px;
+}
+.stat { text-align: center; }
+.stat-value { font-size: 20px; font-weight: 700; color: var(--text); }
+.stat-label { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--text2); }
+
+/* Main content */
+#app {
+    margin-left: 220px; padding: 24px; min-height: 100vh;
+}
+
+/* Common components */
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 16px; margin-bottom: 16px; }
+.section-title { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--text2); margin-bottom: 12px; }
+
+/* Tables */
+.data-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.data-table th { text-align: left; padding: 8px 12px; border-bottom: 2px solid var(--border); color: var(--text2); font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; cursor: pointer; }
+.data-table td { padding: 8px 12px; border-bottom: 1px solid var(--border); }
+.data-table tr:hover td { background: var(--surface2); }
+.data-table .num { text-align: right; font-variant-numeric: tabular-nums; }
+
+/* Buttons */
+.btn { padding: 8px 16px; border-radius: 6px; border: 1px solid var(--border); background: var(--surface); color: var(--text); font-size: 13px; cursor: pointer; transition: all 0.15s; }
+.btn:hover { background: var(--surface2); }
+.btn-primary { background: var(--accent); color: #000; border-color: var(--accent); font-weight: 600; }
+.btn-primary:hover { opacity: 0.9; }
+.btn-sm { padding: 4px 12px; font-size: 11px; }
+
+/* Inputs */
+.input, .textarea, .select {
+    width: 100%; padding: 10px 12px; border-radius: 6px;
+    border: 1px solid var(--border); background: var(--surface2);
+    color: var(--text); font-size: 13px; font-family: inherit;
+}
+.textarea { min-height: 80px; resize: vertical; }
+.select { appearance: none; }
+
+/* Badges */
+.badge { display: inline-block; padding: 2px 8px; border-radius: 3px; font-size: 10px; font-weight: 600; }
+.badge-live { background: rgba(88,166,255,0.15); color: var(--accent); }
+.badge-backtest { background: rgba(210,153,34,0.15); color: var(--orange); }
+.badge-complete { background: rgba(63,185,80,0.15); color: var(--green); }
+.badge-pending { background: rgba(139,148,158,0.15); color: var(--text2); }
+
+/* Detail panel (slide-out) */
+.detail-panel {
+    position: fixed; right: -420px; top: 0; bottom: 0; width: 400px;
+    background: var(--surface); border-left: 1px solid var(--border);
+    z-index: 200; transition: right 0.2s; overflow-y: auto; padding: 20px;
+}
+.detail-panel.open { right: 0; }
+.detail-panel-close { position: absolute; top: 12px; right: 12px; cursor: pointer; color: var(--text2); font-size: 18px; background: none; border: none; }
+
+/* Filter bar */
+.filter-bar { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; align-items: center; }
+.filter-bar .input { max-width: 250px; }
+.filter-bar .select { max-width: 150px; }
+
+/* Quick filter buttons */
+.quick-filters { display: flex; gap: 6px; margin-bottom: 12px; flex-wrap: wrap; }
+.quick-filter { padding: 4px 12px; border-radius: 12px; font-size: 11px; border: 1px solid var(--border); background: var(--surface); color: var(--text2); cursor: pointer; }
+.quick-filter.active { background: var(--accent); color: #000; border-color: var(--accent); }
+
+/* Progress */
+.progress-text { font-size: 13px; color: var(--text2); padding: 12px 0; }
+
+/* Charts */
+.chart-container { position: relative; width: 100%; }
+.chart-container canvas { width: 100% !important; }

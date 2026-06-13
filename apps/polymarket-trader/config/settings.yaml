@@ -1,0 +1,31 @@
+# polymarket-trader settings
+# MODE PROGRESSION: backtest -> paper (default) -> live.
+# Live trading requires BOTH `mode: live` AND `live_armed: true`, plus the
+# POLYMARKET_PRIVATE_KEY / POLYMARKET_FUNDER_ADDRESS env vars. See README.
+
+mode: paper
+live_armed: false
+
+bankroll: 1000.0          # starting equity; in paper mode this is virtual
+double_or_bust: true      # stop at 2x equity (won) or 5% remaining (lost)
+
+dashboard:
+  host: 127.0.0.1         # set to 0.0.0.0 for LAN access
+  port: 8765
+  control_token: "change-me-before-lan-exposure"
+
+poll_seconds: 5.0
+market_refresh_seconds: 3600.0
+max_tracked_markets: 60
+
+strategies:
+  s1_arb:
+    enabled: true
+  s2_mm:
+    enabled: true
+  s3_crypto:
+    enabled: true
+  s4_calib:
+    enabled: true
+
+risk: {}                  # overrides for pmtrader.risk.DEFAULT_RULES

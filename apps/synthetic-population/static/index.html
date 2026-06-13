@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Synthetic Population Engine</title>
+    <link rel="stylesheet" href="/_shared/styles/base.css">
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <h1 class="app-title">Synthetic<br>Population<br><span class="accent">Engine</span></h1>
+        </div>
+        <nav class="sidebar-nav">
+            <a class="nav-link active" data-view="poll">Poll</a>
+            <a class="nav-link" data-view="results">Results</a>
+            <a class="nav-link" data-view="population">Population</a>
+            <a class="nav-link" data-view="backtest">Backtest</a>
+            <a class="nav-link" data-view="events">Events</a>
+            <a class="nav-link" data-view="sources">Data Sources</a>
+        </nav>
+        <div class="sidebar-stats">
+            <div class="stat">
+                <div class="stat-value" id="stat-profiles">&mdash;</div>
+                <div class="stat-label">Profiles</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value" id="stat-archetypes">&mdash;</div>
+                <div class="stat-label">Archetypes</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value" id="stat-polls">&mdash;</div>
+                <div class="stat-label">Polls Run</div>
+            </div>
+        </div>
+    </aside>
+    <main id="app"></main>
+    <script src="/static/app.js"></script>
+    <script>
+      window.CHAT_WIDGET_CONFIG = {
+        appName: "Synthetic Population Engine",
+        systemPrompt: "You are a helpful assistant for the Synthetic Population Engine. This tool generates statistically realistic AI individuals from census data and polls them on questions. Help the user understand poll results, population demographics, and backtesting features.",
+        contextFn: () => {
+          return `Population: ${document.getElementById('stat-profiles')?.textContent || '?'} profiles, ${document.getElementById('stat-archetypes')?.textContent || '?'} archetypes. Current view: ${typeof currentView !== 'undefined' ? currentView : 'unknown'}.`;
+        },
+        welcomeMessage: "Ask me about your synthetic population, poll results, or how backtesting works.",
+        position: "bottom-right",
+      };
+    </script>
+    <script src="/_skills/llm-chat-widget/dist/chat-widget.js"></script>
+</body>
+</html>
