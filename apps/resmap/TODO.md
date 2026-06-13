@@ -90,8 +90,13 @@ Work top to bottom. Each phase is independently testable. Check off as you go.
 
 ## Onboarding website ✅ 2026-06-13
 - [x] `tool/web/`: index (landing) + getting-started (step-by-step) + faq
-      (concepts) + dashboard (live tool), shared nav. `start.bat` opens the
-      landing page after launching the API.
+      (concepts) + dashboard (live tool) + control (ops), shared nav. Plain-English
+      glossary in the FAQ; non-expert clarity pass across all pages.
+- [x] Browser-driven refresh: `tool/api/control.py` (separate localhost control
+      server, token-gated) + `tool/web/control.html` "Refresh data now" button —
+      runs ingest+export server-side (parse/equiv stay manual). `start.bat` launches
+      both servers; `launch.vbs` does it silently (no terminal). Note: a server must
+      be started once (a page can't bootstrap itself); after that it's all browser.
 
 ## Stretch / later
 - [ ] Rule-change alert feed as its own subscription (Telegram/Discord/webhook)

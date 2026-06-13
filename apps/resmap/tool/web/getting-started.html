@@ -45,6 +45,7 @@
   <a href="getting-started.html" class="active">Get started</a>
   <a href="faq.html">How it works</a>
   <a href="dashboard.html">Dashboard</a>
+  <a href="control.html">Control</a>
 </nav>
 <div class="layout">
   <aside>
@@ -171,10 +172,16 @@ python -m uvicorn tool.api.main:app --port 8077</pre>
 SELECT * FROM read_parquet('export/parquet/equivalences/*.parquet')
 WHERE match_type = 'false_friend';</pre>
 
-    <h2 id="schedule"><span class="n">10</span>Keep it fresh automatically</h2>
-    <p>A scheduled task runs <code>scripts/daily_refresh.bat</code> (ingest + export) daily.
-    Parsing and equivalence stay manual — they use Claude and depend on human review.</p>
+    <h2 id="schedule"><span class="n">10</span>Keep it fresh — automatically or from the browser</h2>
+    <p>Three ways to refresh (ingest + export; parsing/equivalence always stay manual):</p>
+    <ul>
+      <li><strong>From the website</strong> — open the <a href="control.html">Control</a> page
+      and click <em>Refresh data now</em>. No terminal. (The control server must be running;
+      <code>start.bat</code> / <code>launch.vbs</code> starts it on port 8078.)</li>
+      <li><strong>On a schedule</strong> — a Windows task runs it daily at 06:00:</li>
+    </ul>
     <pre>schtasks /Create /TN "ResMap Daily Refresh" /TR "...\scripts\daily_refresh.bat" /SC DAILY /ST 06:00 /F</pre>
+    <li style="list-style:none"><strong>By hand</strong> — <code>python -m ingest.run &amp;&amp; python -m export.to_parquet</code></li>
 
     <h2 id="cheat">Command cheatsheet</h2>
     <pre>python -m ingest.run                       # 3. pull markets + detect rule changes

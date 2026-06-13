@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ResMap — Control</title>
+<style>
+  :root{--bg:#0d1117;--panel:#161b22;--border:#30363d;--text:#e6edf3;--muted:#8b949e;
+        --accent:#58a6ff;--green:#3fb950;--yellow:#d29922;--red:#f85149;
+        --mono:"Cascadia Code",Consolas,monospace}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--text);font-family:"Segoe UI",system-ui,sans-serif;line-height:1.55}
+  a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+  nav{position:sticky;top:0;background:rgba(13,17,23,.92);backdrop-filter:blur(6px);
+      border-bottom:1px solid var(--border);padding:.7rem 1rem;display:flex;gap:1.2rem;align-items:center;z-index:10}
+  nav .brand{font-weight:700;color:var(--text)}
+  nav a{color:var(--muted);font-size:.92rem}nav a.active{color:var(--accent)}
+  .wrap{max-width:820px;margin:0 auto;padding:1.6rem 1rem 6rem}
+  h1{font-size:1.6rem}
+  .sub{color:var(--muted);margin:.4rem 0 1.2rem}
+  code{font-family:var(--mono);background:#1f2937;border-radius:4px;padding:.05rem .3rem;font-size:.88em}
+  .bar{display:flex;flex-wrap:wrap;gap:.5rem;align-items:center;background:var(--panel);
+       border:1px solid var(--border);border-radius:8px;padding:.7rem;margin-bottom:.6rem}
+  .bar input{background:#0d1117;border:1px solid var(--border);color:var(--text);border-radius:6px;
+       padding:.4rem .6rem;font-family:var(--mono);font-size:.85rem}
+  .bar input#curl{width:210px} .bar input#tok{width:180px}
+  .legend{color:var(--muted);font-size:.85rem;margin:.2rem 0 1.4rem}
+  .big{font-size:1.05rem;font-weight:700;background:var(--accent);color:#0d1117;border:none;
+       border-radius:8px;padding:.7rem 1.4rem;cursor:pointer}
+  .big:disabled{opacity:.5;cursor:default}
+  .panel{background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:1rem;margin-top:1.2rem}
+  .dot{display:inline-block;width:.6rem;height:.6rem;border-radius:50%;margin-right:.4rem;vertical-align:middle}
+  .idle{background:var(--muted)}.run{background:var(--yellow)}.ok{background:var(--green)}.fail{background:var(--red)}
+  .state{font-weight:600}
+  pre{background:#0d1117;border:1px solid var(--border);border-radius:6px;padding:.7rem .9rem;
+      font-family:var(--mono);font-size:.8rem;overflow:auto;max-height:280px;margin-top:.7rem;white-space:pre-wrap}
+  .warn{border-left:3px solid var(--yellow);background:var(--panel);padding:.6rem .9rem;border-radius:0 6px 6px 0;
+        margin:1rem 0;color:#c9d1d9;font-size:.9rem}
+  .note{border-left:3px solid var(--accent);background:var(--panel);padding:.6rem .9rem;border-radius:0 6px 6px 0;
+        margin:1rem 0;color:#c9d1d9;font-size:.9rem}
+</style>
+</head>
+<body>
+<nav>
+  <span class="brand">ResMap</span>
+  <a href="index.html">Home</a>
+  <a href="getting-started.html">Get started</a>
+  <a href="faq.html">How it works</a>
+  <a href="dashboard.html">Dashboard</a>
+  <a href="control.html" class="active">Control</a>
+</nav>
+<div class="wrap">
+  <h1>Control</h1>
+  <p class="sub">Refresh the dataset from here — no terminal needed. "Refresh" pulls the
+  latest markets from all venues, detects rule changes, and rebuilds the export
+  (the same job that runs automatically each morning).</p>
+
+  <div class="note">Parsing rules and scoring divergence are <strong>not</strong> run here —
+  they use Claude and depend on human review, so you run those yourself
+  (<code>python -m parse.rule_parser</code>, then <a href="dashboard.html">review</a>).</div>
+
+  <div class="bar">
+    <label>control API <input id="curl" value="http://127.0.0.1:8078"></label>
+    <label>token <input id="tok" value="resmap_local_control"></label>
+  </div>
+  <p class="legend">The control server must be running (start.bat / launch.vbs starts it).
+  The token is local-only — change <code>RESMAP_CONTROL_TOKEN</code> before exposing it.</p>
+
+  <button class="big" id="go" onclick="refresh()">⟳ Refresh data now</button>
+
+  <div class="panel">
+    <div><span class="dot idle" id="dot"></span><span class="state" id="state">checking…</span></div>
+    <pre id="log">(no run yet)</pre>
+  </div>
+
+  <div class="warn">A refresh pulls tens of thousands of markets and can take a few minutes.
+  It's safe to leave this page — the job runs on the server. Re-open to check progress.</div>
+</div>
+
+<script>
+  const $ = id => document.getElementById(id);
+  const cfg = () => {
+    sessionStorage.setItem("resmap_curl", $("curl").value);
+    sessionStorage.setItem("resmap_tok", $("tok").value);
+    return {url: $("curl").value.replace(/\/$/, ""), tok: $("tok").value};
+  };
+  let timer = null;
+
+  function render(st) {
+    const dot = $("dot"), state = $("state");
+    if (st.running) {
+      dot.className = "dot run";
+      const secs = st.started_at ? Math.round(Date.now()/1000 - st.started_at) : 0;
+      state.textContent = `running… (${secs}s)`;
+      $("go").disabled = true;
+    } else {
+      $("go").disabled = false;
+      if (st.last) {
+        dot.className = "dot " + (st.last.ok ? "ok" : "fail");
+        state.textContent = st.last.ok ? "last run: success" : "last run: FAILED";
+      } else {
+        dot.className = "dot idle"; state.textContent = "idle — never run this session";
+      }
+    }
+    $("log").textContent = (st.log && st.log.length) ? st.log.join("\n") : "(no log)";
+  }
+
+  async function poll() {
+    const {url, tok} = cfg();
+    try {
+      const r = await fetch(url + "/status", {headers: {"X-Control-Token": tok}});
+      if (!r.ok) throw new Error(r.status === 401 ? "bad token" : "status " + r.status);
+      const st = await r.json();
+      render(st);
+      if (!st.running && timer) { clearInterval(timer); timer = null; }
+    } catch (e) {
+      $("state").textContent = "⚠ " + e.message + " (is the control server running?)";
+      $("dot").className = "dot fail";
+      if (timer) { clearInterval(timer); timer = null; }
+    }
+  }
+
+  async function refresh() {
+    const {url, tok} = cfg();
+    $("state").textContent = "starting…";
+    try {
+      const r = await fetch(url + "/refresh", {method: "POST", headers: {"X-Control-Token": tok}});
+      if (r.status === 409) { $("state").textContent = "already running"; }
+      else if (!r.ok) throw new Error(r.status === 401 ? "bad token" : "refresh " + r.status);
+    } catch (e) {
+      $("state").textContent = "⚠ " + e.message; $("dot").className = "dot fail"; return;
+    }
+    if (!timer) timer = setInterval(poll, 2000);
+    poll();
+  }
+
+  if (sessionStorage.getItem("resmap_curl")) $("curl").value = sessionStorage.getItem("resmap_curl");
+  if (sessionStorage.getItem("resmap_tok")) $("tok").value = sessionStorage.getItem("resmap_tok");
+  poll();   // show current state on load
+
+  window.CHAT_WIDGET_CONFIG = {
+    appName: "ResMap Control",
+    systemPrompt: "You are the ResMap control-panel assistant. This page triggers a data " +
+      "refresh (ingest markets from Polymarket/Kalshi/Gemini + rebuild the Parquet export) " +
+      "on a local control server. Parsing and equivalence scoring are NOT run here — they " +
+      "use Claude and need human review. Help the user understand the refresh and its status.",
+    welcomeMessage: "Ask about the refresh or what it does.",
+    accentColor: "#58a6ff",
+  };
+</script>
+<script src="../../../../_skills/llm-chat-widget/dist/chat-widget.js"></script>
+</body>
+</html>
