@@ -110,7 +110,13 @@ Work top to bottom. Each phase is independently testable. Check off as you go.
 - [x] Live-verified: e.g. Musk-CEO pair (Poly "before 2027" vs Kalshi "before 2026")
       → BUY YES poly @ $0.07 + BUY NO kalshi @ $0.92, cost $0.99, +$1.01 on divergence.
 - [x] Control refresh timeout raised 1800→3600s (full unbounded ingest takes 30-40 min).
-- [ ] Later: per-pair "fetch live" refresh button; net-after-fees (still needs a fee model).
+- [x] Per-venue trading fees (`tool/api/pricing.py` extract_fees): Kalshi taker
+      ceil(7%·p·(1−p))/contract; Polymarket taker p·rate·(p(1−p))^exp/share from the
+      market's feeSchedule (maker 0; fee-free if disabled). BOTH $0 at settlement.
+      /price returns yes_fee/no_fee; dashboard itemises fees per leg + fee-inclusive
+      payoff so the "resolve same" row is the true after-fee cost.
+- [ ] Later: per-pair "fetch live" refresh button; maker-vs-taker toggle (current
+      estimates assume taker orders).
 
 ## Stretch / later
 - [ ] Rule-change alert feed as its own subscription (Telegram/Discord/webhook)
