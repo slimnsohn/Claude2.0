@@ -144,3 +144,15 @@ CREATE TABLE rule_change_events (
     diff_summary    TEXT
 );
 CREATE INDEX idx_rce_market ON rule_change_events(market_id, detected_at DESC);
+
+-- ─────────────────────────────────────────────────────────────────────────────
+-- API access: keys for the metered read-only product surface (tool/api).
+-- Rate limiting is enforced per key (sliding window, in-process — see auth.py).
+-- ─────────────────────────────────────────────────────────────────────────────
+CREATE TABLE api_keys (
+    api_key      TEXT PRIMARY KEY,
+    label        TEXT NOT NULL,                 -- who/what the key is for
+    rate_per_min INT  NOT NULL DEFAULT 60,
+    active       BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at   TIMESTAMPTZ NOT NULL DEFAULT now()
+);

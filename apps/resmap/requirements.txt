@@ -12,12 +12,15 @@ cryptography>=42.0
 # swap to embeddings later if fuzzy recall proves insufficient
 rapidfuzz>=3.6
 
+# API surface (Phase 4 — the metered read-only product)
+fastapi>=0.110
+uvicorn[standard]>=0.29
+
 # Dev
 pytest>=8.0
+httpx>=0.27          # FastAPI TestClient
 
-# ── Phase 4–5 (API surface + export) — install when those phases start ──
-# fastapi>=0.110
-# uvicorn>=0.29
+# ── Phase 5 (analytical export) — install when that phase starts ──
 # pyarrow>=15
 # duckdb>=0.10
 # sqlglot>=23.0

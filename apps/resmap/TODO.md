@@ -61,12 +61,15 @@ Work top to bottom. Each phase is independently testable. Check off as you go.
 - [ ] `rule_change_events.severity` is always 'unknown' — wire re-parse to
       classify cosmetic/material (Phase 2.5; the schema already has the column)
 
-## Phase 4 — product surface (NEXT)
-- [ ] `tool/api/`: read-only endpoints — markets, parsed rules, equivalences,
-      rule-change feed
-- [ ] API auth + per-key rate limiting (this is the metered data product)
-- [ ] `tool/web/`: thin live arb/alert dashboard consuming the API (the DEMO)
-      — show net-after-fees, and CRUCIALLY filter out `false_friend` pairs
+## Phase 4 — product surface ✅ 2026-06-13
+- [x] `tool/api/main.py`: read-only endpoints — /markets, /markets/{id}/rules,
+      /equivalences, /rule-changes (source resolves through merged_into)
+- [x] API-key auth (`api_keys` table, X-API-Key) + per-key sliding-window rate
+      limit (`tool/api/auth.py`); CORS for the file:// dashboard; dev key seeded
+- [x] `tool/web/dashboard.html`: divergence dashboard — pairs flagged
+      true_match/near_match/false_friend, rule-change feed, chat widget.
+      `start.bat` launches uvicorn + opens it.
+- [ ] Later: net-after-fees calc on pairs; auth via hashed keys (currently plaintext)
 
 ## Phase 5 — data product
 - [ ] `export/to_parquet.py`: Postgres → partitioned Parquet for DuckDB consumers

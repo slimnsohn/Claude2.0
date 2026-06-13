@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ResMap — Cross-Venue Divergence (demo)</title>
+<style>
+  :root {
+    --bg:#0d1117; --panel:#161b22; --border:#30363d; --text:#e6edf3;
+    --muted:#8b949e; --accent:#58a6ff; --green:#3fb950; --yellow:#d29922;
+    --red:#f85149; --mono:"Cascadia Code",Consolas,monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--text);font-family:"Segoe UI",system-ui,sans-serif;
+       line-height:1.5;padding:1.5rem 1rem 6rem}
+  .wrap{max-width:1000px;margin:0 auto}
+  h1{font-size:1.6rem}
+  .sub{color:var(--muted);margin-bottom:1.2rem}
+  .sub a{color:var(--accent)}
+  .bar{display:flex;flex-wrap:wrap;gap:.5rem;align-items:center;background:var(--panel);
+       border:1px solid var(--border);border-radius:8px;padding:.7rem;margin-bottom:1.2rem}
+  .bar input{background:#0d1117;border:1px solid var(--border);color:var(--text);
+       border-radius:6px;padding:.4rem .6rem;font-family:var(--mono);font-size:.85rem}
+  .bar input#api{width:230px} .bar input#key{width:160px}
+  .bar button{background:var(--accent);color:#0d1117;border:none;border-radius:6px;
+       padding:.45rem .9rem;font-weight:600;cursor:pointer}
+  .bar .status{color:var(--muted);font-size:.85rem;margin-left:auto}
+  h2{font-size:1.15rem;margin:1.6rem 0 .6rem;border-bottom:1px solid var(--border);padding-bottom:.3rem}
+  .legend{font-size:.85rem;color:var(--muted);margin-bottom:.8rem}
+  .pill{display:inline-block;border-radius:10px;padding:.05rem .5rem;font-size:.72rem;
+        font-weight:700;font-family:var(--mono)}
+  .tm{background:rgba(63,185,80,.15);color:var(--green)}
+  .nm{background:rgba(210,153,34,.15);color:var(--yellow)}
+  .ff{background:rgba(248,81,73,.15);color:var(--red)}
+  .card{background:var(--panel);border:1px solid var(--border);border-radius:8px;
+        padding:.8rem 1rem;margin:.5rem 0}
+  .card.ffb{border-left:3px solid var(--red)}
+  .card.nmb{border-left:3px solid var(--yellow)}
+  .card.tmb{border-left:3px solid var(--green)}
+  .row1{display:flex;gap:.6rem;align-items:center;flex-wrap:wrap}
+  .risk{font-family:var(--mono);font-size:.8rem;color:var(--muted)}
+  .titles{margin:.4rem 0;font-size:.95rem}
+  .titles .venue{font-family:var(--mono);font-size:.72rem;color:var(--muted);
+        border:1px solid var(--border);border-radius:4px;padding:0 .3rem;margin-right:.3rem}
+  .axes{font-family:var(--mono);font-size:.78rem;color:var(--yellow)}
+  .notes{font-size:.85rem;color:#c9d1d9;margin-top:.3rem}
+  .verdict{font-size:.82rem;margin-top:.4rem}
+  .verdict.ff{color:var(--red)} .verdict.tm{color:var(--green)} .verdict.nm{color:var(--yellow)}
+  .empty{color:var(--muted);font-style:italic}
+  .change{font-family:var(--mono);font-size:.82rem;border-bottom:1px solid var(--border);padding:.5rem 0}
+  .change .new{color:var(--text)} .change .old{color:var(--muted);text-decoration:line-through}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>ResMap — Cross-Venue Divergence</h1>
+  <p class="sub">Demo surface over the dataset. <strong>Not an arb scanner</strong> —
+  it flags which lookalike pairs are <span class="pill ff">false&nbsp;friend</span>
+  traps before you treat them as the same market. New to this?
+  <a href="faq.html">Read the FAQ →</a></p>
+
+  <div class="bar">
+    <label>API <input id="api" value="http://127.0.0.1:8077"></label>
+    <label>key <input id="key" placeholder="X-API-Key" value="resmap_dev_key"></label>
+    <button onclick="loadAll()">Load</button>
+    <span class="status" id="status">enter API URL + key, then Load</span>
+  </div>
+
+  <h2>Equivalence pairs <span class="legend" id="pairmeta"></span></h2>
+  <p class="legend">
+    <span class="pill ff">false_friend</span> resolves differently — the trap ·
+    <span class="pill nm">near_match</span> minor divergence — flag ·
+    <span class="pill tm">true_match</span> safe to treat as the same market
+  </p>
+  <div id="pairs"><p class="empty">not loaded</p></div>
+
+  <h2>Rule-change alerts</h2>
+  <p class="legend">When a venue edits settlement criteria mid-market — high-value risk signal.</p>
+  <div id="changes"><p class="empty">not loaded</p></div>
+</div>
+
+<script>
+  const $ = id => document.getElementById(id);
+  const esc = s => (s ?? "").toString().replace(/[&<>]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
+  const CLS = {true_match:"tm", near_match:"nm", false_friend:"ff"};
+  const VERDICT = {
+    true_match: "Safe — identical on all four axes.",
+    near_match: "Flag — differs on a minor axis; don't trust blindly.",
+    false_friend: "TRAP — differs in a way that can flip resolution. A naive scanner calls this free money.",
+  };
+
+  function cfg() {
+    sessionStorage.setItem("resmap_api", $("api").value);
+    sessionStorage.setItem("resmap_key", $("key").value);
+    return {api: $("api").value.replace(/\/$/, ""), key: $("key").value};
+  }
+
+  async function fetchJson(path) {
+    const {api, key} = cfg();
+    const r = await fetch(api + path, {headers: {"X-API-Key": key}});
+    if (!r.ok) throw new Error(`${path} → ${r.status} ${r.statusText}`);
+    return r.json();
+  }
+
+  function renderPairs(rows) {
+    const ff = rows.filter(r => r.match_type === "false_friend").length;
+    $("pairmeta").textContent = `— ${rows.length} pairs, ${ff} false friends`;
+    if (!rows.length) { $("pairs").innerHTML = '<p class="empty">no pairs</p>'; return; }
+    $("pairs").innerHTML = rows.map(r => {
+      const c = CLS[r.match_type] || "nm";
+      const axes = (r.divergence_axes || []).join(", ") || "none";
+      return `<div class="card ${c}b">
+        <div class="row1">
+          <span class="pill ${c}">${esc(r.match_type)}</span>
+          <span class="risk">risk ${(+r.risk_score).toFixed(2)}</span>
+          <span class="axes">diverges on: ${esc(axes)}</span>
+        </div>
+        <div class="titles">
+          <div><span class="venue">${esc(r.market_a_venue)}</span>${esc(r.market_a_title)}</div>
+          <div><span class="venue">${esc(r.market_b_venue)}</span>${esc(r.market_b_title)}</div>
+        </div>
+        ${r.divergence_notes ? `<div class="notes">${esc(r.divergence_notes)}</div>` : ""}
+        <div class="verdict ${c}">${VERDICT[r.match_type] || ""}</div>
+      </div>`;
+    }).join("");
+  }
+
+  function renderChanges(rows) {
+    if (!rows.length) { $("changes").innerHTML = '<p class="empty">no rule changes recorded</p>'; return; }
+    $("changes").innerHTML = rows.map(r => `<div class="change">
+      <div>[${esc(r.venue)}] ${esc(r.title)} <span style="color:var(--muted)">— ${esc(r.detected_at)} (${esc(r.severity)})</span></div>
+      ${r.prev_rules ? `<div class="old">${esc(r.prev_rules.slice(0,160))}</div>` : ""}
+      <div class="new">${esc((r.new_rules||"").slice(0,160))}</div>
+    </div>`).join("");
+  }
+
+  async function loadAll() {
+    $("status").textContent = "loading…";
+    try {
+      const [eq, rc] = await Promise.all([
+        fetchJson("/equivalences?limit=200"),
+        fetchJson("/rule-changes?limit=50"),
+      ]);
+      renderPairs(eq.equivalences || []);
+      renderChanges(rc.rule_changes || []);
+      $("status").textContent = "loaded " + new Date().toLocaleTimeString();
+    } catch (e) {
+      $("status").textContent = "⚠ " + e.message;
+    }
+  }
+
+  // restore last config; auto-load if we have both
+  if (sessionStorage.getItem("resmap_api")) $("api").value = sessionStorage.getItem("resmap_api");
+  if (sessionStorage.getItem("resmap_key")) $("key").value = sessionStorage.getItem("resmap_key");
+  if ($("api").value && $("key").value) loadAll();
+
+  window.CHAT_WIDGET_CONFIG = {
+    appName: "ResMap",
+    systemPrompt: "You are the ResMap assistant on the divergence dashboard. " +
+      "ResMap scores cross-venue lookalike market pairs on four axes (source, " +
+      "cutoff, tie, threshold) as true_match / near_match / false_friend. A " +
+      "false_friend is a pair a naive arb scanner calls free money but that can " +
+      "resolve differently. Help the user interpret the pairs and rule-change " +
+      "alerts on screen. ResMap is read-only and never trades.",
+    welcomeMessage: "Ask about any pair or what false_friend means.",
+    accentColor: "#58a6ff",
+  };
+</script>
+<script src="../../../../_skills/llm-chat-widget/dist/chat-widget.js"></script>
+</body>
+</html>
