@@ -73,8 +73,10 @@ CREATE TABLE sources (
     source_id    UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     canonical_name TEXT NOT NULL UNIQUE,     -- 'AP race call', 'BLS CPI release', ...
     source_type  TEXT,                       -- official_data | media_call | exchange_discretion | onchain | other
+    merged_into  UUID REFERENCES sources(source_id),  -- NULL = canonical; set = alias of another row (curator-merged)
     notes        TEXT
 );
+CREATE INDEX idx_sources_merged ON sources(merged_into) WHERE merged_into IS NOT NULL;
 
 -- ─────────────────────────────────────────────────────────────────────────────
 -- Layer 2b: PARSED rules (derived, mutable, auditable to a snapshot)
