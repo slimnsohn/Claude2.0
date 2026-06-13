@@ -71,9 +71,22 @@
   }
   ul, ol { padding-left: 1.4rem; margin: .5rem 0; }
   li { margin: .25rem 0; }
+  nav { position: sticky; top: 0; background: rgba(13,17,23,.92); backdrop-filter: blur(6px);
+        border-bottom: 1px solid var(--border); padding: .7rem 1rem; display: flex; gap: 1.2rem;
+        align-items: center; z-index: 10; }
+  nav .brand { font-weight: 700; color: var(--text); }
+  nav a { color: var(--muted); font-size: .92rem; }
+  nav a.active { color: var(--accent); }
 </style>
 </head>
 <body>
+<nav>
+  <span class="brand">ResMap</span>
+  <a href="index.html">Home</a>
+  <a href="getting-started.html">Get started</a>
+  <a href="faq.html" class="active">How it works</a>
+  <a href="dashboard.html">Dashboard</a>
+</nav>
 <div class="wrap">
 
 <h1>ResMap</h1>

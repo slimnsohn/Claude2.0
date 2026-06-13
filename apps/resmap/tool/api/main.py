@@ -53,7 +53,7 @@ def require_key(x_api_key: str = Header(default=""), conn=Depends(get_db)) -> di
     key = lookup_key(conn, x_api_key)
     if not key:
         raise HTTPException(401, "missing or invalid API key (X-API-Key header)")
-    if not _rate_limiter.allow(key["api_key"], key["rate_per_min"]):
+    if not _rate_limiter.allow(key["key_hash"], key["rate_per_min"]):
         raise HTTPException(429, f"rate limit exceeded ({key['rate_per_min']}/min)")
     return key
 

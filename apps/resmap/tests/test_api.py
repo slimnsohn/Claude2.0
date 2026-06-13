@@ -17,12 +17,13 @@ def client(db_conn):
     from fastapi.testclient import TestClient
     from tool.api.main import _rate_limiter, app, get_db
 
+    from tool.api.auth import hash_key
     with db_conn.cursor() as cur:
         cur.execute("""
-            INSERT INTO api_keys (api_key, label, rate_per_min) VALUES
-                ('testkey', 'test', 1000), ('rlkey', 'ratelimited', 2)
-            ON CONFLICT (api_key) DO UPDATE SET active=TRUE, rate_per_min=EXCLUDED.rate_per_min
-        """)
+            INSERT INTO api_keys (key_hash, label, rate_per_min) VALUES
+                (%s, 'test', 1000), (%s, 'ratelimited', 2)
+            ON CONFLICT (key_hash) DO UPDATE SET active=TRUE, rate_per_min=EXCLUDED.rate_per_min
+        """, (hash_key("testkey"), hash_key("rlkey")))
     db_conn.commit()
 
     import psycopg

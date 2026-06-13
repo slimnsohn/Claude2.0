@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ResMap — Getting Started</title>
+<style>
+  :root{--bg:#0d1117;--panel:#161b22;--border:#30363d;--text:#e6edf3;--muted:#8b949e;
+        --accent:#58a6ff;--green:#3fb950;--yellow:#d29922;--red:#f85149;
+        --mono:"Cascadia Code",Consolas,monospace}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--text);font-family:"Segoe UI",system-ui,sans-serif;line-height:1.6}
+  a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+  nav{position:sticky;top:0;background:rgba(13,17,23,.92);backdrop-filter:blur(6px);
+      border-bottom:1px solid var(--border);padding:.7rem 1rem;display:flex;gap:1.2rem;align-items:center;z-index:10}
+  nav .brand{font-weight:700;color:var(--text)}
+  nav a{color:var(--muted);font-size:.92rem}nav a.active{color:var(--accent)}
+  .layout{max-width:1040px;margin:0 auto;padding:1.5rem 1rem 6rem;display:grid;
+          grid-template-columns:200px 1fr;gap:2rem}
+  aside{position:sticky;top:64px;align-self:start;font-size:.9rem}
+  aside a{display:block;color:var(--muted);padding:.2rem 0}
+  aside .grp{color:var(--text);font-weight:700;margin-top:.8rem}
+  main{min-width:0}
+  h1{font-size:1.9rem;margin-bottom:.3rem}
+  .lede{color:var(--muted);margin-bottom:1.5rem}
+  h2{font-size:1.25rem;margin:2rem 0 .8rem;border-bottom:1px solid var(--border);padding-bottom:.35rem}
+  h2 .n{color:var(--accent);font-family:var(--mono);margin-right:.4rem}
+  h3{font-size:1rem;margin:1.1rem 0 .3rem}
+  p,li{color:#c9d1d9}ul,ol{padding-left:1.3rem;margin:.4rem 0}
+  pre{background:#1f2937;border:1px solid var(--border);border-radius:8px;padding:.85rem 1.05rem;
+      overflow-x:auto;font-family:var(--mono);font-size:.84rem;margin:.5rem 0}
+  code{font-family:var(--mono);background:#1f2937;border-radius:4px;padding:.08rem .35rem;font-size:.88em}
+  .note{border-left:3px solid var(--accent);background:var(--panel);padding:.7rem 1rem;border-radius:0 8px 8px 0;margin:1rem 0}
+  .warn{border-left-color:var(--yellow)}
+  .moat{border-left-color:var(--red)}
+  table{border-collapse:collapse;width:100%;margin:.6rem 0;font-size:.88rem}
+  td,th{border:1px solid var(--border);padding:.4rem .6rem;text-align:left}th{background:#1f2937}
+  @media(max-width:760px){.layout{grid-template-columns:1fr}aside{position:static}}
+</style>
+</head>
+<body>
+<nav>
+  <span class="brand">ResMap</span>
+  <a href="index.html">Home</a>
+  <a href="getting-started.html" class="active">Get started</a>
+  <a href="faq.html">How it works</a>
+  <a href="dashboard.html">Dashboard</a>
+</nav>
+<div class="layout">
+  <aside>
+    <div class="grp">Setup</div>
+    <a href="#prereq">0 · Prerequisites</a>
+    <a href="#db">1 · Database</a>
+    <a href="#env">2 · Python & .env</a>
+    <div class="grp">Run the pipeline</div>
+    <a href="#ingest">3 · Ingest</a>
+    <a href="#parse">4 · Parse rules</a>
+    <a href="#review">5 · Review</a>
+    <a href="#equiv">6 · Equivalence</a>
+    <div class="grp">Use it</div>
+    <a href="#api">7 · API</a>
+    <a href="#dash">8 · Dashboard</a>
+    <a href="#export">9 · Export</a>
+    <a href="#schedule">10 · Auto-refresh</a>
+    <a href="#cheat">Command cheatsheet</a>
+  </aside>
+  <main>
+    <h1>Getting started</h1>
+    <p class="lede">From a clean machine to a queryable cross-venue divergence dataset.
+    Commands are PowerShell on Windows; the venv python is <code>.venv\Scripts\python.exe</code>
+    (shown as <code>python</code> below). New to the concepts? Read
+    <a href="faq.html">how it works</a> first.</p>
+
+    <h2 id="prereq"><span class="n">0</span>Prerequisites</h2>
+    <ul>
+      <li><strong>PostgreSQL 16</strong> — the system of record. (Windows: <code>winget install PostgreSQL.PostgreSQL.16</code>; full steps in <code>_docs/SETUP_WINDOWS.md</code>.)</li>
+      <li><strong>Python 3.13</strong>.</li>
+      <li><strong>Claude Code CLI</strong> (<code>claude</code> on PATH) — rule parsing runs through <code>claude -p</code>, so there's no API key or per-call cost.</li>
+    </ul>
+
+    <h2 id="db"><span class="n">1</span>Create the database</h2>
+    <p>Create the role + two databases (prod and a test DB) and load the schema into both:</p>
+    <pre>$psql = "C:\Program Files\PostgreSQL\16\bin\psql.exe"
+&amp; $psql -U postgres -c "CREATE ROLE resmap LOGIN PASSWORD 'resmap';"
+&amp; $psql -U postgres -c "CREATE DATABASE resmap OWNER resmap;"
+&amp; $psql -U postgres -c "CREATE DATABASE resmap_test OWNER resmap;"
+$env:PGCLIENTENCODING = "UTF8"   # schema has UTF-8 box chars
+&amp; $psql -v ON_ERROR_STOP=1 -f db\schema.sql "postgresql://resmap:resmap@localhost:5432/resmap"
+&amp; $psql -v ON_ERROR_STOP=1 -f db\schema.sql "postgresql://resmap:resmap@localhost:5432/resmap_test"</pre>
+    <div class="note warn"><strong>Windows psql gotcha:</strong> put flags (<code>-f</code>, <code>-v</code>)
+    <em>before</em> the connection URL, or psql silently ignores them.</div>
+
+    <h2 id="env"><span class="n">2</span>Python environment &amp; <code>.env</code></h2>
+    <pre>python -m venv .venv
+.\.venv\Scripts\python -m pip install -r requirements.txt
+copy .env.example .env       # then edit if your DB creds differ
+.\.venv\Scripts\python -m pytest tests\ -q     # sanity: everything green</pre>
+    <p><code>.env</code> holds <code>DATABASE_URL</code>, <code>TEST_DATABASE_URL</code>, and
+    <code>CLAUDE_CLI_MODEL</code> (default <code>sonnet</code>). No venue keys are needed —
+    all three venues ingest from public endpoints.</p>
+
+    <h2 id="ingest"><span class="n">3</span>Ingest markets</h2>
+    <p>Pull every open market from all three venues. Settlement text is captured verbatim and
+    hashed; re-running only writes a new snapshot when a venue actually edits the rules.</p>
+    <pre>python -m ingest.run                       # all venues
+python -m ingest.run --venue polymarket --max-pages 5   # a quick bounded run</pre>
+    <p>Run it again — it's idempotent: unchanged markets write nothing. A genuine mid-market
+    rule edit produces a <code>rule_change_events</code> row (a sellable alert on its own).
+    Classify those edits cosmetic vs material with:</p>
+    <pre>python -m parse.classify_changes</pre>
+
+    <h2 id="parse"><span class="n">4</span>Extract structured rules</h2>
+    <p>Claude reads each market's verbatim rules and returns 10 structured fields (source,
+    cutoff, tie handling, threshold, …). Highest-volume markets first; run in batches.</p>
+    <pre>python -m parse.rule_parser --limit 20
+python -m parse.rule_parser --limit 3 --dry-run    # preview without writing</pre>
+    <div class="note moat"><strong>Human review is the moat.</strong> Every parse lands
+    <code>reviewed = false</code>. The LLM extraction is cheap and cloneable; a curated,
+    verified settlement-semantics database is not. There is deliberately no auto-accept.</div>
+
+    <h2 id="review"><span class="n">5</span>Review parses &amp; curate sources</h2>
+    <pre>python -m parse.review_cli list                 # unreviewed, shakiest first
+python -m parse.review_cli show 7d45baf9        # parse beside the verbatim rules
+python -m parse.review_cli approve 7d45baf9</pre>
+    <p>Sources are normalized to short canonical authorities ("FIFA", "NASA GISS LOTI"). When
+    two rows name the same authority differently, merge them so they stop looking like a
+    divergence:</p>
+    <pre>python -m parse.review_cli list-sources
+python -m parse.review_cli merge-source "Fifa official body" "FIFA"
+python -m scripts.cluster_sources               # let claude propose merges (you approve)</pre>
+
+    <h2 id="equiv"><span class="n">6</span>Score cross-venue divergence</h2>
+    <p>Find lookalike Polymarket↔Kalshi pairs and compare their parsed interpretations across
+    four axes (source, cutoff, tie, threshold) → <code>true_match</code> / <code>near_match</code>
+    / <code>false_friend</code>.</p>
+    <pre>python -m parse.equivalence</pre>
+    <p>For the full registry (slow to match), use the staged pipeline that caches candidates:</p>
+    <pre>python -m scripts.equivalence_pipeline match --out pairs.json --top 12
+python -m parse.rule_parser --ids ID1 ID2 ...   # parse any sides it flags as unparsed
+python -m scripts.equivalence_pipeline compare --pairs pairs.json</pre>
+
+    <h2 id="api"><span class="n">7</span>Serve the API</h2>
+    <p>Mint a key (only its hash is stored), then start the read-only API:</p>
+    <pre>python -m scripts.make_api_key --label "me" --rate 120    # prints the key once
+python -m uvicorn tool.api.main:app --port 8077</pre>
+    <table>
+      <tr><th>Endpoint</th><th>Returns</th></tr>
+      <tr><td><code>GET /markets</code></td><td>markets (filter by venue/category/status)</td></tr>
+      <tr><td><code>GET /markets/{id}/rules</code></td><td>current parsed rules + snapshot ref</td></tr>
+      <tr><td><code>GET /equivalences</code></td><td>scored pairs (filter match_type / min_risk)</td></tr>
+      <tr><td><code>GET /rule-changes</code></td><td>the rule-change alert feed</td></tr>
+    </table>
+    <pre>curl -H "X-API-Key: YOUR_KEY" "http://127.0.0.1:8077/equivalences?match_type=false_friend"</pre>
+
+    <h2 id="dash"><span class="n">8</span>Open the dashboard</h2>
+    <p><a href="dashboard.html">dashboard.html</a> consumes the API: enter the API URL + your
+    key and Load. Pairs are flagged <strong>true_match / near_match / false_friend</strong>
+    with plain-language verdicts, alongside the rule-change feed. On Windows,
+    <code>start.bat</code> launches the API and opens the dashboard in one step.</p>
+
+    <h2 id="export"><span class="n">9</span>Export for analysis</h2>
+    <p>Snapshot the structured layers to partitioned Parquet (markets/parsed_rules/rule_changes
+    by venue) — read it from DuckDB, pandas, or anything Arrow-aware:</p>
+    <pre>python -m export.to_parquet --out ./export/parquet</pre>
+    <pre>-- from DuckDB:
+SELECT * FROM read_parquet('export/parquet/equivalences/*.parquet')
+WHERE match_type = 'false_friend';</pre>
+
+    <h2 id="schedule"><span class="n">10</span>Keep it fresh automatically</h2>
+    <p>A scheduled task runs <code>scripts/daily_refresh.bat</code> (ingest + export) daily.
+    Parsing and equivalence stay manual — they use Claude and depend on human review.</p>
+    <pre>schtasks /Create /TN "ResMap Daily Refresh" /TR "...\scripts\daily_refresh.bat" /SC DAILY /ST 06:00 /F</pre>
+
+    <h2 id="cheat">Command cheatsheet</h2>
+    <pre>python -m ingest.run                       # 3. pull markets + detect rule changes
+python -m parse.classify_changes           #    label rule edits cosmetic/material
+python -m parse.rule_parser --limit 20     # 4. extract rules (claude -p)
+python -m parse.review_cli list            # 5. review queue
+python -m parse.review_cli merge-source A B#    curate the source registry
+python -m parse.equivalence                # 6. score divergence
+python -m scripts.make_api_key --label x   # 7. mint an API key
+python -m uvicorn tool.api.main:app        #    serve the API
+python -m export.to_parquet                # 9. analytical snapshot
+pytest tests\ -q                           #    run the test suite</pre>
+  </main>
+</div>
+</body>
+</html>

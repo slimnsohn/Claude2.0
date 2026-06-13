@@ -150,7 +150,7 @@ CREATE INDEX idx_rce_market ON rule_change_events(market_id, detected_at DESC);
 -- Rate limiting is enforced per key (sliding window, in-process — see auth.py).
 -- ─────────────────────────────────────────────────────────────────────────────
 CREATE TABLE api_keys (
-    api_key      TEXT PRIMARY KEY,
+    key_hash     TEXT PRIMARY KEY,              -- sha256 of the raw key; raw key never stored
     label        TEXT NOT NULL,                 -- who/what the key is for
     rate_per_min INT  NOT NULL DEFAULT 60,
     active       BOOLEAN NOT NULL DEFAULT TRUE,

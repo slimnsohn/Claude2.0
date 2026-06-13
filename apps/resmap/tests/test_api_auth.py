@@ -1,5 +1,16 @@
-"""Unit tests for the API rate limiter (no HTTP, injected clock)."""
-from tool.api.auth import RateLimiter
+"""Unit tests for the API rate limiter + key hashing (no HTTP, injected clock)."""
+from tool.api.auth import RateLimiter, hash_key
+
+
+def test_hash_key_is_deterministic_sha256():
+    h = hash_key("resmap_dev_key")
+    assert h == hash_key("resmap_dev_key")     # stable
+    assert len(h) == 64 and all(c in "0123456789abcdef" for c in h)  # sha256 hex
+    assert h != "resmap_dev_key"               # never the raw key
+
+
+def test_hash_key_distinguishes_keys():
+    assert hash_key("a") != hash_key("b")
 
 
 class FakeClock:

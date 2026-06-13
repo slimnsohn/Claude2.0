@@ -7,8 +7,15 @@ if the API is ever horizontally scaled.
 """
 from __future__ import annotations
 
+import hashlib
 import time
 from typing import Callable, Optional
+
+
+def hash_key(raw_key: str) -> str:
+    """SHA-256 hex of a raw API key. Only the hash is stored, so a DB leak
+    never exposes usable keys."""
+    return hashlib.sha256(raw_key.encode("utf-8")).hexdigest()
 
 
 class RateLimiter:
@@ -33,17 +40,18 @@ class RateLimiter:
         self._hits.clear()
 
 
-def lookup_key(conn, api_key: str) -> Optional[dict]:
-    """Return {api_key, label, rate_per_min} for an active key, else None."""
-    if not api_key:
+def lookup_key(conn, raw_key: str) -> Optional[dict]:
+    """Return {key_hash, label, rate_per_min} for an active key, else None.
+    The raw key is hashed before lookup — only hashes are stored."""
+    if not raw_key:
         return None
     with conn.cursor() as cur:
         cur.execute(
-            "SELECT api_key, label, rate_per_min FROM api_keys "
-            "WHERE api_key = %s AND active = TRUE",
-            (api_key,),
+            "SELECT key_hash, label, rate_per_min FROM api_keys "
+            "WHERE key_hash = %s AND active = TRUE",
+            (hash_key(raw_key),),
         )
         row = cur.fetchone()
     if not row:
         return None
-    return {"api_key": row[0], "label": row[1], "rate_per_min": row[2]}
+    return {"key_hash": row[0], "label": row[1], "rate_per_min": row[2]}

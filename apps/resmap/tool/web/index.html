@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ResMap — Prediction-Market Resolution Intelligence</title>
+<style>
+  :root{--bg:#0d1117;--panel:#161b22;--border:#30363d;--text:#e6edf3;--muted:#8b949e;
+        --accent:#58a6ff;--green:#3fb950;--yellow:#d29922;--red:#f85149;
+        --mono:"Cascadia Code",Consolas,monospace}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--text);font-family:"Segoe UI",system-ui,sans-serif;line-height:1.6}
+  a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+  /* nav */
+  nav{position:sticky;top:0;background:rgba(13,17,23,.92);backdrop-filter:blur(6px);
+      border-bottom:1px solid var(--border);padding:.7rem 1rem;display:flex;gap:1.2rem;
+      align-items:center;z-index:10}
+  nav .brand{font-weight:700;color:var(--text)}
+  nav a{color:var(--muted);font-size:.92rem}
+  nav a.active{color:var(--accent)}
+  .wrap{max-width:920px;margin:0 auto;padding:2rem 1rem 6rem}
+  .hero{text-align:center;padding:2rem 0 1rem}
+  .hero h1{font-size:2.4rem;letter-spacing:-.5px}
+  .hero .tag{color:var(--muted);font-size:1.15rem;margin:.6rem auto;max-width:640px}
+  .cta{display:flex;gap:.7rem;justify-content:center;flex-wrap:wrap;margin-top:1.4rem}
+  .btn{border:1px solid var(--border);border-radius:8px;padding:.6rem 1.1rem;font-weight:600}
+  .btn.primary{background:var(--accent);color:#0d1117;border-color:var(--accent)}
+  .note{border-left:3px solid var(--accent);background:var(--panel);padding:.9rem 1.1rem;
+        border-radius:0 8px 8px 0;margin:1.6rem 0;color:#c9d1d9}
+  h2{font-size:1.3rem;margin:2.4rem 0 1rem;border-bottom:1px solid var(--border);padding-bottom:.4rem}
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:.9rem}
+  .card{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:1.1rem}
+  .card h3{font-size:1.05rem;margin-bottom:.3rem}
+  .card p{color:var(--muted);font-size:.9rem;margin-bottom:.6rem}
+  .pipeline{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center;background:var(--panel);
+            border:1px solid var(--border);border-radius:8px;padding:1rem;font-size:.82rem}
+  .stage{background:#1f2937;border:1px solid var(--border);border-radius:6px;padding:.35rem .6rem;
+         font-family:var(--mono);white-space:nowrap}
+  .stage small{display:block;color:var(--muted)}
+  .arrow{color:var(--muted)}
+  pre{background:#1f2937;border:1px solid var(--border);border-radius:8px;padding:.9rem 1.1rem;
+      overflow-x:auto;font-family:var(--mono);font-size:.85rem;margin:.6rem 0}
+  .pill{display:inline-block;border-radius:10px;padding:.05rem .5rem;font-size:.72rem;font-weight:700;font-family:var(--mono)}
+  .ff{background:rgba(248,81,73,.15);color:var(--red)}
+  table{border-collapse:collapse;width:100%;margin:.6rem 0;font-size:.9rem}
+  td,th{border:1px solid var(--border);padding:.45rem .6rem;text-align:left}
+  th{background:#1f2937}.done{color:var(--green);font-weight:600}
+</style>
+</head>
+<body>
+<nav>
+  <span class="brand">ResMap</span>
+  <a href="index.html" class="active">Home</a>
+  <a href="getting-started.html">Get started</a>
+  <a href="faq.html">How it works</a>
+  <a href="dashboard.html">Dashboard</a>
+</nav>
+<div class="wrap">
+
+  <div class="hero">
+    <h1>ResMap</h1>
+    <p class="tag">Prediction-market <strong>resolution intelligence</strong> — a dataset
+      that knows <em>how</em> markets settle, and where lookalike markets across
+      Polymarket, Kalshi & Gemini quietly resolve differently.</p>
+    <div class="cta">
+      <a class="btn primary" href="getting-started.html">Get started →</a>
+      <a class="btn" href="faq.html">How it works</a>
+      <a class="btn" href="dashboard.html">Live dashboard</a>
+    </div>
+  </div>
+
+  <div class="note">
+    <strong>The one idea.</strong> Anyone can store "market X trades at 42¢." ResMap stores
+    <em>under exactly what conditions X resolves YES, from what authoritative source, by what
+    cutoff, and how that differs from the lookalike market on another venue.</em> That answer
+    is expensive to compile, compounds over time, and is the entire product.
+  </div>
+
+  <h2>Why it exists</h2>
+  <p>A naive arb scanner sees "France wins the World Cup" at 20¢ on one venue and 24¢ on
+  another and calls it free money. But two markets on the <em>same real-world event</em> can
+  resolve differently — a different settlement source, a 6pm vs 11:59pm cutoff, a draw that
+  voids one market and resolves the other NO, or "&gt;50%" vs "&ge;50.0%" on the boundary.
+  ResMap flags which lookalike pairs are <span class="pill ff">false friends</span> — the
+  traps — before you treat them as the same market.</p>
+
+  <h2>What you can do here</h2>
+  <div class="cards">
+    <div class="card">
+      <h3>Run it yourself</h3>
+      <p>Stand up the database, pull markets, extract & review rules, score divergence —
+      copy-paste commands, start to finish.</p>
+      <a href="getting-started.html">Getting started guide →</a>
+    </div>
+    <div class="card">
+      <h3>Understand the design</h3>
+      <p>The three data layers, the four divergence axes, why human review is the moat,
+      and what ResMap deliberately doesn't do.</p>
+      <a href="faq.html">How it works (FAQ) →</a>
+    </div>
+    <div class="card">
+      <h3>Use the live data</h3>
+      <p>Browse scored cross-venue pairs and rule-change alerts against a running API.</p>
+      <a href="dashboard.html">Open the dashboard →</a>
+    </div>
+  </div>
+
+  <h2>The pipeline</h2>
+  <div class="pipeline">
+    <span class="stage">3 venues<small>public APIs</small></span><span class="arrow">→</span>
+    <span class="stage">ingest<small>hash + change-detect</small></span><span class="arrow">→</span>
+    <span class="stage">parse<small>claude → 10 fields</small></span><span class="arrow">→</span>
+    <span class="stage">review + merge<small>human curation</small></span><span class="arrow">→</span>
+    <span class="stage">equivalence<small>4-axis divergence</small></span><span class="arrow">→</span>
+    <span class="stage">API + export<small>product surface</small></span>
+  </div>
+
+  <h2>60-second taste</h2>
+  <pre>python -m ingest.run                    # pull all 3 venues, detect rule changes
+python -m parse.rule_parser --limit 20  # LLM-extract settlement rules (you review them)
+python -m parse.equivalence             # score cross-venue divergence
+python -m uvicorn tool.api.main:app --port 8077   # serve it; then open the dashboard</pre>
+  <p>Full walkthrough in the <a href="getting-started.html">getting started guide</a>.</p>
+
+  <h2>Status</h2>
+  <table>
+    <tr><th>Capability</th><th>State</th></tr>
+    <tr><td>Ingestion — Polymarket, Kalshi, Gemini (~72k markets)</td><td class="done">live</td></tr>
+    <tr><td>Rule extraction (claude -p) + human review CLI</td><td class="done">live</td></tr>
+    <tr><td>Source calibration — entity extraction + curated merges</td><td class="done">live</td></tr>
+    <tr><td>Equivalence engine — 4-axis false-friend detection</td><td class="done">live</td></tr>
+    <tr><td>Read-only metered API + divergence dashboard</td><td class="done">live</td></tr>
+    <tr><td>Parquet export for analytical buyers</td><td class="done">live</td></tr>
+    <tr><td>Daily auto-refresh (ingest + export)</td><td class="done">scheduled</td></tr>
+  </table>
+
+  <p style="color:var(--muted);margin-top:2rem;font-size:.9rem">Read-only by design — ResMap
+  sells the signal; it never trades, holds custody, or places orders.</p>
+</div>
+</body>
+</html>

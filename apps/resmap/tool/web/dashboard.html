@@ -49,9 +49,20 @@
   .empty{color:var(--muted);font-style:italic}
   .change{font-family:var(--mono);font-size:.82rem;border-bottom:1px solid var(--border);padding:.5rem 0}
   .change .new{color:var(--text)} .change .old{color:var(--muted);text-decoration:line-through}
+  nav{position:sticky;top:0;background:rgba(13,17,23,.92);backdrop-filter:blur(6px);
+      border-bottom:1px solid var(--border);padding:.7rem 1rem;display:flex;gap:1.2rem;align-items:center;z-index:10}
+  nav .brand{font-weight:700;color:var(--text)}
+  nav a{color:var(--muted);font-size:.92rem}nav a.active{color:var(--accent)}
 </style>
 </head>
 <body>
+<nav>
+  <span class="brand">ResMap</span>
+  <a href="index.html">Home</a>
+  <a href="getting-started.html">Get started</a>
+  <a href="faq.html">How it works</a>
+  <a href="dashboard.html" class="active">Dashboard</a>
+</nav>
 <div class="wrap">
   <h1>ResMap — Cross-Venue Divergence</h1>
   <p class="sub">Demo surface over the dataset. <strong>Not an arb scanner</strong> —

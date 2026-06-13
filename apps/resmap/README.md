@@ -5,7 +5,9 @@ structured knowledge of *how* Polymarket, Kalshi & Gemini markets resolve, and
 *where lookalike markets across venues diverge*. A thin arb/alert tool sits on
 top as the demo.
 
-**Read `CLAUDE.md` first** — north star + decisions. Then work `TODO.md` top-down.
+**New here?** Open `tool/web/index.html` (or run `start.bat`) — a landing page with
+a step-by-step **getting-started guide**, a **how-it-works** explainer, and the live
+**dashboard**. Builders: read `CLAUDE.md` (north star + decisions), then `TODO.md`.
 
 ## Why this is defensible
 A naive arb scanner does price arithmetic anyone can copy. The value here is the

@@ -44,12 +44,14 @@ Work top to bottom. Each phase is independently testable. Check off as you go.
       NASA → "NASA GISS LOTI". Existing parses re-parsed under the new
       contract; old verbose source rows stay referenced by stale parses
       (history), live equivalence joins only fresh parses so it self-heals.
-- [ ] Source calibration LAYER 2 (residual semantic merge): even short names
-      recur as near-duplicates ("FIFA" vs "Fifa governing body"). Add
-      `sources.merged_into` self-ref; source axis resolves through
-      COALESCE(merged_into, source_id); bootstrap merges with an LLM cluster
-      pass a human approves via a `review_cli merge-source` command.
-- [ ] Review the 51 ≥0.90 pairs; extend seed set; tune AXIS_WEIGHTS
+- [x] Source calibration LAYER 2 ✅ 2026-06-13: `sources.merged_into` self-ref;
+      equivalence resolves COALESCE(merged_into, source_id); `review_cli
+      list-sources`/`merge-source`; `scripts/cluster_sources` (LLM proposes,
+      human approves). Applied live: registry now 12 canonical + 25 aliases;
+      Brandon Johnson arrest pair source-axis cleared (0.9→0.45).
+- [ ] Review the 51 ≥0.90 pairs (needs ~80 more parses) + tune AXIS_WEIGHTS —
+      deferred: tuning is unprincipled without a hand-labelled seed set; build
+      the seed set first.
 
 ## Hardening (audit 2026-06-13, fixed) ✅
 - [x] candidate_matcher date window symmetric (was abs(timedelta.days),
@@ -58,8 +60,11 @@ Work top to bottom. Each phase is independently testable. Check off as you go.
       ingest keeps completed work, resumes idempotently (was all-or-nothing)
 - [x] rule_parser --ids filter is a composable clause, not a brittle
       str.replace on the WHERE text
-- [ ] `rule_change_events.severity` is always 'unknown' — wire re-parse to
-      classify cosmetic/material (Phase 2.5; the schema already has the column)
+- [x] `rule_change_events.severity` classifier ✅ 2026-06-13:
+      `parse/classify_changes.py` (claude compares prev/new → cosmetic|material
+      + diff_summary). Run `python -m parse.classify_changes`.
+- [x] API keys hashed ✅ 2026-06-13: `api_keys.key_hash` (sha256); raw key never
+      stored; `scripts/make_api_key.py` mints + prints once.
 
 ## Phase 4 — product surface ✅ 2026-06-13
 - [x] `tool/api/main.py`: read-only endpoints — /markets, /markets/{id}/rules,
@@ -69,19 +74,29 @@ Work top to bottom. Each phase is independently testable. Check off as you go.
 - [x] `tool/web/dashboard.html`: divergence dashboard — pairs flagged
       true_match/near_match/false_friend, rule-change feed, chat widget.
       `start.bat` launches uvicorn + opens it.
-- [ ] Later: net-after-fees calc on pairs; auth via hashed keys (currently plaintext)
+- [x] Auth via hashed keys ✅ (see Hardening above)
+- [ ] net-after-fees calc on pairs — DEFERRED BY DESIGN: requires live price
+      feeds ResMap deliberately doesn't store ("settlement semantics, not prices").
+      Would need a separate price source; out of scope for the dataset product.
 
 ## Phase 5 — data product ✅ 2026-06-13
 - [x] `export/to_parquet.py`: Postgres → Parquet snapshot (markets/parsed_rules/
       rule_changes partitioned by venue; sources/equivalences flat). parsed_rules
       resolves source through merged_into; all parses exported with is_stale flag
       so buyers keep history. Verified live: 72,641 markets → 6.7 MB, DuckDB-readable.
-- [ ] Decide cadence + schedule (daily snapshot via Task Scheduler) — not yet wired
+- [x] Scheduled daily refresh ✅ 2026-06-13: `scripts/daily_refresh.bat`
+      (ingest + export only — parse/equiv stay manual/curated) registered as
+      Windows Task "ResMap Daily Refresh", 06:00 daily.
+
+## Onboarding website ✅ 2026-06-13
+- [x] `tool/web/`: index (landing) + getting-started (step-by-step) + faq
+      (concepts) + dashboard (live tool), shared nav. `start.bat` opens the
+      landing page after launching the API.
 
 ## Stretch / later
-- [ ] Schedule `ingest.run` (Task Scheduler, daily)
 - [ ] Rule-change alert feed as its own subscription (Telegram/Discord/webhook)
 - [ ] Historical price/probability time-series (the "closing line" archive idea)
 - [ ] Backtesting harness over the historical dataset
+- [ ] Hand-labelled equivalence seed set → calibrate AXIS_WEIGHTS, expand to all 51 ≥0.90 pairs
 - [ ] Kalshi signed requests if rate limits bite (key regen at kalshi.com)
 - [ ] Gemini in the equivalence layer once Poly↔Kalshi is solid
