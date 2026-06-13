@@ -77,6 +77,7 @@
   nav .brand { font-weight: 700; color: var(--text); }
   nav a { color: var(--muted); font-size: .92rem; }
   nav a.active { color: var(--accent); }
+  .legend { color: var(--muted); font-size: .85rem; margin: .3rem 0 .8rem; }
 </style>
 </head>
 <body>
@@ -101,6 +102,19 @@ market on another venue.</em> That answer is expensive to compile, compounds
 over time, and is the entire product.
 </div>
 
+<h2 id="glossary">Plain-English glossary</h2>
+<p class="legend">New to prediction markets? Start here — the rest of the page uses these terms.</p>
+<table>
+<tr><th>Term</th><th>What it means</th></tr>
+<tr><td><strong>Prediction market</strong></td><td>A market where you buy/sell "Yes" or "No" on whether a future event happens. The price (e.g. 42¢) is roughly the implied chance.</td></tr>
+<tr><td><strong>Venue</strong></td><td>A platform that runs these markets. ResMap covers three: Polymarket, Kalshi, Gemini.</td></tr>
+<tr><td><strong>Resolution / settle</strong></td><td>How a market is decided once the event is known — i.e. whether it pays out "Yes" or "No".</td></tr>
+<tr><td><strong>Settlement source</strong></td><td>The authority that officially decides the outcome (e.g. "FIFA", "NASA", "the Associated Press").</td></tr>
+<tr><td><strong>Cutoff</strong></td><td>The exact deadline/time that counts for settlement (a 6pm vs 11:59pm cutoff can capture different facts).</td></tr>
+<tr><td><strong>Arbitrage ("arb")</strong></td><td>Buying the same outcome cheap on one venue and selling it dear on another for a "risk-free" profit — <em>if</em> the two markets truly resolve the same way.</td></tr>
+<tr><td><span class="pill ff">false friend</span></td><td>Two markets that look identical but can resolve <em>differently</em> — so the "free" arb is actually a trap. Surfacing these is ResMap's whole point.</td></tr>
+</table>
+
 <h2>The pipeline at a glance</h2>
 <div class="pipeline">
   <span class="stage">Polymarket · Kalshi · Gemini<small>public APIs</small></span>
@@ -111,7 +125,7 @@ over time, and is the entire product.
   <span class="arrow">→</span>
   <span class="stage">rule_snapshots<small>append-only verbatim text</small></span>
   <span class="arrow">→</span>
-  <span class="stage">rule_parser<small>LLM → 9 structured fields</small></span>
+  <span class="stage">rule_parser<small>LLM → 10 structured fields</small></span>
   <span class="arrow">→</span>
   <span class="stage">review_cli<small>human approves</small></span>
   <span class="arrow">→</span>

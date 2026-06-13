@@ -49,6 +49,7 @@
   .empty{color:var(--muted);font-style:italic}
   .change{font-family:var(--mono);font-size:.82rem;border-bottom:1px solid var(--border);padding:.5rem 0}
   .change .new{color:var(--text)} .change .old{color:var(--muted);text-decoration:line-through}
+  code{font-family:var(--mono);background:#1f2937;border-radius:4px;padding:.05rem .3rem;font-size:.88em}
   nav{position:sticky;top:0;background:rgba(13,17,23,.92);backdrop-filter:blur(6px);
       border-bottom:1px solid var(--border);padding:.7rem 1rem;display:flex;gap:1.2rem;align-items:center;z-index:10}
   nav .brand{font-weight:700;color:var(--text)}
@@ -65,17 +66,20 @@
 </nav>
 <div class="wrap">
   <h1>ResMap — Cross-Venue Divergence</h1>
-  <p class="sub">Demo surface over the dataset. <strong>Not an arb scanner</strong> —
-  it flags which lookalike pairs are <span class="pill ff">false&nbsp;friend</span>
-  traps before you treat them as the same market. New to this?
-  <a href="faq.html">Read the FAQ →</a></p>
+  <p class="sub">Live view of the data. It flags which lookalike markets across
+  venues are <span class="pill ff">false&nbsp;friend</span> traps — pairs that look
+  like the same bet but can settle <em>differently</em>, so the "free" arbitrage
+  ("arb") isn't free. New to the terms? <a href="faq.html">Read how it works →</a></p>
 
   <div class="bar">
     <label>API <input id="api" value="http://127.0.0.1:8077"></label>
     <label>key <input id="key" placeholder="X-API-Key" value="resmap_dev_key"></label>
     <button onclick="loadAll()">Load</button>
-    <span class="status" id="status">enter API URL + key, then Load</span>
+    <span class="status" id="status">first time? after <code>start.bat</code> these defaults work — just click Load</span>
   </div>
+  <p class="legend">The <strong>key</strong> is your access pass (the <code>X-API-Key</code>).
+  Running locally, the pre-filled <code>resmap_dev_key</code> works; otherwise mint one with
+  <code>python -m scripts.make_api_key --label me</code>.</p>
 
   <h2>Equivalence pairs <span class="legend" id="pairmeta"></span></h2>
   <p class="legend">
