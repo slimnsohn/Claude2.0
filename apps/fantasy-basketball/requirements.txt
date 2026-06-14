@@ -1,0 +1,7 @@
+# Component 1 — historical data aggregation
+nba_api>=1.5.0
+duckdb>=1.0.0
+pandas>=2.0.0
+
+# Component 2 — Yahoo league integration
+requests>=2.31.0   # raw OAuth2 client (fbball/yahoo_client.py)
