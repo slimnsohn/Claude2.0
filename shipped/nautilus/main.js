@@ -14,6 +14,11 @@ const { BUILTIN_SITES } = require('./src/core/sites.js');
 const { createIndexer } = require('./src/indexer.js');
 const { launchItem } = require('./src/launch.js');
 const { createLogger } = require('./src/log.js');
+const { buildHome } = require('./src/core/sections.js');
+const { record } = require('./src/core/history.js');
+const { mergeConfig, seedPinned } = require('./src/core/config.js');
+const { loadConfig, saveConfig } = require('./src/configStore.js');
+const { loadHistory, saveHistory } = require('./src/historyStore.js');
 const { TRAY_ICON_DATA_URL } = require('./assets/tray-icon.js');
 
 const WIN_W = 680;
@@ -22,6 +27,8 @@ const HOTKEYS = ['Alt+Space', 'Ctrl+Alt+Space', 'Ctrl+Shift+Space'];
 const WORKSPACE_DIR = 'C:\\Users\\slims\\Desktop\\Claude 2.0';
 
 const log = createLogger(path.join(__dirname, 'data', 'launcher.log'));
+const CONFIG_PATH = path.join(__dirname, 'data', 'config.json');
+const HISTORY_PATH = path.join(__dirname, 'data', 'history.json');
 
 // ---------- single instance ----------
 if (!app.requestSingleInstanceLock()) {
@@ -30,6 +37,8 @@ if (!app.requestSingleInstanceLock()) {
   let win = null;
   let tray = null;
   let quitting = false;
+  let config = mergeConfig({});
+  let history = { version: 1, items: {} };
 
   // ---------- index sources (real fs wired in) ----------
   function listDirSync(dir) {
@@ -199,6 +208,16 @@ if (!app.requestSingleInstanceLock()) {
 
     indexer.start();
 
+    // Config + history (after the first index is built so the seed can match apps).
+    history = loadHistory(HISTORY_PATH, log);
+    const loaded = loadConfig(CONFIG_PATH, log);
+    config = loaded.config;
+    if (!loaded.existed) {
+      config = mergeConfig({ ...config, pinned: seedPinned(indexer.getItems()) });
+      try { saveConfig(CONFIG_PATH, config); } catch (err) { log.error(`config seed save failed: ${err.message}`); }
+      log.info(`First run: seeded ${config.pinned.length} pinned app(s).`);
+    }
+
     // Auto-start at login via wscript+launch.vbs so no terminal ever appears.
     app.setLoginItemSettings({
       openAtLogin: true,
@@ -246,9 +265,34 @@ if (!app.requestSingleInstanceLock()) {
 
   ipcMain.handle('launch', async (event, item) => {
     const result = await launchItem(item, { shell, clipboard });
-    if (result.ok) hideWindow();
-    else log.error(`Launch failed for ${item.title}: ${result.error}`);
+    if (result.ok) {
+      hideWindow();
+      history = record(history, item, Date.now());
+      try { saveHistory(HISTORY_PATH, history); } catch (err) { log.error(`history save failed: ${err.message}`); }
+    } else {
+      log.error(`Launch failed for ${item.title}: ${result.error}`);
+    }
     return result;
+  });
+
+  ipcMain.handle('getHome', async () => {
+    const rows = buildHome({ config, history, index: indexer.getItems() });
+    const items = await attachIcons(rows.filter((r) => r.kind === 'item').map((r) => r.item));
+    let k = 0;
+    return rows.map((r) => (r.kind === 'item' ? { kind: 'item', item: items[k++] } : r));
+  });
+
+  ipcMain.handle('getConfig', async () => config);
+
+  ipcMain.handle('saveConfig', async (event, incoming) => {
+    config = mergeConfig(incoming);
+    try { saveConfig(CONFIG_PATH, config); } catch (err) { log.error(`config save failed: ${err.message}`); }
+    return config;
+  });
+
+  ipcMain.handle('searchIndex', async (event, query) => {
+    const { results } = route(query, indexer.getItems());
+    return { results: await attachIcons(results) };
   });
 
   ipcMain.on('window:hide', () => hideWindow());
