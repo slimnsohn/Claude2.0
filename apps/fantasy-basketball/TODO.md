@@ -4,12 +4,13 @@
 
 ## Now
 
-- [ ] Component 3: valuation engine — port `zscore.py`/`categories.py` onto the live views (z-scores → punt-aware → impact-weighted %-cats). Reads `player_season_stats` / `player_recent_form`, joins rosters via `nba_player_id`.
+- [ ] Component 4 (first surface): waiver pickups — needs the Yahoo free-agent pool pulled + bridged, then rank FAs by *marginal* value to my roster's category needs.
 
 ## Next
 
-- [ ] Yahoo free agents / waiver pool pull (the available-player universe) + bridge them too.
+- [ ] Yahoo free agents / waiver pool pull (the available-player universe) + bridge them.
 - [ ] Weekly matchup + games-per-week pull (for start/sit).
+- [ ] Trade analyzer (net category-value swing, punt-aware).
 
 ## Backlog
 
@@ -19,6 +20,11 @@
 
 ## Done
 
+- [x] **Component 3 — valuation engine (COMPLETE & VERIFIED).** `python value.py`.
+  - 9-cat z-scores; FG%/FT% volume-weighted (impact method); TOV inverted; punt-aware.
+  - `fbball/valuation.py` (pure `compute_values` + `rank_from_db`); reads season or recent-form views.
+  - `value.py` CLI: overall / `--mine` / `--punt` / `--source recent`.
+  - Validated on live data: Jokić #1, Wemby #2, SGA #3 (correct elite 9-cat order); punting FT%+TO lifts Gobert #91→#29. 69 tests pass.
 - [x] **Player-ID bridge (LIVE & VERIFIED).** `fbball/bridge.py`, auto-run by `yahoo`.
   - 157/157 roster players matched to NBA player_ids; 0 unmatched.
   - Normalized names (accents/suffixes/punctuation); collisions (Gary Trent Jr., Jabari Smith Jr.) resolved by active-player preference; alias map for nicknames; unmatched left NULL.

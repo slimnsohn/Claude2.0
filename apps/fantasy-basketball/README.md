@@ -27,6 +27,20 @@ python ingest.py status            # what's in the store right now
 
 Or just double-click **`update.bat`** to refresh today's games.
 
+## Value players (9-cat z-scores)
+
+```bash
+python value.py                    # top 30 overall (season value)
+python value.py --mine             # value YOUR roster vs the league pool
+python value.py --punt FT_PCT TOV  # punt build: re-rank ignoring those cats
+python value.py --source recent    # rank by current form (last 15 games)
+```
+
+Values are z-scores vs the qualifying pool. FG%/FT% use the volume-weighted
+**impact** method (not raw percentage). Punting a category re-ranks for that
+build — e.g. punting FT%+TO lifts a Gobert-type big who's elite everywhere else.
+Engine: `fbball/valuation.py`.
+
 Every command is **safe to re-run**. Writes are idempotent on
 `(player_id, game_id)`, so you can never create duplicates. Historical seasons
 are marked complete and never re-pulled; only the in-progress season refreshes.

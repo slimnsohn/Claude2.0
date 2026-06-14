@@ -138,6 +138,12 @@ SELECT
     AVG(r.blk)   AS bpg,
     AVG(r.tov)   AS topg,
     AVG(r.fg3m)  AS tpm_pg,
+    AVG(r.fga)   AS fga_pg,
+    AVG(r.fta)   AS fta_pg,
+    SUM(r.fgm)   AS fgm_tot,
+    SUM(r.fga)   AS fga_tot,
+    SUM(r.ftm)   AS ftm_tot,
+    SUM(r.fta)   AS fta_tot,
     CASE WHEN SUM(r.fga) > 0 THEN SUM(r.fgm) * 1.0 / SUM(r.fga) END AS fg_pct,
     CASE WHEN SUM(r.fta) > 0 THEN SUM(r.ftm) * 1.0 / SUM(r.fta) END AS ft_pct
 FROM ranked r
