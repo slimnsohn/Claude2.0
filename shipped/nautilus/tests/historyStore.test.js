@@ -27,3 +27,15 @@ test('loadHistory falls back to empty on corrupt JSON or bad shape', () => {
   fs.writeFileSync(p, '{"items": 5}');
   assert.deepStrictEqual(loadHistory(p), { version: 1, items: {} });
 });
+
+test('loadHistory invokes log.error on corrupt JSON (not on missing file)', () => {
+  const corrupt = tmp();
+  fs.writeFileSync(corrupt, 'garbage');
+  let corruptLogged = false;
+  loadHistory(corrupt, { error: () => { corruptLogged = true; } });
+  assert.strictEqual(corruptLogged, true);
+
+  let missingLogged = false;
+  loadHistory(tmp(), { error: () => { missingLogged = true; } }); // tmp() path has no file
+  assert.strictEqual(missingLogged, false);
+});

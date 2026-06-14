@@ -28,6 +28,19 @@ test('saveConfig then loadConfig round-trips a merged config', () => {
 test('loadConfig falls back to defaults on corrupt JSON', () => {
   const p = tmp();
   fs.writeFileSync(p, '{ not json');
-  const { config } = loadConfig(p);
+  const { config, existed } = loadConfig(p);
+  assert.strictEqual(existed, false);
   assert.deepStrictEqual(config, DEFAULT_CONFIG);
+});
+
+test('loadConfig invokes log.error on corrupt JSON (not on missing file)', () => {
+  const corrupt = tmp();
+  fs.writeFileSync(corrupt, '{ not json');
+  let corruptLogged = false;
+  loadConfig(corrupt, { error: () => { corruptLogged = true; } });
+  assert.strictEqual(corruptLogged, true);
+
+  let missingLogged = false;
+  loadConfig(tmp(), { error: () => { missingLogged = true; } }); // tmp() path has no file
+  assert.strictEqual(missingLogged, false);
 });
