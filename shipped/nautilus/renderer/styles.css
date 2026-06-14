@@ -114,3 +114,28 @@ html, body {
 #results li.section-label:first-child {
   padding-top: 6px;
 }
+
+/* ---- config window ---- */
+.config-body { background: var(--surface, #16161e); color: var(--text, #e8e8f0); margin: 0; overflow: auto; }
+#config { padding: 20px 24px; font-size: 14px; }
+#config h1 { font-size: 20px; margin: 0 0 16px; }
+#config h2 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text2, #8a8a99); margin: 20px 0 8px; }
+.section-row { display: flex; align-items: center; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--border, #2a2a35); }
+.enable-label { display: flex; align-items: center; gap: 8px; flex: 1; cursor: pointer; }
+.section-name { font-size: 15px; }
+.section-row select, .section-row input.limit-input,
+#pin-search { background: var(--surface2, #20202c); color: var(--text, #e8e8f0); border: 1px solid var(--border, #2a2a35); border-radius: 6px; padding: 6px 8px; outline: none; }
+.limit-input { width: 60px; }
+#pin-search { width: 100%; margin: 10px 0 6px; font-size: 14px; box-sizing: border-box; }
+#pinned-list, #pin-results { list-style: none; margin: 0; padding: 0; }
+#pinned-list li { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 8px; }
+#pinned-list li:hover { background: var(--surface2, #20202c); }
+.pin-title { flex: 1; }
+#pinned-list button { background: var(--surface2, #20202c); color: var(--text, #e8e8f0); border: 1px solid var(--border, #2a2a35); border-radius: 6px; width: 28px; height: 28px; cursor: pointer; }
+#pinned-list button:disabled { opacity: 0.35; cursor: default; }
+#pin-results li { padding: 8px 10px; border-radius: 8px; cursor: pointer; }
+#pin-results li:hover { background: var(--surface2, #20202c); }
+#pin-results li.pinned-already { color: var(--text2, #8a8a99); cursor: default; }
+#config-footer { display: flex; align-items: center; justify-content: flex-end; gap: 12px; margin-top: 24px; }
+#save-status { color: var(--green, #3ecf8e); font-size: 13px; }
+#save-btn { background: var(--accent, #7c5cff); color: #fff; border: none; border-radius: 8px; padding: 9px 20px; font-size: 14px; cursor: pointer; }

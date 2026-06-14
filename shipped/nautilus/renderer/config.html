@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://www.google.com" />
+  <title>Nautilus Settings</title>
+  <link rel="stylesheet" href="../../../_shared/styles/base.css" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body class="config-body">
+  <div id="config">
+    <h1>Nautilus Settings</h1>
+
+    <section id="sections-config">
+      <h2>Sections</h2>
+      <div id="section-rows"></div>
+    </section>
+
+    <section id="pinned-config">
+      <h2>Pinned</h2>
+      <ul id="pinned-list"></ul>
+      <input id="pin-search" type="text" placeholder="Search apps, sites, folders to pin…" autocomplete="off" spellcheck="false" />
+      <ul id="pin-results"></ul>
+    </section>
+
+    <div id="config-footer">
+      <span id="save-status"></span>
+      <button id="save-btn">Save</button>
+    </div>
+  </div>
+  <script src="config.js"></script>
+</body>
+</html>

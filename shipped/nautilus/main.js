@@ -144,6 +144,25 @@ if (!app.requestSingleInstanceLock()) {
     });
   }
 
+  let configWin = null;
+  function createConfigWindow() {
+    if (configWin && !configWin.isDestroyed()) { configWin.focus(); return; }
+    configWin = new BrowserWindow({
+      width: 560,
+      height: 640,
+      title: 'Nautilus Settings',
+      backgroundColor: '#16161e',
+      autoHideMenuBar: true,
+      webPreferences: {
+        preload: path.join(__dirname, 'preload.js'),
+        contextIsolation: true,
+        nodeIntegration: false,
+      },
+    });
+    configWin.loadFile(path.join(__dirname, 'renderer', 'config.html'));
+    configWin.on('closed', () => { configWin = null; });
+  }
+
   function showWindow() {
     if (!win) return;
     const wa = screen.getPrimaryDisplay().workArea;
@@ -194,6 +213,7 @@ if (!app.requestSingleInstanceLock()) {
     tray.setToolTip(`Nautilus — ${hotkey || 'no hotkey (click to open)'}`);
     tray.setContextMenu(Menu.buildFromTemplate([
       { label: 'Show Nautilus', click: showWindow },
+      { label: 'Settings…', click: createConfigWindow },
       { label: 'Refresh Index', click: () => indexer.refresh() },
       { type: 'separator' },
       {
