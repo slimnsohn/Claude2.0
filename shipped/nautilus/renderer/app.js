@@ -4,8 +4,8 @@ const queryEl = document.getElementById('query');
 const resultsEl = document.getElementById('results');
 const errorEl = document.getElementById('error');
 
-let results = [];
-let selectedIndex = 0;
+let rows = [];          // [{kind:'header',label} | {kind:'item',item}]
+let selectedIndex = -1; // index into rows; points at an item, or -1
 let errorTimer = null;
 
 const BADGE_LABEL = { app: 'APP', site: 'SITE', folder: 'FOLDER', claude: 'CLAUDE', calc: 'CALC' };
@@ -33,9 +33,36 @@ function iconOrBadge(item) {
   return img;
 }
 
+function itemIndices() {
+  const idxs = [];
+  rows.forEach((r, i) => { if (r.kind === 'item') idxs.push(i); });
+  return idxs;
+}
+
+function selectFirstItem() {
+  selectedIndex = rows.findIndex((r) => r.kind === 'item');
+}
+
+function moveSelection(delta) {
+  const idxs = itemIndices();
+  if (!idxs.length) return;
+  const pos = idxs.indexOf(selectedIndex);
+  const next = pos === -1 ? (delta > 0 ? 0 : idxs.length - 1)
+                          : (pos + delta + idxs.length) % idxs.length;
+  selectedIndex = idxs[next];
+  render();
+}
+
 function render() {
   resultsEl.replaceChildren(
-    ...results.map((item, i) => {
+    ...rows.map((row, i) => {
+      if (row.kind === 'header') {
+        const li = document.createElement('li');
+        li.className = 'section-label';
+        li.textContent = row.label;
+        return li;
+      }
+      const item = row.item;
       const li = document.createElement('li');
       if (i === selectedIndex) li.classList.add('selected');
 
@@ -51,7 +78,7 @@ function render() {
       li.addEventListener('mousemove', () => {
         if (selectedIndex !== i) { selectedIndex = i; render(); }
       });
-      li.addEventListener('click', () => launch(results[i]));
+      li.addEventListener('click', () => launch(item));
       return li;
     })
   );
@@ -66,15 +93,29 @@ function flashError(message) {
   errorTimer = setTimeout(() => { errorEl.hidden = true; }, 2500);
 }
 
-let searchSeq = 0;
+let seq = 0; // shared between search() and showHome() so stale responses drop
 
 async function search(value) {
-  const seq = ++searchSeq;
+  const mine = ++seq;
   const response = await window.nautilus.search(value);
-  if (seq !== searchSeq) return; // a newer query is in flight — drop stale results
-  results = response.results;
-  selectedIndex = 0;
+  if (mine !== seq) return;
+  rows = response.results.map((item) => ({ kind: 'item', item }));
+  selectFirstItem();
   render();
+}
+
+async function showHome() {
+  const mine = ++seq;
+  const home = await window.nautilus.getHome();
+  if (mine !== seq) return;
+  rows = home;
+  selectFirstItem();
+  render();
+}
+
+function onQueryChanged() {
+  if (queryEl.value.trim() === '') showHome();
+  else search(queryEl.value);
 }
 
 async function launch(item) {
@@ -84,18 +125,19 @@ async function launch(item) {
   if (!result.ok) flashError(`Couldn't launch ${item.title}: ${result.error}`);
 }
 
-queryEl.addEventListener('input', () => search(queryEl.value));
+queryEl.addEventListener('input', onQueryChanged);
 
 queryEl.addEventListener('keydown', (e) => {
   if (e.key === 'ArrowDown' || (e.key === 'Tab' && !e.shiftKey)) {
     e.preventDefault();
-    if (results.length) { selectedIndex = (selectedIndex + 1) % results.length; render(); }
+    moveSelection(1);
   } else if (e.key === 'ArrowUp' || (e.key === 'Tab' && e.shiftKey)) {
     e.preventDefault();
-    if (results.length) { selectedIndex = (selectedIndex - 1 + results.length) % results.length; render(); }
+    moveSelection(-1);
   } else if (e.key === 'Enter') {
     e.preventDefault();
-    launch(results[selectedIndex]);
+    const row = rows[selectedIndex];
+    if (row && row.kind === 'item') launch(row.item);
   } else if (e.key === 'Escape') {
     e.preventDefault();
     window.nautilus.hide();
@@ -104,12 +146,11 @@ queryEl.addEventListener('keydown', (e) => {
 
 window.nautilus.onShown(() => {
   queryEl.value = '';
-  results = [];
-  selectedIndex = 0;
   errorEl.hidden = true;
-  render();
+  showHome();
   requestAnimationFrame(() => queryEl.focus());
 });
 
-// Initial focus for the first show (window:shown may fire before load).
+// Initial focus + home for the first show (window:shown may fire before load).
 queryEl.focus();
+showHome();
