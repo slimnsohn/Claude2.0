@@ -56,8 +56,8 @@ function seedPinned(index, names = SEED_NAMES) {
   const out = [];
   for (const name of names) {
     const lc = name.toLowerCase();
-    const match = apps.find((i) => i.title.toLowerCase() === lc)
-      || apps.find((i) => i.title.toLowerCase().includes(lc));
+    const match = apps.find((i) => (i.title || '').toLowerCase() === lc)
+      || apps.find((i) => (i.title || '').toLowerCase().includes(lc));
     if (match) out.push({ type: 'app', title: match.title, subtitle: match.subtitle || '', target: match.target });
   }
   return out;

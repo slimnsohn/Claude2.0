@@ -43,6 +43,26 @@ test('mergeConfig is idempotent', () => {
   assert.deepStrictEqual(mergeConfig(once), once);
 });
 
+test('mergeConfig handles null/undefined input', () => {
+  assert.deepStrictEqual(mergeConfig(null), DEFAULT_CONFIG);
+  assert.deepStrictEqual(mergeConfig(undefined), DEFAULT_CONFIG);
+});
+
+test('seedPinned handles a null/empty index without throwing', () => {
+  assert.deepStrictEqual(seedPinned(null, ['Cursor']), []);
+  assert.deepStrictEqual(seedPinned([], ['Cursor']), []);
+});
+
+test('seedPinned skips app entries with a missing title', () => {
+  const index = [
+    { id: 'a', type: 'app', subtitle: '', target: 'C:\\notitle.lnk' }, // no title
+    { id: 'b', type: 'app', title: 'Cursor', subtitle: 'Programs', target: 'C:\\Cursor.lnk' },
+  ];
+  assert.deepStrictEqual(seedPinned(index, ['Cursor']), [
+    { type: 'app', title: 'Cursor', subtitle: 'Programs', target: 'C:\\Cursor.lnk' },
+  ]);
+});
+
 test('seedPinned matches apps by case-insensitive title (exact preferred, then substring)', () => {
   const index = [
     { id: 'a', type: 'app', title: 'Cursor', subtitle: 'Programs', target: 'C:\\Cursor.lnk' },
