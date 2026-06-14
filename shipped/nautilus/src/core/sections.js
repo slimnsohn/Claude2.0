@@ -13,7 +13,8 @@ function resolvePinned(pinned, byKey, { typeFilter, limit }) {
   for (const entry of pinned) {
     if (typeFilter !== 'all' && entry.type !== typeFilter) continue;
     const key = `${entry.type}:${entry.target}`;
-    out.push(byKey.get(key) || { id: key, ...entry });
+    const live = byKey.get(key);
+    out.push(live ? { ...live, id: key } : { id: key, ...entry });
     if (out.length >= limit) break;
   }
   return out;

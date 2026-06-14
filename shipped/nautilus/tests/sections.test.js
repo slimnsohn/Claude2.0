@@ -111,6 +111,31 @@ test('buildHome with Pinned disabled does not suppress its items from Recent', (
   assert.deepStrictEqual(sectionItems(out, 'Recent').map((i) => i.title), ['A']);
 });
 
+test('buildHome dedups pinned sites/folders against live index using type:target keys', () => {
+  let h = { version: 1, items: {} };
+  // history items get type:target keys via keyOf
+  h = record(h, { id: 'x', type: 'site', title: 'GH', subtitle: '', target: 'https://gh' }, 100);
+  h = record(h, { id: 'y', type: 'folder', title: 'F', subtitle: '', target: 'C:\\f' }, 200);
+  // live index uses the REAL scanner id schemes, NOT type:target
+  const index = [
+    { id: 'bm:https://gh', type: 'site', title: 'GitHub', subtitle: 'gh', target: 'https://gh' },
+    { id: 'dir:C:\\f', type: 'folder', title: 'Folder F', subtitle: '', target: 'C:\\f' },
+  ];
+  const config = cfg({
+    frequent: { enabled: false, typeFilter: 'all', limit: 5 },
+    pinned: [
+      { type: 'site', title: 'GH', subtitle: '', target: 'https://gh' },
+      { type: 'folder', title: 'F', subtitle: '', target: 'C:\\f' },
+    ],
+  });
+  const out = buildHome({ config, history: h, index });
+  // pinned resolved from the live index (fresh titles), normalized ids
+  assert.deepStrictEqual(sectionItems(out, 'Pinned').map((i) => i.title), ['GitHub', 'Folder F']);
+  assert.deepStrictEqual(sectionItems(out, 'Pinned').map((i) => i.id), ['site:https://gh', 'folder:C:\\f']);
+  // and therefore suppressed from Recent
+  assert.deepStrictEqual(sectionItems(out, 'Recent'), []);
+});
+
 function sectionItems(rows, label) {
   const start = rows.findIndex((r) => r.kind === 'header' && r.label === label);
   if (start === -1) return [];
