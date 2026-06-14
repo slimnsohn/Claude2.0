@@ -94,21 +94,18 @@ def _default_reference_sources(players, teams, fetch_team_roster):
     return players, teams, fetch_team_roster
 
 
-def bridge_yahoo_players(con, aliases: dict | None = None) -> dict:
-    """Match yahoo_roster players to NBA player_ids and write them back.
-
-    Returns {matched, unmatched: [player_name, ...]}. Unmatched players keep a
-    NULL nba_player_id — surfaced, never force-matched.
+def _bridge_table(con, table: str, aliases: dict | None = None) -> dict:
+    """Match a Yahoo player table (player_key, player_name, editorial_team) to
+    NBA player_ids and write nba_player_id back. Shared by rosters + FAs.
     """
-    db.init_schema(con)
-    roster_rows = con.execute(
-        "SELECT player_key, player_name, editorial_team FROM yahoo_roster"
+    rows = con.execute(
+        f"SELECT player_key, player_name, editorial_team FROM {table}"
     ).df().to_dict("records")
     nba_rows = con.execute(
         "SELECT player_id, full_name, is_active, team FROM players"
     ).df().to_dict("records")
 
-    matches = bridge.match_rosters(roster_rows, nba_rows, aliases)
+    matches = bridge.match_rosters(rows, nba_rows, aliases)
     by_key = {m["player_key"]: m["nba_player_id"] for m in matches}
 
     matched = [(k, v) for k, v in by_key.items() if v is not None]
@@ -117,15 +114,36 @@ def bridge_yahoo_players(con, aliases: dict | None = None) -> dict:
         mdf = pd.DataFrame(matched, columns=["player_key", "nba_player_id"])
         con.register("_bridge", mdf)
         con.execute(
-            "UPDATE yahoo_roster SET nba_player_id = b.nba_player_id "
-            "FROM _bridge b WHERE yahoo_roster.player_key = b.player_key"
+            f"UPDATE {table} SET nba_player_id = b.nba_player_id "
+            f"FROM _bridge b WHERE {table}.player_key = b.player_key"
         )
         con.unregister("_bridge")
 
-    unmatched = [
-        r["player_name"] for r in roster_rows if by_key.get(r["player_key"]) is None
-    ]
+    unmatched = [r["player_name"] for r in rows if by_key.get(r["player_key"]) is None]
     return {"matched": len(matched), "unmatched": unmatched}
+
+
+def bridge_yahoo_players(con, aliases: dict | None = None) -> dict:
+    """Bridge yahoo_roster players to NBA player_ids. Unmatched stay NULL."""
+    db.init_schema(con)
+    return _bridge_table(con, "yahoo_roster", aliases)
+
+
+def pull_free_agents(con, league_key: str, *, client=None, aliases=None) -> dict:
+    """Pull a league's free-agent pool, store it, and bridge to NBA ids."""
+    if client is None:
+        from fbball import yahoo_client as client
+
+    db.init_schema(con)
+    parsed = client.get_free_agents(league_key)
+    df = transform.free_agents_to_frame(parsed, league_key)
+    db.upsert_free_agents(con, df)
+    bridged = _bridge_table(con, "yahoo_free_agents", aliases)
+    return {
+        "fetched": len(df),
+        "matched": bridged["matched"],
+        "unmatched": bridged["unmatched"],
+    }
 
 
 def pull_yahoo_league(con, league_key: str, *, client=None, aliases=None) -> dict:

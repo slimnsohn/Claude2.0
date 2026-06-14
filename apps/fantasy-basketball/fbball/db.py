@@ -62,6 +62,16 @@ CREATE TABLE IF NOT EXISTS yahoo_roster (
     PRIMARY KEY (team_key, player_key)
 );
 
+CREATE TABLE IF NOT EXISTS yahoo_free_agents (
+    league_key         VARCHAR,
+    player_key         VARCHAR PRIMARY KEY,
+    player_name        VARCHAR,
+    editorial_team     VARCHAR,
+    eligible_positions VARCHAR,
+    status             VARCHAR,
+    nba_player_id      INTEGER
+);
+
 CREATE TABLE IF NOT EXISTS ingest_state (
     source      VARCHAR PRIMARY KEY,
     last_season VARCHAR,
@@ -345,6 +355,23 @@ def upsert_yahoo_roster(con, rows) -> int:
     )
     con.execute("INSERT INTO yahoo_roster BY NAME SELECT * FROM _inc_yroster")
     con.unregister("_inc_yroster")
+    return len(rows)
+
+
+def count_free_agents(con) -> int:
+    return con.execute("SELECT COUNT(*) FROM yahoo_free_agents").fetchone()[0]
+
+
+def upsert_free_agents(con, rows) -> int:
+    """Replace a league's free-agent pool with the incoming snapshot."""
+    if len(rows) == 0:
+        return 0
+    con.register("_inc_fa", rows)
+    con.execute(
+        "DELETE FROM yahoo_free_agents WHERE league_key IN (SELECT DISTINCT league_key FROM _inc_fa)"
+    )
+    con.execute("INSERT INTO yahoo_free_agents BY NAME SELECT * FROM _inc_fa")
+    con.unregister("_inc_fa")
     return len(rows)
 
 

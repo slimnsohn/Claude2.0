@@ -116,6 +116,29 @@ def yahoo_rosters_to_frames(parsed_teams: list, league_key: str):
     return teams_df, roster_df
 
 
+def free_agents_to_frame(parsed_fas: list, league_key: str) -> pd.DataFrame:
+    """get_free_agents() output -> yahoo_free_agents rows."""
+    records = []
+    for p in parsed_fas:
+        elig = p.get("eligible_positions", [])
+        if isinstance(elig, list):
+            elig = ",".join(str(e) for e in elig)
+        records.append({
+            "league_key": league_key,
+            "player_key": p.get("player_key", ""),
+            "player_name": p.get("name", ""),
+            "editorial_team": p.get("team", ""),
+            "eligible_positions": elig,
+            "status": p.get("status", ""),
+            "nba_player_id": None,
+        })
+    return pd.DataFrame(
+        records,
+        columns=["league_key", "player_key", "player_name", "editorial_team",
+                 "eligible_positions", "status", "nba_player_id"],
+    )
+
+
 def normalize_roster(roster: pd.DataFrame, team: str) -> pd.DataFrame:
     """A CommonTeamRoster frame -> player_id/nba_position/team rows."""
     out = pd.DataFrame()

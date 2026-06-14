@@ -82,6 +82,17 @@ def cmd_yahoo(args, con) -> None:
             print(f"    - {name}")
 
 
+def cmd_freeagents(args, con) -> None:
+    print(f"Pulling free agents for league {args.league}...")
+    result = ingest.pull_free_agents(con, args.league)
+    print(f"Done. {result['fetched']} free agents fetched, "
+          f"{result['matched']} bridged to NBA ids.")
+    if result["unmatched"]:
+        print(f"  {len(result['unmatched'])} unmatched (no NBA stats link):")
+        for name in result["unmatched"][:15]:
+            print(f"    - {name}")
+
+
 def cmd_status(args, con) -> None:
     print("Store status:")
     _print_status(con)
@@ -105,6 +116,10 @@ def main(argv=None) -> None:
     p_yh = sub.add_parser("yahoo", help="pull your Yahoo league rosters")
     p_yh.add_argument("--league", default=DEFAULT_LEAGUE_KEY, help="Yahoo league_key")
     p_yh.set_defaults(func=cmd_yahoo)
+
+    p_fa = sub.add_parser("freeagents", help="pull the league free-agent pool")
+    p_fa.add_argument("--league", default=DEFAULT_LEAGUE_KEY, help="Yahoo league_key")
+    p_fa.set_defaults(func=cmd_freeagents)
 
     p_st = sub.add_parser("status", help="show what's in the store")
     p_st.set_defaults(func=cmd_status)

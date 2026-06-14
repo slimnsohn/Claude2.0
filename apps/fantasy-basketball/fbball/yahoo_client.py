@@ -554,6 +554,55 @@ def get_league_player_ranks(league_key: str) -> dict:
     return ranks
 
 
+def get_free_agents(league_key: str, limit: int = 200) -> list[dict]:
+    """Fetch available (free-agent + waiver) players, best first.
+
+    Paginates /players;status=A;sort=AR in 25s. Returns dicts with player_key,
+    name, team, eligible_positions, status.
+    """
+    out = []
+    start = 0
+    page = 25
+    while len(out) < limit:
+        raw = yahoo_request(
+            f"/league/{league_key}/players;status=A;sort=AR",
+            params={"start": start, "count": page},
+        )
+        try:
+            block = raw["fantasy_content"]["league"][1]["players"]
+            count = block.get("count", 0)
+        except (KeyError, IndexError, TypeError):
+            break
+        if count == 0:
+            break
+        for pi in range(count):
+            entry = block.get(str(pi))
+            if not entry or "player" not in entry:
+                continue
+            meta = entry["player"][0]
+            info = {}
+            name = ""
+            for item in meta:
+                if isinstance(item, dict):
+                    if "name" in item:
+                        name = item["name"].get("full", "")
+                    else:
+                        info.update(item)
+            out.append({
+                "player_key": info.get("player_key", ""),
+                "name": name,
+                "team": info.get("editorial_team_abbr", ""),
+                "eligible_positions": _eligible_position_strings(
+                    info.get("eligible_positions", [])
+                ),
+                "status": info.get("status", ""),
+            })
+        start += count
+        if count < page:
+            break
+    return out[:limit]
+
+
 def get_league_metadata(league_key: str) -> dict:
     """Get league metadata including renew field for history chain."""
     return yahoo_request(f"/league/{league_key}/metadata")

@@ -4,13 +4,12 @@
 
 ## Now
 
-- [ ] Component 4 (first surface): waiver pickups — needs the Yahoo free-agent pool pulled + bridged, then rank FAs by *marginal* value to my roster's category needs.
+- [ ] Component 4 (start/sit surface): weekly matchup + games-per-week pull, then optimize the lineup to maximize expected category wins.
 
 ## Next
 
-- [ ] Yahoo free agents / waiver pool pull (the available-player universe) + bridge them.
-- [ ] Weekly matchup + games-per-week pull (for start/sit).
-- [ ] Trade analyzer (net category-value swing, punt-aware).
+- [ ] Trade analyzer (net category-value swing for both sides, punt-aware).
+- [ ] Draft board (punt-build-aware tiers + positional scarcity) — seasonal.
 
 ## Backlog
 
@@ -20,6 +19,10 @@
 
 ## Done
 
+- [x] **Component 4 (waivers surface) — COMPLETE & VERIFIED.** `python ingest.py freeagents` then `python waivers.py`.
+  - Pulls + bridges the FA pool (live: 200/200 matched), stores in `yahoo_free_agents`.
+  - Ranks FAs by *marginal* value to my category needs (`fbball/recommend.py`): weakest cat weight 1.0, strongest 0.0, punts 0. Shows RAW vs FIT.
+  - Validated live: my needs = TO + STL; surfaced steal specialists (Thybulle RAW 1.05 but FIT-ranked #3). 79 tests pass.
 - [x] **Component 3 — valuation engine (COMPLETE & VERIFIED).** `python value.py`.
   - 9-cat z-scores; FG%/FT% volume-weighted (impact method); TOV inverted; punt-aware.
   - `fbball/valuation.py` (pure `compute_values` + `rank_from_db`); reads season or recent-form views.

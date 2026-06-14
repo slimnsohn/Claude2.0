@@ -21,6 +21,7 @@ python ingest.py backfill          # one-time: load the last 4 seasons
 python ingest.py backfill --seasons 6   # ...or more history
 python ingest.py reference         # load team + player reference tables (positions, teams)
 python ingest.py yahoo             # pull your Yahoo league rosters (all 10 teams)
+python ingest.py freeagents        # pull the league's free-agent pool
 python ingest.py update            # nightly: pull the current season's new games
 python ingest.py status            # what's in the store right now
 ```
@@ -40,6 +41,21 @@ Values are z-scores vs the qualifying pool. FG%/FT% use the volume-weighted
 **impact** method (not raw percentage). Punting a category re-ranks for that
 build — e.g. punting FT%+TO lifts a Gobert-type big who's elite everywhere else.
 Engine: `fbball/valuation.py`.
+
+## Waiver pickups (ranked by YOUR needs)
+
+```bash
+python ingest.py freeagents        # pull the FA pool first (daily)
+python waivers.py                  # ranked pickups that fill your weak cats
+python waivers.py --punt FT_PCT TOV
+```
+
+Free agents are ranked by **marginal value to your roster**, not raw value:
+your weakest category gets the highest weight, your strongest gets zero. A steal
+specialist who fills a category you're losing beats a higher-raw-value scorer
+who piles onto a category you're already winning. The output shows both `RAW`
+(overall value) and `FIT` (needs-weighted) so the difference is visible.
+Engine: `fbball/recommend.py`.
 
 Every command is **safe to re-run**. Writes are idempotent on
 `(player_id, game_id)`, so you can never create duplicates. Historical seasons
