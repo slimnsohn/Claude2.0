@@ -29,16 +29,12 @@ function buildHome({ config, history, index }) {
   const byKey = indexByKey(index);
   const cfg = config.sections;
   const out = [];
+  const pinnedKeys = new Set();
 
-  // Always resolve pinned items so their keys can suppress duplicates in
-  // Recent/Frequent, even when the Pinned section itself is hidden.
-  const pinnedSection = cfg.pinned && !Array.isArray(cfg.pinned) ? cfg.pinned : null;
-  const pinnedSectionCfg = pinnedSection || { typeFilter: 'all', limit: 8 };
-  const allPinnedItems = resolvePinned(config.pinned, byKey, pinnedSectionCfg);
-  const pinnedKeys = new Set(allPinnedItems.map((i) => i.id));
-
-  if (pinnedSection && pinnedSection.enabled) {
-    pushSection(out, 'Pinned', allPinnedItems);
+  if (cfg.pinned.enabled) {
+    const items = resolvePinned(config.pinned, byKey, cfg.pinned);
+    items.forEach((i) => pinnedKeys.add(i.id));
+    pushSection(out, 'Pinned', items);
   }
 
   const headroom = config.pinned.length;

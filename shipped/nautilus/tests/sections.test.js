@@ -5,16 +5,19 @@ const assert = require('node:assert');
 const { buildHome } = require('../src/core/sections.js');
 const { record } = require('../src/core/history.js');
 
-const cfg = (over = {}) => ({
-  version: 1,
-  sections: {
-    pinned: { enabled: true, typeFilter: 'all', limit: 8 },
-    recent: { enabled: true, typeFilter: 'all', limit: 5 },
-    frequent: { enabled: true, typeFilter: 'all', limit: 5 },
-    ...over,
-  },
-  pinned: over.pinned || [],
-});
+const cfg = (over = {}) => {
+  const { pinned, ...sectionOver } = over;
+  return {
+    version: 1,
+    sections: {
+      pinned: { enabled: true, typeFilter: 'all', limit: 8 },
+      recent: { enabled: true, typeFilter: 'all', limit: 5 },
+      frequent: { enabled: true, typeFilter: 'all', limit: 5 },
+      ...sectionOver,
+    },
+    pinned: pinned || [],
+  };
+};
 
 const app = (t, target, title) => ({ id: `${t}:${target}`, type: t, title, subtitle: '', target });
 
