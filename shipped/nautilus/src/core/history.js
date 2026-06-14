@@ -8,6 +8,8 @@ function keyOf(item) {
 
 function record(history, item, now) {
   if (!item || !TRACKABLE.has(item.type) || !item.target) return history;
+  // Shallow copy is safe: record() is the only writer and always assigns a fresh
+  // entry object for the touched key, so existing entries are never mutated in place.
   const items = { ...(history && history.items) };
   const key = keyOf(item);
   const prev = items[key] || { count: 0 };
@@ -19,7 +21,7 @@ function record(history, item, now) {
     count: prev.count + 1,
     lastLaunched: now,
   };
-  return { version: 1, items };
+  return { version: 1, items }; // version: schema version for future migrations
 }
 
 function toItem(rec) {

@@ -21,6 +21,14 @@ test('record creates and increments counts immutably', () => {
   assert.strictEqual(h0.items['app:C:\\a.lnk'], undefined); // h0 untouched
 });
 
+test('record bootstraps from a null/empty history (cold start)', () => {
+  const h = record(null, { id: 'x', type: 'app', title: 'X', subtitle: '', target: 'C:\\x.lnk' }, 1);
+  assert.deepStrictEqual(h, {
+    version: 1,
+    items: { 'app:C:\\x.lnk': { type: 'app', title: 'X', subtitle: '', target: 'C:\\x.lnk', count: 1, lastLaunched: 1 } },
+  });
+});
+
 test('record ignores non-trackable types and targetless items', () => {
   const h0 = { version: 1, items: {} };
   assert.strictEqual(record(h0, { type: 'claude', target: 'https://claude.ai/new' }, 1), h0);
