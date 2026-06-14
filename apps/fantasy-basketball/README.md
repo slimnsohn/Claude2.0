@@ -55,10 +55,24 @@ joins to `game_logs` losslessly on `player_id`. `teams` — 30 NBA teams.
 
 **Yahoo league tables.** `yahoo_teams` — the 10 fantasy teams (your team flagged
 `is_my_team`). `yahoo_roster` — every team's current roster: player, NBA team,
-Yahoo eligibility, injury status, and `nba_player_id` (the bridge to the stats
-lake — filled by the name matcher, next step). Credentials live in gitignored
-`yahoo_creds.json` / `yahoo_token.json` (reused from a prior build; never
-committed). League: `466.l.79957` "The Best Time of Year" (9-cat H2H).
+Yahoo eligibility, injury status, and `nba_player_id` — the **bridge** to the
+stats lake, filled by the name matcher (`fbball/bridge.py`: accent/suffix/
+punctuation-normalized, collisions resolved by active-player + team, nicknames
+via an alias map; unmatched left NULL, never force-matched). The `yahoo` command
+auto-bridges. Credentials live in gitignored `yahoo_creds.json` /
+`yahoo_token.json` (reused from a prior build; never committed). League:
+`466.l.79957` "The Best Time of Year" (9-cat H2H).
+
+```python
+# Your roster, with live season stats — joined through the bridge:
+con.execute("""
+  SELECT r.player_name, s.ppg, s.rpg, s.apg, s.fg_pct
+  FROM yahoo_roster r JOIN yahoo_teams t USING (team_key)
+  JOIN player_season_stats s
+    ON s.player_id = r.nba_player_id AND s.season='2025-26'
+  WHERE t.is_my_team ORDER BY s.ppg DESC
+""").df()
+```
 
 **Analytics views** (always live — recompute from `game_logs`, no refresh step):
 - `player_season_stats` — one row per (player, season, season_type): games

@@ -73,6 +73,13 @@ def cmd_yahoo(args, con) -> None:
         f"Done. {result['teams']} teams, {result['roster_spots']} roster spots. "
         f"Your team: {result['my_team']}."
     )
+    print(
+        f"Bridged {result['matched']}/{result['roster_spots']} players to NBA ids."
+    )
+    if result["unmatched"]:
+        print("  Unmatched (NULL nba_player_id — add an alias if needed):")
+        for name in result["unmatched"]:
+            print(f"    - {name}")
 
 
 def cmd_status(args, con) -> None:

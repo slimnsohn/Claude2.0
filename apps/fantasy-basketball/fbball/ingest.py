@@ -7,7 +7,7 @@ Two modes:
                       upsert means only genuinely new games land.
 """
 
-from fbball import db, nba_source, transform
+from fbball import bridge, db, nba_source, transform
 
 SOURCE = "nba_game_logs"
 
@@ -94,11 +94,45 @@ def _default_reference_sources(players, teams, fetch_team_roster):
     return players, teams, fetch_team_roster
 
 
-def pull_yahoo_league(con, league_key: str, *, client=None) -> dict:
-    """Pull all team rosters for a Yahoo league and store them.
+def bridge_yahoo_players(con, aliases: dict | None = None) -> dict:
+    """Match yahoo_roster players to NBA player_ids and write them back.
+
+    Returns {matched, unmatched: [player_name, ...]}. Unmatched players keep a
+    NULL nba_player_id — surfaced, never force-matched.
+    """
+    db.init_schema(con)
+    roster_rows = con.execute(
+        "SELECT player_key, player_name, editorial_team FROM yahoo_roster"
+    ).df().to_dict("records")
+    nba_rows = con.execute(
+        "SELECT player_id, full_name, is_active, team FROM players"
+    ).df().to_dict("records")
+
+    matches = bridge.match_rosters(roster_rows, nba_rows, aliases)
+    by_key = {m["player_key"]: m["nba_player_id"] for m in matches}
+
+    matched = [(k, v) for k, v in by_key.items() if v is not None]
+    if matched:
+        import pandas as pd
+        mdf = pd.DataFrame(matched, columns=["player_key", "nba_player_id"])
+        con.register("_bridge", mdf)
+        con.execute(
+            "UPDATE yahoo_roster SET nba_player_id = b.nba_player_id "
+            "FROM _bridge b WHERE yahoo_roster.player_key = b.player_key"
+        )
+        con.unregister("_bridge")
+
+    unmatched = [
+        r["player_name"] for r in roster_rows if by_key.get(r["player_key"]) is None
+    ]
+    return {"matched": len(matched), "unmatched": unmatched}
+
+
+def pull_yahoo_league(con, league_key: str, *, client=None, aliases=None) -> dict:
+    """Pull all team rosters for a Yahoo league, store them, and bridge to NBA ids.
 
     `client` defaults to fbball.yahoo_client (the live OAuth client); inject a
-    fake in tests. Returns a small summary including which team is mine.
+    fake in tests. Returns a summary incl. my team and bridge match counts.
     """
     if client is None:
         from fbball import yahoo_client as client
@@ -109,12 +143,17 @@ def pull_yahoo_league(con, league_key: str, *, client=None) -> dict:
     db.upsert_yahoo_teams(con, teams_df)
     db.upsert_yahoo_roster(con, roster_df)
 
+    # Link the rosters to the NBA stats lake so they can actually be valued.
+    bridge_result = bridge_yahoo_players(con, aliases)
+
     mine = teams_df[teams_df["is_my_team"]]
     my_team = mine.iloc[0]["name"] if len(mine) else None
     return {
         "teams": len(teams_df),
         "roster_spots": len(roster_df),
         "my_team": my_team,
+        "matched": bridge_result["matched"],
+        "unmatched": bridge_result["unmatched"],
     }
 
 

@@ -4,12 +4,12 @@
 
 ## Now
 
-- [ ] Player-ID bridge: match `yahoo_roster.player_name` → NBA `players.player_id` (handle Jr./accents/nicknames, e.g. "Bones Hyland" = "Nah'Shon Hyland"). The join the whole decoupled design hinges on.
+- [ ] Component 3: valuation engine — port `zscore.py`/`categories.py` onto the live views (z-scores → punt-aware → impact-weighted %-cats). Reads `player_season_stats` / `player_recent_form`, joins rosters via `nba_player_id`.
 
 ## Next
 
-- [ ] Yahoo free agents / waiver pool pull (the available-player universe).
-- [ ] Component 3: valuation engine — port `zscore.py`/`categories.py` onto the live views (z-scores → punt-aware → impact-weighted %-cats). Reads `player_season_stats` / `player_recent_form`.
+- [ ] Yahoo free agents / waiver pool pull (the available-player universe) + bridge them too.
+- [ ] Weekly matchup + games-per-week pull (for start/sit).
 
 ## Backlog
 
@@ -19,6 +19,10 @@
 
 ## Done
 
+- [x] **Player-ID bridge (LIVE & VERIFIED).** `fbball/bridge.py`, auto-run by `yahoo`.
+  - 157/157 roster players matched to NBA player_ids; 0 unmatched.
+  - Normalized names (accents/suffixes/punctuation); collisions (Gary Trent Jr., Jabari Smith Jr.) resolved by active-player preference; alias map for nicknames; unmatched left NULL.
+  - Your roster now joins to live stats (Brunson 26 PPG, Wemby 25/11.5/3.1 blk).
 - [x] **Component 2 (slice 1) — Yahoo league pull (LIVE & VERIFIED).** `python ingest.py yahoo`.
   - Reused prior working creds + refresh token (no re-registration). Ported proven `fbball/yahoo_client.py` (raw OAuth2 + Yahoo-JSON parsers).
   - Stored all 10 teams + 157 roster spots into `yahoo_teams` / `yahoo_roster`; your team `slimpickens` auto-flagged. Eligibility + injury status captured. Roster stored as a snapshot (drops disappear on re-pull).
