@@ -27,6 +27,7 @@ npm test         # unit tests (node --test tests/)
 - Calculator: `=2+2` or bare math (`15*8.5`) shows the answer as top row; Enter copies it to clipboard. Safe parser in src/core/calc.js (no eval).
 - Hotkey: Alt+Space, fallbacks Ctrl+Alt+Space → Ctrl+Shift+Space; tray tooltip shows active hotkey.
 - Icons: apps/folders via app.getFileIcon (cached); sites via Google favicon service (badge fallback).
+- Home view (empty query): Pinned / Recent / Frequent sections from data/config.json + data/history.json; headers are non-selectable, arrows/Tab skip them. Tray → Settings… opens the config window (toggle each section, set type filter + limit, manage pins). First run seeds Cursor/Notepad/Excel if found. Launches are recorded to history on success.
 - Tray-resident; window hides on Esc/blur; quit only via tray Exit.
 
 ## Skills & Protocols
