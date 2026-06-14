@@ -17,8 +17,8 @@ const { createLogger } = require('./src/log.js');
 const { buildHome } = require('./src/core/sections.js');
 const { record } = require('./src/core/history.js');
 const { mergeConfig, seedPinned } = require('./src/core/config.js');
-const { loadConfig, saveConfig } = require('./src/configStore.js');
-const { loadHistory, saveHistory } = require('./src/historyStore.js');
+const { loadConfig, saveConfig: persistConfig } = require('./src/configStore.js');
+const { loadHistory, saveHistory: persistHistory } = require('./src/historyStore.js');
 const { TRAY_ICON_DATA_URL } = require('./assets/tray-icon.js');
 
 const WIN_W = 680;
@@ -208,13 +208,14 @@ if (!app.requestSingleInstanceLock()) {
 
     indexer.start();
 
-    // Config + history (after the first index is built so the seed can match apps).
+    // Config + history. indexer.start() refreshes synchronously, so getItems()
+    // is already populated here and the first-run seed can match installed apps.
     history = loadHistory(HISTORY_PATH, log);
     const loaded = loadConfig(CONFIG_PATH, log);
     config = loaded.config;
     if (!loaded.existed) {
       config = mergeConfig({ ...config, pinned: seedPinned(indexer.getItems()) });
-      try { saveConfig(CONFIG_PATH, config); } catch (err) { log.error(`config seed save failed: ${err.message}`); }
+      try { persistConfig(CONFIG_PATH, config); } catch (err) { log.error(`config seed save failed: ${err.message}`); }
       log.info(`First run: seeded ${config.pinned.length} pinned app(s).`);
     }
 
@@ -268,7 +269,7 @@ if (!app.requestSingleInstanceLock()) {
     if (result.ok) {
       hideWindow();
       history = record(history, item, Date.now());
-      try { saveHistory(HISTORY_PATH, history); } catch (err) { log.error(`history save failed: ${err.message}`); }
+      try { persistHistory(HISTORY_PATH, history); } catch (err) { log.error(`history save failed: ${err.message}`); }
     } else {
       log.error(`Launch failed for ${item.title}: ${result.error}`);
     }
@@ -286,7 +287,7 @@ if (!app.requestSingleInstanceLock()) {
 
   ipcMain.handle('saveConfig', async (event, incoming) => {
     config = mergeConfig(incoming);
-    try { saveConfig(CONFIG_PATH, config); } catch (err) { log.error(`config save failed: ${err.message}`); }
+    try { persistConfig(CONFIG_PATH, config); } catch (err) { log.error(`config save failed: ${err.message}`); }
     return config;
   });
 
