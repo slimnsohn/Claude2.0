@@ -89,6 +89,28 @@ test('buildHome on empty everything returns []', () => {
   assert.deepStrictEqual(buildHome({ config, history: { version: 1, items: {} }, index: [] }), []);
 });
 
+test('buildHome pinned typeFilter excludes non-matching types', () => {
+  const config = cfg({
+    pinned: [
+      { type: 'site', title: 'GH', subtitle: '', target: 'https://github.com' },
+      { type: 'app', title: 'A', subtitle: '', target: 'C:\\a.lnk' },
+    ],
+  });
+  config.sections.pinned.typeFilter = 'app';
+  const pinned = sectionItems(buildHome({ config, history: { version: 1, items: {} }, index: [] }), 'Pinned');
+  assert.deepStrictEqual(pinned.map((i) => i.title), ['A']);
+});
+
+test('buildHome with Pinned disabled does not suppress its items from Recent', () => {
+  let h = { version: 1, items: {} };
+  h = record(h, app('app', 'C:\\a.lnk', 'A'), 100);
+  const config = cfg({ pinned: [{ type: 'app', title: 'A', subtitle: '', target: 'C:\\a.lnk' }] });
+  config.sections.pinned.enabled = false;
+  const out = buildHome({ config, history: h, index: [] });
+  assert.strictEqual(out.find((r) => r.kind === 'header' && r.label === 'Pinned'), undefined);
+  assert.deepStrictEqual(sectionItems(out, 'Recent').map((i) => i.title), ['A']);
+});
+
 function sectionItems(rows, label) {
   const start = rows.findIndex((r) => r.kind === 'header' && r.label === label);
   if (start === -1) return [];

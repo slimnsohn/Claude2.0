@@ -30,14 +30,14 @@ function buildHome({ config, history, index }) {
   const cfg = config.sections;
   const out = [];
   const pinnedKeys = new Set();
+  let headroom = 0;
 
   if (cfg.pinned.enabled) {
     const items = resolvePinned(config.pinned, byKey, cfg.pinned);
     items.forEach((i) => pinnedKeys.add(i.id));
     pushSection(out, 'Pinned', items);
+    headroom = items.length;
   }
-
-  const headroom = config.pinned.length;
 
   if (cfg.recent.enabled) {
     const items = recent(history, { typeFilter: cfg.recent.typeFilter, limit: cfg.recent.limit + headroom })
