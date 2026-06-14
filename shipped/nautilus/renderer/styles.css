@@ -116,6 +116,7 @@ html, body {
 }
 
 /* ---- config window ---- */
+html.config-root { overflow: auto; }
 .config-body { background: var(--surface, #16161e); color: var(--text, #e8e8f0); margin: 0; overflow: auto; }
 #config { padding: 20px 24px; font-size: 14px; }
 #config h1 { font-size: 20px; margin: 0 0 16px; }
