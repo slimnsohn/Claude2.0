@@ -329,6 +329,8 @@ def parse_standings(raw: dict) -> list[dict]:
                 "name": info.get("name", ""),
                 "managers": managers,
                 "rank": int(standings_info.get("rank", 0)),
+                "playoff_seed": standings_info.get("playoff_seed", ""),
+                "games_back": standings_info.get("games_back", ""),
                 "wins": int(outcome.get("wins", 0)),
                 "losses": int(outcome.get("losses", 0)),
                 "ties": int(outcome.get("ties", 0)),
@@ -601,6 +603,41 @@ def get_free_agents(league_key: str, limit: int = 200) -> list[dict]:
         if count < page:
             break
     return out[:limit]
+
+
+def get_player_names(league_key: str, player_keys: list[str], batch: int = 25) -> dict:
+    """Resolve player_key -> full name, batching (Yahoo caps keys per request).
+
+    Used to name drafted-then-dropped players who aren't on any final roster.
+    """
+    out = {}
+    keys = [k for k in player_keys if k]
+    for i in range(0, len(keys), batch):
+        chunk = keys[i:i + batch]
+        raw = yahoo_request(
+            f"/league/{league_key}/players;player_keys={','.join(chunk)}"
+        )
+        try:
+            block = raw["fantasy_content"]["league"][1]["players"]
+            count = block.get("count", 0)
+        except (KeyError, IndexError, TypeError):
+            continue
+        for pi in range(count):
+            entry = block.get(str(pi))
+            if not entry or "player" not in entry:
+                continue
+            meta = entry["player"][0]
+            info, name = {}, ""
+            for item in meta:
+                if isinstance(item, dict):
+                    if "name" in item:
+                        name = item["name"].get("full", "")
+                    else:
+                        info.update(item)
+            pk = info.get("player_key", "")
+            if pk:
+                out[pk] = name
+    return out
 
 
 def get_league_metadata(league_key: str) -> dict:

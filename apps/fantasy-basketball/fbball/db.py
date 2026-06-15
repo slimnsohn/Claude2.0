@@ -72,6 +72,71 @@ CREATE TABLE IF NOT EXISTS yahoo_free_agents (
     nba_player_id      INTEGER
 );
 
+-- ── Yahoo league HISTORY lake (fixed; one immutable set per past season) ──
+CREATE TABLE IF NOT EXISTS yh_seasons (
+    season     INTEGER PRIMARY KEY,   -- 2010 .. 2025
+    league_key VARCHAR,
+    name       VARCHAR,
+    num_teams  INTEGER,
+    start_date DATE,
+    end_date   DATE
+);
+
+CREATE TABLE IF NOT EXISTS yh_teams (
+    season           INTEGER,
+    team_key         VARCHAR,
+    team_name        VARCHAR,
+    manager_nickname VARCHAR,
+    manager_email    VARCHAR,   -- owner identity (owners change; email is stable)
+    manager_guid     VARCHAR,
+    PRIMARY KEY (season, team_key)
+);
+
+CREATE TABLE IF NOT EXISTS yh_standings (
+    season              INTEGER,
+    team_key            VARCHAR,
+    final_rank          INTEGER,   -- reflects playoffs (championship result)
+    playoff_seed        INTEGER,   -- regular-season seed (playoff teams)
+    regular_season_rank INTEGER,   -- derived: full reg-season order, ALL teams
+    wins                INTEGER,
+    losses              INTEGER,
+    ties                INTEGER,
+    win_pct             DOUBLE,
+    games_back          VARCHAR,
+    points_for          VARCHAR,
+    PRIMARY KEY (season, team_key)
+);
+
+CREATE TABLE IF NOT EXISTS yh_draft (
+    season      INTEGER,
+    pick        INTEGER,
+    round       INTEGER,
+    team_key    VARCHAR,
+    player_key  VARCHAR,
+    player_name VARCHAR,
+    PRIMARY KEY (season, pick)
+);
+
+CREATE TABLE IF NOT EXISTS yh_final_roster (
+    season             INTEGER,
+    team_key           VARCHAR,
+    player_key         VARCHAR,
+    player_name        VARCHAR,
+    eligible_positions VARCHAR,
+    status             VARCHAR,
+    PRIMARY KEY (season, team_key, player_key)
+);
+
+-- Canonical owner identity (derived): one owner across renames + email changes,
+-- prioritizing team-name continuity. Rebuilt wholesale from yh_teams.
+CREATE TABLE IF NOT EXISTS yh_owner_identity (
+    season      INTEGER,
+    team_key    VARCHAR,
+    owner_id    VARCHAR,   -- stable slug of the owner's most-used team name
+    owner_label VARCHAR,   -- that team name
+    PRIMARY KEY (season, team_key)
+);
+
 CREATE TABLE IF NOT EXISTS ingest_state (
     source      VARCHAR PRIMARY KEY,
     last_season VARCHAR,
@@ -381,6 +446,38 @@ def upsert_free_agents(con, rows) -> int:
     )
     con.execute("INSERT INTO yahoo_free_agents BY NAME SELECT * FROM _inc_fa")
     con.unregister("_inc_fa")
+    return len(rows)
+
+
+_HISTORY_TABLES = {"yh_seasons", "yh_teams", "yh_standings", "yh_draft", "yh_final_roster"}
+
+
+def replace_history(con, table: str, rows) -> int:
+    """Write history rows, replacing any existing rows for the same season(s).
+
+    Immutable data, but re-runnable: a re-pull of a season cleanly overwrites it.
+    """
+    if table not in _HISTORY_TABLES:
+        raise ValueError(f"unknown history table: {table}")
+    if len(rows) == 0:
+        return 0
+    con.register("_inc_hist", rows)
+    con.execute(
+        f"DELETE FROM {table} WHERE season IN (SELECT DISTINCT season FROM _inc_hist)"
+    )
+    con.execute(f"INSERT INTO {table} BY NAME SELECT * FROM _inc_hist")
+    con.unregister("_inc_hist")
+    return len(rows)
+
+
+def write_owner_identity(con, rows) -> int:
+    """Replace the whole owner-identity table (clusters span all seasons)."""
+    con.execute("DELETE FROM yh_owner_identity")
+    if len(rows) == 0:
+        return 0
+    con.register("_inc_own", rows)
+    con.execute("INSERT INTO yh_owner_identity BY NAME SELECT * FROM _inc_own")
+    con.unregister("_inc_own")
     return len(rows)
 
 

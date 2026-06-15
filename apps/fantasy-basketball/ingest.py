@@ -93,6 +93,37 @@ def cmd_freeagents(args, con) -> None:
             print(f"    - {name}")
 
 
+def cmd_history(args, con) -> None:
+    from fbball import yahoo_history
+    print(f"Pulling Yahoo league history (renew chain from {args.league})...")
+    totals = yahoo_history.pull_league_history(
+        con, start_key=args.league, log=print)
+    print(f"\nDone. {totals['seasons']} seasons | {totals['teams']} team-seasons | "
+          f"{totals['draft']} draft picks | {totals['roster']} final-roster spots.")
+
+
+def cmd_owners(args, con) -> None:
+    from fbball import yahoo_history
+    n = yahoo_history.rebuild_owner_identity(con)
+    if n == 0:
+        print("No league history stored. Run:  python ingest.py history")
+        return
+    rows = con.execute(
+        """
+        SELECT o.owner_label, COUNT(DISTINCT o.season) n_seasons,
+               MIN(o.season) ymin, MAX(o.season) ymax,
+               COUNT(DISTINCT t.team_name) n_names,
+               COUNT(DISTINCT NULLIF(t.manager_email,'')) n_emails
+        FROM yh_owner_identity o JOIN yh_teams t USING (season, team_key)
+        GROUP BY o.owner_label ORDER BY n_seasons DESC, ymin
+        """
+    ).fetchall()
+    print(f"Canonical owners (team-name continuity, bridging email/nickname): {len(rows)}\n")
+    print(f"  {'Owner (team)':<24} {'Seas':>4}  {'Span':<11} {'Names':>5} {'Emails':>6}")
+    for r in rows:
+        print(f"  {(r[0] or '')[:24]:<24} {r[1]:>4}  {str(r[2])+'-'+str(r[3]):<11} {r[4]:>5} {r[5]:>6}")
+
+
 def cmd_prep(args, con) -> None:
     """Offseason one-shot: pull the season that just finished + refresh reference.
 
@@ -138,6 +169,15 @@ def main(argv=None) -> None:
     p_fa = sub.add_parser("freeagents", help="pull the league free-agent pool")
     p_fa.add_argument("--league", default=DEFAULT_LEAGUE_KEY, help="Yahoo league_key")
     p_fa.set_defaults(func=cmd_freeagents)
+
+    p_hist = sub.add_parser(
+        "history", help="pull the full Yahoo league history lake (all past seasons)")
+    p_hist.add_argument("--league", default=DEFAULT_LEAGUE_KEY, help="current league_key")
+    p_hist.set_defaults(func=cmd_history)
+
+    p_own = sub.add_parser(
+        "owners", help="rebuild + show canonical owner identity (team-name continuity)")
+    p_own.set_defaults(func=cmd_owners)
 
     p_prep = sub.add_parser(
         "prep", help="offseason one-shot: pull last season + refresh reference")

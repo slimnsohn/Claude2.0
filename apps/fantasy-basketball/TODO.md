@@ -4,7 +4,7 @@
 
 ## Now
 
-- [ ] (Open) Pick the next surface when needed. Start/sit + trade analyzer were explicitly deprioritized by the user.
+- [ ] (Open) Pick the next thing when needed — the full pipeline + history lake are complete.
 
 ## Next
 
@@ -19,6 +19,12 @@
 
 ## Done
 
+- [x] **Yahoo league history lake — BUILT & VERIFIED.** `python ingest.py history`.
+  - Walks the renew chain back to 2010; 16 seasons, 168 team-seasons, 2,516 draft picks, 2,554 final-roster spots.
+  - Tables: yh_seasons, yh_teams (owners by email — 22 distinct owners), yh_standings (final_rank vs playoff_seed vs derived regular_season_rank), yh_draft, yh_final_roster. `fbball/yahoo_history.py`.
+  - Validated: derived regular_season_rank matches Yahoo playoff_seed exactly; 2024 champ was a 5-seed. Draft names 100% resolved (batched player lookup fills drafted-then-dropped players).
+  - Data organization documented: one DuckDB file, isolated namespaces (NBA `game_logs`/`players`/`teams`, live `yahoo_*`, history `yh_*`); `replace_history` rejects non-`yh_` tables so NBA raw data is structurally protected.
+  - Canonical owner identity (`yh_owner_identity`, `python ingest.py owners`): union-find over team-seasons sharing any non-blank signal (team name / email / nickname), team-name continuity prioritized. 22 true owners; folds name-changers (slimpickens 11 names→1) and bridges blank-email years (LetsBall).
 - [x] **Draft board — COMPLETE & VERIFIED.** `python draft.py`.
   - Punt-aware 9-cat value → tiers (gap-based value cliffs) → positional rank by primary position (`fbball/draft.py`).
   - `--pos`, `--punt`, `--gap` flags. Validated live: Jokić Tier 1; punt FT%+TO lifts Giannis into the top tier. 86 tests pass.

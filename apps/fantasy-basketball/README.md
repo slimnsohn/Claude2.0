@@ -70,6 +70,30 @@ who piles onto a category you're already winning. The output shows both `RAW`
 (overall value) and `FIT` (needs-weighted) so the difference is visible.
 Engine: `fbball/recommend.py`.
 
+## Yahoo league history (a fixed, separate data lake)
+
+```bash
+python ingest.py history     # walk the renew chain, pull all 16 past seasons (once)
+python ingest.py owners      # rebuild + show canonical owner identity (no API calls)
+```
+
+Immutable `yh_*` tables capturing every season back to 2010:
+- `yh_seasons` — each season's league_key, name, team count, dates
+- `yh_teams` — teams + **owners keyed by email** (owners change & rename; email is stable)
+- `yh_standings` — `final_rank` (reflects playoffs), `playoff_seed` (regular-season seed),
+  and a derived `regular_season_rank` for **all** teams (from W-L record; validated to
+  match Yahoo's seed exactly)
+- `yh_draft` — every draft pick (player names resolved where the player stayed rostered)
+- `yh_final_roster` — end-of-season rosters
+- `yh_owner_identity` — derived canonical owner per team-season. Resolves the
+  same person across team renames AND email changes/blanks by linking
+  team-seasons that share any non-blank signal (team name, email, or nickname),
+  prioritizing team-name continuity. 22 true owners over the league's history.
+
+This is separate from the live Yahoo tables (`yahoo_roster`/`yahoo_free_agents`,
+which refresh) — history never changes, so it's pulled once. Engine:
+`fbball/yahoo_history.py`.
+
 ## Draft board
 
 ```bash
@@ -101,6 +125,21 @@ con = duckdb.connect("data/fbball.duckdb")
 con.execute("SELECT player_name, AVG(pts) FROM game_logs "
             "WHERE season='2025-26' GROUP BY player_name ORDER BY 2 DESC LIMIT 10").df()
 ```
+
+## Data organization
+
+One DuckDB file (`data/fbball.duckdb`), three isolated namespaces — they never
+share a table, so no operation in one domain can corrupt another's raw data:
+
+| Prefix | Domain | Mutability |
+|--------|--------|------------|
+| `game_logs`, `players`, `teams` | NBA stats (the data lake) | refreshable |
+| `yahoo_*` | live Yahoo (rosters, free agents) | snapshot, re-pulled |
+| `yh_*` | Yahoo league **history** | fixed, pulled once |
+
+The Yahoo writers (`replace_history`, the snapshot upserts) only ever touch
+their own tables — `replace_history` rejects any non-`yh_` table by name — so
+the NBA raw data is structurally protected from the fantasy side.
 
 ## Schema
 
