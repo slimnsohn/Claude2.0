@@ -46,7 +46,8 @@ Python · `nba_api` (NBA stats) · `yahoo_fantasy_api` (league) · DuckDB / Parq
 - **Player-ID bridge LIVE.** `fbball/bridge.py`; 157/157 rosters linked to NBA stats.
 - **Component 3 — valuation engine DONE.** `python value.py` (9-cat z-scores, impact-weighted %, punt-aware). `fbball/valuation.py`.
 - **Component 4 (waivers) DONE.** `python ingest.py freeagents` + `python waivers.py`. Marginal-value-to-needs ranking. `fbball/recommend.py`.
-- **Next:** start/sit (games-per-week) + trade analyzer. See README/TODO.
+- **Draft board DONE.** `python draft.py` (punt-aware value → tiers → positional rank). `fbball/draft.py`.
+- Start/sit + trade analyzer **deprioritized by user.** See README/TODO.
 
 ## Environment Variables
 - Yahoo: `YAHOO_CLIENT_ID`, `YAHOO_CLIENT_SECRET` (Component 2, not yet). Never commit.

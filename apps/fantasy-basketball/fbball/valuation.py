@@ -106,6 +106,8 @@ def compute_values(players: list[dict], punt=None) -> list[dict]:
         results.append({
             "player_id": p.get("player_id"),
             "full_name": p.get("full_name", ""),
+            "nba_position": p.get("nba_position"),
+            "team": p.get("team"),
             "gp": p.get("gp", 0),
             "mpg": p.get("mpg", 0),
             "zscores": zscores,

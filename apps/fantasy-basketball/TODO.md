@@ -4,12 +4,12 @@
 
 ## Now
 
-- [ ] Component 4 (start/sit surface): weekly matchup + games-per-week pull, then optimize the lineup to maximize expected category wins.
+- [ ] (Open) Pick the next surface when needed. Start/sit + trade analyzer were explicitly deprioritized by the user.
 
 ## Next
 
-- [ ] Trade analyzer (net category-value swing for both sides, punt-aware).
-- [ ] Draft board (punt-build-aware tiers + positional scarcity) — seasonal.
+- [ ] Optional: projections module (recent-weighted rates) to feed valuation instead of raw season-to-date.
+- [ ] Optional: nightly scheduling of `update` during the season.
 
 ## Backlog
 
@@ -19,6 +19,9 @@
 
 ## Done
 
+- [x] **Draft board — COMPLETE & VERIFIED.** `python draft.py`.
+  - Punt-aware 9-cat value → tiers (gap-based value cliffs) → positional rank by primary position (`fbball/draft.py`).
+  - `--pos`, `--punt`, `--gap` flags. Validated live: Jokić Tier 1; punt FT%+TO lifts Giannis into the top tier. 86 tests pass.
 - [x] **Component 4 (waivers surface) — COMPLETE & VERIFIED.** `python ingest.py freeagents` then `python waivers.py`.
   - Pulls + bridges the FA pool (live: 200/200 matched), stores in `yahoo_free_agents`.
   - Ranks FAs by *marginal* value to my category needs (`fbball/recommend.py`): weakest cat weight 1.0, strongest 0.0, punts 0. Shows RAW vs FIT.

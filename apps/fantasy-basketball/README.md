@@ -57,6 +57,21 @@ who piles onto a category you're already winning. The output shows both `RAW`
 (overall value) and `FIT` (needs-weighted) so the difference is visible.
 Engine: `fbball/recommend.py`.
 
+## Draft board
+
+```bash
+python draft.py                    # punt-aware value, grouped into tiers
+python draft.py --pos C            # positional run (centers only)
+python draft.py --punt FT_PCT TOV  # board for a punt build (re-tiers)
+python draft.py --gap 1.0          # coarser tiers
+```
+
+Players ranked by 9-cat value, grouped into **tiers** at value cliffs (a new
+tier starts where value drops by more than `--gap`), with **positional rank**
+(`C3` = 3rd-best center, grouped by primary position) for scarcity. Punt builds
+re-rank and re-tier — e.g. punting FT%+TO lifts Giannis into the top tier.
+Engine: `fbball/draft.py`.
+
 Every command is **safe to re-run**. Writes are idempotent on
 `(player_id, game_id)`, so you can never create duplicates. Historical seasons
 are marked complete and never re-pulled; only the in-progress season refreshes.
