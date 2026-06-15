@@ -93,6 +93,24 @@ def cmd_freeagents(args, con) -> None:
             print(f"    - {name}")
 
 
+def cmd_prep(args, con) -> None:
+    """Offseason one-shot: pull the season that just finished + refresh reference.
+
+    Run this in the offseason (≈April–September). It targets the current
+    season label, which in the offseason is the season that just completed.
+    """
+    today = dt.date.today()
+    season = seasons.current_season(today)
+    print(f"Offseason prep - pulling completed season {season} + reference data...")
+    new = ingest.update(con, season)
+    print(f"  game logs : {new:,} new rows")
+    ref = ingest.load_reference(con)
+    print(f"  reference : {ref['teams']} teams, {ref['players']:,} players "
+          f"({ref['enriched']:,} with positions)")
+    _print_status(con)
+    print("\nReady. Build your board:  python draft.py")
+
+
 def cmd_status(args, con) -> None:
     print("Store status:")
     _print_status(con)
@@ -120,6 +138,10 @@ def main(argv=None) -> None:
     p_fa = sub.add_parser("freeagents", help="pull the league free-agent pool")
     p_fa.add_argument("--league", default=DEFAULT_LEAGUE_KEY, help="Yahoo league_key")
     p_fa.set_defaults(func=cmd_freeagents)
+
+    p_prep = sub.add_parser(
+        "prep", help="offseason one-shot: pull last season + refresh reference")
+    p_prep.set_defaults(func=cmd_prep)
 
     p_st = sub.add_parser("status", help="show what's in the store")
     p_st.set_defaults(func=cmd_status)

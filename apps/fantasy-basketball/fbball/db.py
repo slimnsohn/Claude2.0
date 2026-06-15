@@ -186,6 +186,15 @@ def count_game_logs(con: duckdb.DuckDBPyConnection) -> int:
     return con.execute("SELECT COUNT(*) FROM game_logs").fetchone()[0]
 
 
+def latest_season(con) -> str | None:
+    """The most recent season present in game_logs (None if empty).
+
+    This is what the analysis tools default to — pull last season in the
+    offseason and everything points at it automatically, no year to edit.
+    """
+    return con.execute("SELECT MAX(season) FROM game_logs").fetchone()[0]
+
+
 def upsert_game_logs(con, rows) -> int:
     """Insert game-log rows, skipping any (player_id, game_id) already present.
 

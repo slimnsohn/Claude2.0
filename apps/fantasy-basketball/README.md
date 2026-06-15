@@ -14,6 +14,19 @@ the last 4 seasons (~105k rows), stored in DuckDB. Refreshable nightly.
 pip install -r requirements.txt
 ```
 
+## Offseason refresh (the once-a-year workflow)
+
+Run this each offseason (≈April–September) to pull the season that just
+finished and refresh player/position data, then build your board:
+
+```bash
+python ingest.py prep              # pulls last season's logs + reference data
+python draft.py                    # board auto-uses the latest season — no year to edit
+```
+
+That's it. `prep` targets the just-completed season automatically, and every
+analysis tool defaults to the latest season in your data lake.
+
 ## Use it
 
 ```bash

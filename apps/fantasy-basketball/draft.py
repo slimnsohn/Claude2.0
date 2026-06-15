@@ -26,7 +26,8 @@ CATS = valuation.CATS
 def main(argv=None):
     p = argparse.ArgumentParser(description="draft board")
     p.add_argument("--db", default=DEFAULT_DB)
-    p.add_argument("--season", default="2025-26")
+    p.add_argument("--season", default=None,
+                   help="season label; defaults to the latest in your data lake")
     p.add_argument("--source", choices=["season", "recent"], default="season")
     p.add_argument("--punt", nargs="*", default=[], metavar="CAT")
     p.add_argument("--pos", default=None, help="filter to an NBA position (G/F/C)")
@@ -43,8 +44,9 @@ def main(argv=None):
 
     con = db.connect(args.db)
     try:
+        season = args.season or db.latest_season(con)
         players = board.build_board(
-            con, season=args.season, source=args.source,
+            con, season=season, source=args.source,
             min_gp=args.min_gp, min_min=args.min_min, punt=punt, gap=args.gap,
         )
     finally:
@@ -55,7 +57,7 @@ def main(argv=None):
                    if board.primary_position(p.get("nba_position")) == args.pos]
     players = players[: args.top]
 
-    label = f"{args.source} value, {args.season}"
+    label = f"{args.source} value, {season}"
     if punt:
         label += f"  |  PUNT: {', '.join(valuation.CAT_DISPLAY[c] for c in punt)}"
     if args.pos:

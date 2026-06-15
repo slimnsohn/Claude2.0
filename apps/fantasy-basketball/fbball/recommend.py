@@ -63,7 +63,7 @@ def rank_waivers(candidates: list[dict], weights: dict) -> list[dict]:
 def recommend_waivers(
     con,
     *,
-    season: str = "2025-26",
+    season: str | None = None,
     source: str = "season",
     min_gp: int = 20,
     min_min: float = 10.0,

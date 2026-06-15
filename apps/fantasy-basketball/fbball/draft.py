@@ -53,7 +53,7 @@ def positional_ranks(ranked: list[dict]) -> list[dict]:
 def build_board(
     con,
     *,
-    season: str = "2025-26",
+    season: str | None = None,
     season_type: str = "Regular Season",
     source: str = "season",
     min_gp: int = 20,

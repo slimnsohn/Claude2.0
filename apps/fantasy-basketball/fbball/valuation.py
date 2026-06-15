@@ -132,7 +132,7 @@ _VIEW_COLUMNS = [
 def rank_from_db(
     con,
     *,
-    season: str = "2025-26",
+    season: str | None = None,
     season_type: str = "Regular Season",
     source: str = "season",
     min_gp: int = 20,
@@ -141,9 +141,13 @@ def rank_from_db(
 ) -> list[dict]:
     """Load the qualifying player pool from the views and rank it.
 
-    source='season' -> player_season_stats (full-season value);
-    source='recent' -> player_recent_form (current form, last 15 games).
+    season=None defaults to the latest season in the data lake, so offseason
+    prep needs no year specified. source='season' -> player_season_stats
+    (full-season value); source='recent' -> player_recent_form (last 15).
     """
+    if season is None:
+        from fbball import db as _db
+        season = _db.latest_season(con)
     cols = ", ".join(_VIEW_COLUMNS)
     if source == "recent":
         rows = con.execute(

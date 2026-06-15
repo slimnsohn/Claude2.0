@@ -64,6 +64,23 @@ def test_checkpoint_roundtrip():
     assert str(cp["last_date"]) == "2024-12-01"
 
 
+def test_latest_season_empty_is_none():
+    con = duckdb.connect(":memory:")
+    db.init_schema(con)
+    assert db.latest_season(con) is None
+
+
+def test_latest_season_returns_max():
+    con = duckdb.connect(":memory:")
+    db.init_schema(con)
+    for season, gid in [("2023-24", "g1"), ("2025-26", "g2"), ("2024-25", "g3")]:
+        con.execute(
+            "INSERT INTO game_logs (player_id, season, game_id, game_date) "
+            "VALUES (1, ?, ?, DATE '2025-11-01')", [season, gid]
+        )
+    assert db.latest_season(con) == "2025-26"
+
+
 def test_season_completion_tracking():
     con = duckdb.connect(":memory:")
     db.init_schema(con)
