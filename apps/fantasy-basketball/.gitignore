@@ -1,0 +1,18 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Data lake — large/derived, not source. Keep out of git.
+data/*.duckdb
+data/*.duckdb.wal
+data/*.parquet
+data/raw/
+
+# Secrets / OAuth tokens — NEVER commit
+.env
+*.token
+oauth2.json
+yahoo_creds.json
+yahoo_token.json

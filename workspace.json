@@ -1,6 +1,15 @@
 {
   "version": 1,
-  "projects": [],
+  "projects": [
+    {
+      "name": "fantasy-basketball",
+      "type": "OTHER",
+      "location": "apps/fantasy-basketball",
+      "status": "active",
+      "description": "Yahoo H2H 9-cat fantasy basketball decision engine — NBA data lake → valuation → decision surfaces",
+      "createdDate": "2026-06-14"
+    }
+  ],
   "types": [
     "BROWSER",
     "ELECTRON",
