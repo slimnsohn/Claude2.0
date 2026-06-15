@@ -46,7 +46,10 @@ Python · `nba_api` (NBA stats) · `yahoo_fantasy_api` (league) · DuckDB / Parq
 - **Player-ID bridge LIVE.** `fbball/bridge.py`; 157/157 rosters linked to NBA stats.
 - **Component 3 — valuation engine DONE.** `python value.py` (9-cat z-scores, impact-weighted %, punt-aware). `fbball/valuation.py`.
 - **Component 4 (waivers) DONE.** `python ingest.py freeagents` + `python waivers.py`. Marginal-value-to-needs ranking. `fbball/recommend.py`.
-- **Draft board DONE.** `python draft.py` (punt-aware value → tiers → positional rank). `fbball/draft.py`.
+- **Draft board DONE.** `python draft.py` (defaults to PROJECTED next-season value → tiers → positional rank). `fbball/draft.py`.
+- **Projections DONE.** `fbball/projections.py` (age-ratio + sample/recency weighting); ages in `player_bio` via `ingest.py bios`. `--source projection`.
+- **Live draft assistant DONE.** `python livedraft.py` (interactive, projection + needs). `fbball/livedraft.py`.
+- **Yahoo history lake + canonical owners DONE.** `ingest.py history` / `owners`.
 - Start/sit + trade analyzer **deprioritized by user.** See README/TODO.
 
 ## Environment Variables

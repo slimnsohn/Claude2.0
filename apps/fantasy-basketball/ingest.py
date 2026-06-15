@@ -138,8 +138,17 @@ def cmd_prep(args, con) -> None:
     ref = ingest.load_reference(con)
     print(f"  reference : {ref['teams']} teams, {ref['players']:,} players "
           f"({ref['enriched']:,} with positions)")
+    bios = ingest.pull_bios(con, seasons.recent_seasons(3, today=today))
+    print(f"  ages      : {bios:,} player-age rows (for projections)")
     _print_status(con)
     print("\nReady. Build your board:  python draft.py")
+
+
+def cmd_bios(args, con) -> None:
+    seasons_list = seasons.recent_seasons(args.seasons, today=dt.date.today())
+    print(f"Pulling player ages for: {', '.join(seasons_list)}")
+    n = ingest.pull_bios(con, seasons_list)
+    print(f"Done. {n:,} player-age rows.")
 
 
 def cmd_status(args, con) -> None:
@@ -182,6 +191,10 @@ def main(argv=None) -> None:
     p_prep = sub.add_parser(
         "prep", help="offseason one-shot: pull last season + refresh reference")
     p_prep.set_defaults(func=cmd_prep)
+
+    p_bio = sub.add_parser("bios", help="pull player ages (for projections)")
+    p_bio.add_argument("--seasons", type=int, default=3, help="how many recent seasons")
+    p_bio.set_defaults(func=cmd_bios)
 
     p_st = sub.add_parser("status", help="show what's in the store")
     p_st.set_defaults(func=cmd_status)

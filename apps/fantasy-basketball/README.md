@@ -94,20 +94,45 @@ This is separate from the live Yahoo tables (`yahoo_roster`/`yahoo_free_agents`,
 which refresh) — history never changes, so it's pulled once. Engine:
 `fbball/yahoo_history.py`.
 
+## Projections
+
+Per-game stats for *next* season, projected from recent history:
+
+- **Age as a growth/decline ratio** — `curve(target_age)/curve(recent_age)` —
+  so ascending young players project up and veterans decline (the old code
+  wrongly deflated youngsters).
+- **Sample-weighted** by games played (a hot 12-game sample can't dominate a
+  full prior season) and **recency-weighted** across the last 3 seasons.
+- Output feeds valuation/draft/waivers via `--source projection`.
+
+Needs player ages (`python ingest.py bios`, included in `prep`). Engine:
+`fbball/projections.py`.
+
 ## Draft board
 
 ```bash
-python draft.py                    # punt-aware value, grouped into tiers
+python draft.py                    # PROJECTED next-season value, tiered (default)
+python draft.py --source season    # ...or rank by last season instead
 python draft.py --pos C            # positional run (centers only)
 python draft.py --punt FT_PCT TOV  # board for a punt build (re-tiers)
-python draft.py --gap 1.0          # coarser tiers
 ```
 
-Players ranked by 9-cat value, grouped into **tiers** at value cliffs (a new
-tier starts where value drops by more than `--gap`), with **positional rank**
-(`C3` = 3rd-best center, grouped by primary position) for scarcity. Punt builds
-re-rank and re-tier — e.g. punting FT%+TO lifts Giannis into the top tier.
+Players ranked by **projected** 9-cat value (default — what matters for a
+draft), grouped into **tiers** at value cliffs, with **positional rank**
+(`C3` = 3rd-best center) for scarcity. Punt builds re-rank and re-tier.
 Engine: `fbball/draft.py`.
+
+## Live draft assistant
+
+```bash
+python livedraft.py                # interactive — tracks picks, recommends best available
+python livedraft.py --punt FT_PCT TOV
+```
+
+Type names as players come off the board; `me <name>` for your own picks. It
+shows the best available by projected value, and once you've made picks, the
+best available **weighted to your roster's category needs** (`need`). Tolerates
+typos and accents ("jokic" finds Jokić). Engine: `fbball/livedraft.py`.
 
 Every command is **safe to re-run**. Writes are idempotent on
 `(player_id, game_id)`, so you can never create duplicates. Historical seasons

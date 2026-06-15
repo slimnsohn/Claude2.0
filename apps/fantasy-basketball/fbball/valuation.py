@@ -145,6 +145,14 @@ def rank_from_db(
     prep needs no year specified. source='season' -> player_season_stats
     (full-season value); source='recent' -> player_recent_form (last 15).
     """
+    if source == "projection":
+        from fbball import projections
+        rows = projections.project_players(
+            con, target_season=season, min_recent_gp=min_gp)
+        rows = [r for r in rows
+                if _num(r.get("gp")) >= min_gp and _num(r.get("mpg")) >= min_min]
+        return compute_values(rows, punt=punt)
+
     if season is None:
         from fbball import db as _db
         season = _db.latest_season(con)

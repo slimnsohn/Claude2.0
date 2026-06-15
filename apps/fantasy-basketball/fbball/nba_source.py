@@ -56,3 +56,24 @@ def fetch_season_logs(
         ).get_data_frames()[0]
 
     return _retry(call, attempts=attempts, base_delay=base_delay)
+
+
+def fetch_season_bios(
+    season: str,
+    season_type: str = "Regular Season",
+    *,
+    attempts: int = 5,
+    base_delay: float = 1.0,
+    timeout: int = REQUEST_TIMEOUT,
+) -> pd.DataFrame:
+    """Pull all players' bio/age for one season in a single call."""
+    from nba_api.stats.endpoints import LeagueDashPlayerBioStats
+
+    def call():
+        return LeagueDashPlayerBioStats(
+            season=season,
+            season_type_all_star=season_type,
+            timeout=timeout,
+        ).get_data_frames()[0]
+
+    return _retry(call, attempts=attempts, base_delay=base_delay)

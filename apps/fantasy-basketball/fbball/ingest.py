@@ -175,6 +175,21 @@ def pull_yahoo_league(con, league_key: str, *, client=None, aliases=None) -> dic
     }
 
 
+def pull_bios(con, seasons, *, fetch=nba_source.fetch_season_bios, sleep=None,
+              rate_limit: float = nba_source.RATE_LIMIT_SECONDS) -> int:
+    """Pull player ages for the given seasons (one call each). Returns rows written."""
+    if sleep is None:
+        import time
+        sleep = time.sleep
+    db.init_schema(con)
+    total = 0
+    for season in sorted(seasons):
+        raw = fetch(season)
+        total += db.upsert_bios(con, transform.normalize_bios(raw, season))
+        sleep(rate_limit)
+    return total
+
+
 def summary(con) -> dict:
     """A small at-a-glance report: total rows, per-season counts, checkpoint."""
     db.init_schema(con)

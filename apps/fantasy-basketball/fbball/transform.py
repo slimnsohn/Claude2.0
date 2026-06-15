@@ -41,6 +41,17 @@ def normalize_game_logs(raw: pd.DataFrame, season_type: str) -> pd.DataFrame:
     return out[GAME_LOG_COLUMNS]
 
 
+def normalize_bios(raw: pd.DataFrame, season: str) -> pd.DataFrame:
+    """LeagueDashPlayerBioStats frame -> player_bio rows (season, player_id, age)."""
+    out = pd.DataFrame()
+    out["season"] = season
+    out["player_id"] = raw["PLAYER_ID"] if "PLAYER_ID" in raw.columns else None
+    out["age"] = raw["AGE"] if "AGE" in raw.columns else None
+    if len(raw):
+        out["season"] = season
+    return out[["season", "player_id", "age"]]
+
+
 def normalize_teams(static_teams: list) -> pd.DataFrame:
     """nba_api.stats.static.teams.get_teams() list -> teams rows."""
     return pd.DataFrame(

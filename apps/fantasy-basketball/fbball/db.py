@@ -144,6 +144,14 @@ CREATE TABLE IF NOT EXISTS ingest_state (
     updated_at  TIMESTAMP
 );
 
+-- Player age per season (for the projection age curve). Bulk-pulled, 1 call/season.
+CREATE TABLE IF NOT EXISTS player_bio (
+    season    VARCHAR,
+    player_id INTEGER,
+    age       DOUBLE,
+    PRIMARY KEY (season, player_id)
+);
+
 -- Which historical seasons are fully loaded and immutable. The current
 -- (in-progress) season is deliberately never recorded here, so it always
 -- gets re-pulled. This is what makes backfill resumable in any order.
@@ -479,6 +487,39 @@ def write_owner_identity(con, rows) -> int:
     con.execute("INSERT INTO yh_owner_identity BY NAME SELECT * FROM _inc_own")
     con.unregister("_inc_own")
     return len(rows)
+
+
+def upsert_bios(con, rows) -> int:
+    """Insert/refresh player ages (idempotent on season, player_id)."""
+    if len(rows) == 0:
+        return 0
+    con.register("_inc_bio", rows)
+    con.execute(
+        "INSERT INTO player_bio BY NAME SELECT * FROM _inc_bio "
+        "ON CONFLICT (season, player_id) DO UPDATE SET age = EXCLUDED.age"
+    )
+    con.unregister("_inc_bio")
+    return len(rows)
+
+
+def ages_for_target(con, target_season: str) -> dict:
+    """player_id -> projected age in target_season, using each player's most
+    recent known age advanced forward by the season gap."""
+    target_start = int(target_season[:4])
+    rows = con.execute(
+        """
+        WITH latest AS (
+            SELECT player_id, season, age,
+                   ROW_NUMBER() OVER (PARTITION BY player_id ORDER BY season DESC) rn
+            FROM player_bio WHERE age IS NOT NULL
+        )
+        SELECT player_id, season, age FROM latest WHERE rn = 1
+        """
+    ).fetchall()
+    out = {}
+    for player_id, season, age in rows:
+        out[player_id] = age + (target_start - int(season[:4]))
+    return out
 
 
 def get_checkpoint(con, source: str):

@@ -28,7 +28,9 @@ def main(argv=None):
     p.add_argument("--db", default=DEFAULT_DB)
     p.add_argument("--season", default=None,
                    help="season label; defaults to the latest in your data lake")
-    p.add_argument("--source", choices=["season", "recent"], default="season")
+    p.add_argument("--source", choices=["season", "recent", "projection"],
+                   default="projection",
+                   help="projection = next-season projected value (default for drafting)")
     p.add_argument("--punt", nargs="*", default=[], metavar="CAT")
     p.add_argument("--pos", default=None, help="filter to an NBA position (G/F/C)")
     p.add_argument("--top", type=int, default=80)
@@ -44,7 +46,15 @@ def main(argv=None):
 
     con = db.connect(args.db)
     try:
-        season = args.season or db.latest_season(con)
+        if args.source == "projection":
+            season = args.season   # None -> project the season after the latest
+            latest = db.latest_season(con)
+            target = args.season or (f"{int(latest[:4])+1}-{str(int(latest[:4])+2)[-2:]}"
+                                     if latest else "?")
+            season_label = f"projected {target}"
+        else:
+            season = args.season or db.latest_season(con)
+            season_label = season
         players = board.build_board(
             con, season=season, source=args.source,
             min_gp=args.min_gp, min_min=args.min_min, punt=punt, gap=args.gap,
@@ -57,7 +67,7 @@ def main(argv=None):
                    if board.primary_position(p.get("nba_position")) == args.pos]
     players = players[: args.top]
 
-    label = f"{args.source} value, {season}"
+    label = f"{season_label}"
     if punt:
         label += f"  |  PUNT: {', '.join(valuation.CAT_DISPLAY[c] for c in punt)}"
     if args.pos:

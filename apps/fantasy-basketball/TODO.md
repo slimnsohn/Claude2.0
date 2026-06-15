@@ -4,12 +4,12 @@
 
 ## Now
 
-- [ ] (Open) Pick the next thing when needed — the full pipeline + history lake are complete.
+- [ ] (Open) Pick the next thing when needed — full pipeline, history lake, projections, and live draft are all done.
 
 ## Next
 
-- [ ] Optional: projections module (recent-weighted rates) to feed valuation instead of raw season-to-date.
-- [ ] Optional: nightly scheduling of `update` during the season.
+- [ ] Optional: port synergy/roster-analyzer (archetypes, complementary pairings) from the old project if in-season tools ever wanted.
+- [ ] Optional: external ranking benchmark (Basketball Monster) for projection validation.
 
 ## Backlog
 
@@ -19,6 +19,10 @@
 
 ## Done
 
+- [x] **Projection engine + live draft assistant — BUILT & VERIFIED (ported from old project, upgraded).**
+  - Ages pulled in bulk (`LeagueDashPlayerBioStats`, 1 call/season) → `player_bio`; `python ingest.py bios` (folded into `prep`).
+  - `fbball/projections.py`: next-season per-game projection. Model upgrades over the old code: age handled as growth/decline RATIO (curve(target)/curve(recent)) so young players project up; sample-weighted by GP; recency-weighted (last 3 seasons). Wired as `--source projection`; draft board now defaults to it.
+  - `fbball/livedraft.py` + `livedraft.py`: interactive draft-day assistant. Tracks picks, best-available by projected value, needs-weighted once you have picks, accent/typo-tolerant name resolution. Verified live: 851 players, projected 2026-27 board (Wemby #1), needs view shifts after picks.
 - [x] **Yahoo league history lake — BUILT & VERIFIED.** `python ingest.py history`.
   - Walks the renew chain back to 2010; 16 seasons, 168 team-seasons, 2,516 draft picks, 2,554 final-roster spots.
   - Tables: yh_seasons, yh_teams (owners by email — 22 distinct owners), yh_standings (final_rank vs playoff_seed vs derived regular_season_rank), yh_draft, yh_final_roster. `fbball/yahoo_history.py`.
