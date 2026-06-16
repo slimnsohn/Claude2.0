@@ -19,6 +19,10 @@
 
 ## Done
 
+- [x] **Web UI — BUILT & VERIFIED.** `start.bat` → http://127.0.0.1:5050.
+  - Flask (`app.py`, read-only) + thin JSON API (`fbball/webapi.py`) over the tested engine; vanilla-JS single page (`web/`) with workspace base.css + chat widget. Design spec: `docs/web-ui-design.md`.
+  - 5 tabs: Overview, Players (accent-insensitive search + per-season accordion), Rankings (source/punt/pos), Draft cockpit (projected tiered board + live tracking + needs panel), League (champions/owners/standings/draft/rosters).
+  - Verified live against real data; 14 API tests (webapi + Flask routes). Google-clean styling.
 - [x] **Projection engine + live draft assistant — BUILT & VERIFIED (ported from old project, upgraded).**
   - Ages pulled in bulk (`LeagueDashPlayerBioStats`, 1 call/season) → `player_bio`; `python ingest.py bios` (folded into `prep`).
   - `fbball/projections.py`: next-season per-game projection. Model upgrades over the old code: age handled as growth/decline RATIO (curve(target)/curve(recent)) so young players project up; sample-weighted by GP; recency-weighted (last 3 seasons). Wired as `--source projection`; draft board now defaults to it.

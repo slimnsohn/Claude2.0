@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Fantasy basketball decision engine — explore the data lake, rankings, draft, and league history.">
+<title>Fantasy Basketball</title>
+<link rel="stylesheet" href="/shared/styles/base.css">
+<link rel="stylesheet" href="/app.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="wrap">
+    <div class="brand">Fantasy<span>Basketball</span></div>
+    <nav class="tabs">
+      <a data-view="overview" class="active">Overview</a>
+      <a data-view="players">Players</a>
+      <a data-view="rankings">Rankings</a>
+      <a data-view="draft">Draft</a>
+      <a data-view="league">League</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+  <section id="overview" class="view"></section>
+  <section id="players" class="view hidden"></section>
+  <section id="rankings" class="view hidden"></section>
+  <section id="draft" class="view hidden"></section>
+  <section id="league" class="view hidden"></section>
+</main>
+
+<script>
+  window.CHAT_WIDGET_CONFIG = { appName: "Fantasy Basketball" };
+</script>
+<script src="/widget/chat-widget.js"></script>
+<script src="/app.js"></script>
+</body>
+</html>

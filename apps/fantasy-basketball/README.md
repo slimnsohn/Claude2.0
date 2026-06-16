@@ -14,6 +14,25 @@ the last 4 seasons (~105k rows), stored in DuckDB. Refreshable nightly.
 pip install -r requirements.txt
 ```
 
+## Web UI
+
+Double-click **`start.bat`** (or `python app.py`) and open
+**http://127.0.0.1:5050**. A clean, single-page UI over the data lake:
+
+- **Overview** — lake summary, your team, league quick facts
+- **Players** — searchable table (accent-insensitive); click a player to expand
+  an accordion of every past season
+- **Rankings** — 9-cat z-scores with source (season / recent / projection),
+  punt chips, and position filter
+- **Draft** — projected tiered board with live tracking ("took" / ★ for your
+  picks) and a side panel of best-available + needs-weighted suggestions
+- **League** — champions, owners (canonical identity + titles), standings and
+  draft history by year, current rosters
+
+Flask backend (read-only over the DuckDB lake, `app.py`), thin JSON API
+(`fbball/webapi.py`) reusing the tested engine, vanilla-JS frontend (`web/`)
+with the workspace styling + chat widget. Design: Google-clean.
+
 ## Offseason refresh (the once-a-year workflow)
 
 Run this each offseason (≈April–September) to pull the season that just

@@ -5,3 +5,6 @@ pandas>=2.0.0
 
 # Component 2 — Yahoo league integration
 requests>=2.31.0   # raw OAuth2 client (fbball/yahoo_client.py)
+
+# Web UI
+flask>=3.0.0
