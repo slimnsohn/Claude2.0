@@ -89,4 +89,17 @@ tbody tr.clickable:hover td { background: var(--surface); }
 .subnav a { color: var(--text2); cursor: pointer; padding: 8px 0; border-bottom: 2px solid transparent; }
 .subnav a.active { color: var(--text); border-bottom-color: var(--accent); }
 .loading { color: var(--text2); padding: 40px 0; text-align: center; }
+
+/* update / refresh progress */
+button:disabled { opacity: .5; cursor: default; }
+.chip input { vertical-align: middle; }
+.steps { margin: 8px 0 4px; }
+.srow { display: flex; align-items: center; gap: 11px; padding: 9px 0; border-bottom: 1px solid var(--border); }
+.srow .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--border); flex: none; }
+.srow.running .dot { background: var(--orange); box-shadow: 0 0 0 3px color-mix(in srgb, var(--orange) 25%, transparent); }
+.srow.done .dot { background: var(--green); }
+.srow .sl { font-weight: 500; min-width: 220px; }
+.ulog { background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+        padding: 12px 14px; max-height: 300px; overflow: auto; margin-top: 16px;
+        font: 12px/1.55 ui-monospace, "Consolas", monospace; color: var(--text2); white-space: pre-wrap; }
 @media (max-width: 860px) { .cockpit { grid-template-columns: 1fr; } .panel { position: static; } }

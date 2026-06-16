@@ -6,7 +6,7 @@ Kept separate from Flask so the logic is unit-testable without a server.
 """
 
 
-from fbball import db, draft as draftmod, recommend, valuation
+from fbball import db, draft as draftmod, ingest, recommend, valuation
 
 # Per-season columns surfaced for the player table + accordion.
 _PLAYER_COLS = ["season", "season_type", "gp", "mpg", "ppg", "rpg", "apg", "spg",
@@ -97,6 +97,22 @@ def draft_recommend(con, *, drafted_ids, my_ids, source="projection", punt=None,
         "available": available[:top],
         "by_need": by_need[:top],
         "profile": profile,
+    }
+
+
+# ── Update / refresh state ───────────────────────────────────────────────
+
+def update_state(con) -> dict:
+    """Current data state + the selectable refresh steps, for the Update tab."""
+    last = con.execute("SELECT MAX(updated_at) FROM ingest_state").fetchone()[0]
+    return {
+        "latest_season": db.latest_season(con),
+        "game_log_rows": _scalar(con, "SELECT COUNT(*) FROM game_logs"),
+        "seasons": _scalar(con, "SELECT COUNT(DISTINCT season) FROM game_logs"),
+        "history_seasons": _scalar(con, "SELECT COUNT(*) FROM yh_seasons"),
+        "last_updated": str(last) if last else None,
+        "steps": [{"key": k, "label": ingest.REFRESH_LABELS[k]}
+                  for k in ingest.REFRESH_STEPS],
     }
 
 

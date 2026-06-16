@@ -10,6 +10,7 @@ Two modes:
 from fbball import bridge, db, nba_source, transform
 
 SOURCE = "nba_game_logs"
+DEFAULT_LEAGUE_KEY = "466.l.79957"  # "The Best Time of Year" — 9-cat H2H
 
 
 def _max_date(rows):
@@ -173,6 +174,69 @@ def pull_yahoo_league(con, league_key: str, *, client=None, aliases=None) -> dic
         "matched": bridge_result["matched"],
         "unmatched": bridge_result["unmatched"],
     }
+
+
+# ── Full data refresh (the offseason "update everything") ────────────────
+# Canonical order; the web Update page and `ingest.py refresh` use these.
+REFRESH_STEPS = ["logs", "reference", "ages", "history", "live"]
+REFRESH_LABELS = {
+    "logs": "Game logs (last season)",
+    "reference": "Teams & players",
+    "ages": "Player ages",
+    "history": "Yahoo league history",
+    "live": "Live Yahoo rosters & free agents",
+}
+
+
+def _default_refresh_runners():
+    """Wire each step to the real ingestion. Each runner: (con, log) -> summary."""
+    import datetime as dt
+    from fbball import seasons, yahoo_history
+
+    def logs(con, log):
+        season = seasons.current_season(dt.date.today())
+        log(f"  pulling {season} game logs…")
+        n = update(con, season)
+        return f"{n:,} new rows"
+
+    def reference(con, log):
+        r = load_reference(con)
+        return f"{r['teams']} teams, {r['players']:,} players ({r['enriched']:,} w/ positions)"
+
+    def ages(con, log):
+        n = pull_bios(con, seasons.recent_seasons(3, today=dt.date.today()))
+        return f"{n:,} player-age rows"
+
+    def history(con, log):
+        t = yahoo_history.pull_league_history(con, start_key=DEFAULT_LEAGUE_KEY, log=log)
+        return f"{t['seasons']} seasons, {t['draft']} draft picks"
+
+    def live(con, log):
+        r = pull_yahoo_league(con, DEFAULT_LEAGUE_KEY)
+        f = pull_free_agents(con, DEFAULT_LEAGUE_KEY)
+        return f"{r['teams']} teams, {f['fetched']} free agents"
+
+    return {"logs": logs, "reference": reference, "ages": ages,
+            "history": history, "live": live}
+
+
+def run_refresh(con, steps=None, *, log=print, runners=None) -> None:
+    """Run the selected refresh steps in canonical order, emitting progress
+    markers the web UI parses: ::step::<name>, ::done::<name>::<summary>,
+    ::complete::."""
+    steps = steps or list(REFRESH_STEPS)
+    bad = [s for s in steps if s not in REFRESH_STEPS]
+    if bad:
+        raise ValueError(f"unknown refresh step(s): {', '.join(bad)}")
+    runners = runners or _default_refresh_runners()
+
+    for name in REFRESH_STEPS:        # canonical order regardless of input order
+        if name not in steps:
+            continue
+        log(f"::step::{name}")
+        summary = runners[name](con, log)
+        log(f"::done::{name}::{summary}")
+    log("::complete::")
 
 
 def pull_bios(con, seasons, *, fetch=nba_source.fetch_season_bios, sleep=None,

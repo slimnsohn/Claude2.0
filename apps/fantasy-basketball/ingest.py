@@ -63,7 +63,14 @@ def cmd_reference(args, con) -> None:
     )
 
 
-DEFAULT_LEAGUE_KEY = "466.l.79957"  # "The Best Time of Year" — 9-cat H2H
+DEFAULT_LEAGUE_KEY = ingest.DEFAULT_LEAGUE_KEY
+
+
+def cmd_refresh(args, con) -> None:
+    steps = args.steps or ingest.REFRESH_STEPS
+    print(f"Refreshing: {', '.join(steps)}")
+    ingest.run_refresh(con, steps=steps, log=print)
+    print("Refresh complete.")
 
 
 def cmd_yahoo(args, con) -> None:
@@ -187,6 +194,13 @@ def main(argv=None) -> None:
     p_own = sub.add_parser(
         "owners", help="rebuild + show canonical owner identity (team-name continuity)")
     p_own.set_defaults(func=cmd_owners)
+
+    p_refresh = sub.add_parser(
+        "refresh", help="full offseason refresh (all sources; what the web Update tab runs)")
+    p_refresh.add_argument("--steps", nargs="*", default=None,
+                           choices=ingest.REFRESH_STEPS,
+                           help="subset of steps (default: all)")
+    p_refresh.set_defaults(func=cmd_refresh)
 
     p_prep = sub.add_parser(
         "prep", help="offseason one-shot: pull last season + refresh reference")

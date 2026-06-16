@@ -9,11 +9,13 @@ Run:  python app.py   (or start.bat)
 """
 
 import os
+import subprocess
+import sys
 
 import duckdb
-from flask import Flask, jsonify, request, send_from_directory
+from flask import Flask, Response, jsonify, request, send_from_directory
 
-from fbball import db, webapi
+from fbball import db, ingest, webapi
 
 APP_DIR = os.path.dirname(os.path.abspath(__file__))
 WORKSPACE = os.path.dirname(os.path.dirname(APP_DIR))
@@ -117,6 +119,35 @@ def create_app(db_path: str = DEFAULT_DB) -> Flask:
     def league_draft():
         s = request.args.get("season")
         return run(webapi.league_draft, season=int(s) if s else None)
+
+    # ---- update / refresh ----
+    @app.route("/api/update/state")
+    def update_state():
+        return run(webapi.update_state)
+
+    @app.route("/api/update/stream")
+    def update_stream():
+        """Stream a refresh (Server-Sent Events). Runs ingest.py refresh in a
+        separate process so the write is isolated from read-only serving."""
+        raw = request.args.get("steps", "")
+        steps = [s for s in raw.split(",") if s in ingest.REFRESH_STEPS]
+        cmd = [sys.executable, "-u", os.path.join(APP_DIR, "ingest.py"), "refresh"]
+        if steps:
+            cmd += ["--steps", *steps]
+        env = {**os.environ, "PYTHONIOENCODING": "utf-8"}
+
+        def gen():
+            proc = subprocess.Popen(
+                cmd, cwd=APP_DIR, env=env, stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT, text=True, encoding="utf-8",
+                errors="replace", bufsize=1)
+            for line in proc.stdout:
+                yield f"data: {line.rstrip()}\n\n"
+            proc.wait()
+            yield f"data: ::exit::{proc.returncode}\n\n"
+
+        return Response(gen(), mimetype="text/event-stream",
+                        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
 
     return app
 

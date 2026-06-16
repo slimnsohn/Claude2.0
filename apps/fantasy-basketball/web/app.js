@@ -240,4 +240,76 @@ views.league = async () => {
   subs.champions();
 };
 
+// ============ UPDATE ============
+views.update = async () => {
+  const root = $("#update");
+  const draw = async () => {
+    const s = await api("/api/update/state");
+    const updated = s.last_updated ? s.last_updated.split(".")[0] : "never";
+    root.innerHTML = `
+      <h2>Update data</h2>
+      <p class="sub">Run this in the offseason or before your draft to pull last year's stats, ages, and Yahoo data. Idempotent — safe to run anytime.</p>
+      <div class="cards">
+        <div class="card"><div class="n">${s.latest_season||"–"}</div><div class="l">latest season loaded</div></div>
+        <div class="card"><div class="n">${(s.game_log_rows||0).toLocaleString()}</div><div class="l">game-log rows</div></div>
+        <div class="card"><div class="n">${s.history_seasons}</div><div class="l">league history seasons</div></div>
+        <div class="card"><div class="n" style="font-size:15px">${updated}</div><div class="l">last updated</div></div>
+      </div>
+      <div class="controls">
+        <button class="btn" id="uall">Refresh everything</button>
+        <a id="uadv" class="muted" style="cursor:pointer">Advanced ▾</a>
+      </div>
+      <div id="usteps" class="hidden" style="margin:-8px 0 18px">
+        <div class="chips">${s.steps.map(st=>`<label class="chip on" data-step="${st.key}"><input type="checkbox" checked style="margin-right:6px">${st.label}</label>`).join("")}</div>
+        <button class="ghost" id="urun" style="margin-top:12px">Run selected</button>
+      </div>
+      <div id="uprogress"></div>
+      <pre id="ulog" class="ulog hidden"></pre>`;
+
+    const advBox = $("#usteps");
+    $("#uadv").onclick = () => advBox.classList.toggle("hidden");
+    advBox.querySelectorAll(".chip").forEach(ch => ch.onclick = (e) => {
+      if(e.target.tagName!=="INPUT"){ const c=ch.querySelector("input"); c.checked=!c.checked; }
+      ch.classList.toggle("on", ch.querySelector("input").checked);
+    });
+    const allKeys = s.steps.map(st=>st.key);
+    const labels = Object.fromEntries(s.steps.map(st=>[st.key,st.label]));
+    $("#uall").onclick = () => runRefresh(allKeys, labels);
+    $("#urun").onclick = () => {
+      const sel = [...advBox.querySelectorAll(".chip")].filter(c=>c.querySelector("input").checked).map(c=>c.dataset.step);
+      if(sel.length) runRefresh(sel, labels);
+    };
+  };
+
+  const runRefresh = (steps, labels) => {
+    document.querySelectorAll("#uall,#urun").forEach(b=>b.disabled=true);
+    const prog = $("#uprogress"), log = $("#ulog");
+    log.textContent=""; log.classList.remove("hidden");
+    const status = {}; steps.forEach(k=>status[k]="pending");
+    const render = () => prog.innerHTML = `<div class="steps">${steps.map(k=>`
+      <div class="srow ${status[k].startsWith('done')?'done':status[k]}">
+        <span class="dot"></span><span class="sl">${labels[k]}</span>
+        <span class="ss muted">${status[k].startsWith('done:')?status[k].slice(5):(status[k]==='running'?'…':'')}</span></div>`).join("")}</div>`;
+    render();
+    const es = new EventSource(`/api/update/stream?steps=${steps.join(",")}`);
+    es.onmessage = (ev) => {
+      const line = ev.data;
+      if(line.startsWith("::step::")){ status[line.slice(8)]="running"; render(); }
+      else if(line.startsWith("::done::")){ const [,k,sum]=line.split("::").filter(Boolean); status[k]="done:"+sum; render(); }
+      else if(line.startsWith("::complete::")){ /* all steps done */ }
+      else if(line.startsWith("::exit::")){
+        es.close();
+        document.querySelectorAll("#uall,#urun").forEach(b=>b.disabled=false);
+        const ok = line.endsWith("0");
+        prog.insertAdjacentHTML("beforeend", `<p class="${ok?'posv':'neg'}" style="margin-top:14px">${ok?'✓ Update complete.':'✗ Update failed — see log.'}</p>`);
+        loaded.overview=false;  // refresh overview next time it's opened
+        if(ok) setTimeout(draw, 600);
+      } else if(line.trim()){ log.textContent += line+"\n"; log.scrollTop = log.scrollHeight; }
+    };
+    es.onerror = () => { es.close(); document.querySelectorAll("#uall,#urun").forEach(b=>b.disabled=false); };
+  };
+
+  draw();
+};
+
 show("overview");

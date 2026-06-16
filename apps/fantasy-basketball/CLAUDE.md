@@ -50,7 +50,7 @@ Python · `nba_api` (NBA stats) · `yahoo_fantasy_api` (league) · DuckDB / Parq
 - **Projections DONE.** `fbball/projections.py` (age-ratio + sample/recency weighting); ages in `player_bio` via `ingest.py bios`. `--source projection`.
 - **Live draft assistant DONE.** `python livedraft.py` (interactive, projection + needs). `fbball/livedraft.py`.
 - **Yahoo history lake + canonical owners DONE.** `ingest.py history` / `owners`.
-- **Web UI DONE.** `start.bat` → http://127.0.0.1:5050. Flask (`app.py`) + JSON API (`fbball/webapi.py`) + vanilla JS (`web/`). 5 tabs: Overview/Players(accordion)/Rankings/Draft cockpit/League. Google-clean.
+- **Web UI DONE.** `start.bat` → http://127.0.0.1:5050. Flask (`app.py`) + JSON API (`fbball/webapi.py`) + vanilla JS (`web/`). 6 tabs: Overview/Players(accordion)/Rankings/Draft cockpit/League/Update. Update tab refreshes the lake from the browser (live SSE progress) via `ingest.py refresh`. Google-clean.
 - Start/sit + trade analyzer **deprioritized by user.** See README/TODO.
 
 ## Environment Variables

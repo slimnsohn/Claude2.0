@@ -28,6 +28,10 @@ Double-click **`start.bat`** (or `python app.py`) and open
   picks) and a side panel of best-available + needs-weighted suggestions
 - **League** — champions, owners (canonical identity + titles), standings and
   draft history by year, current rosters
+- **Update** — refresh the whole lake from the browser: one "Refresh everything"
+  button (or advanced per-step checkboxes), with a **live progress** log. Runs
+  the offseason pull — last season's stats, reference, ages, Yahoo history, live
+  Yahoo — streamed via Server-Sent Events. (CLI equivalent: `python ingest.py refresh`)
 
 Flask backend (read-only over the DuckDB lake, `app.py`), thin JSON API
 (`fbball/webapi.py`) reusing the tested engine, vanilla-JS frontend (`web/`)

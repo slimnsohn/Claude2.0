@@ -45,6 +45,27 @@ def test_overview_handles_empty_store():
     assert out["my_team"] is None   # no yahoo team -> gracefully None
 
 
+def test_update_state_reports_current_state():
+    con = _seed(duckdb.connect(":memory:"))
+    con.execute("INSERT INTO ingest_state VALUES ('nba_game_logs','2025-26',DATE '2026-04-12', now())")
+    out = webapi.update_state(con)
+    assert out["latest_season"] == "2025-26"
+    assert out["game_log_rows"] == 2
+    assert out["last_updated"] is not None
+    # advertises the selectable steps with labels
+    keys = [s["key"] for s in out["steps"]]
+    assert keys == ["logs", "reference", "ages", "history", "live"]
+    assert all(s["label"] for s in out["steps"])
+
+
+def test_update_state_empty_store_has_no_timestamp():
+    con = duckdb.connect(":memory:")
+    db.init_schema(con)
+    out = webapi.update_state(con)
+    assert out["latest_season"] is None
+    assert out["last_updated"] is None
+
+
 def _multi(con):
     """Two players, two seasons each, for table + accordion + rankings."""
     db.init_schema(con)
