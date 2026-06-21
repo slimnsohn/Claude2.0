@@ -47,17 +47,31 @@ views.overview = async () => {
 // ============ PLAYERS (with accordion) ============
 views.players = async () => {
   const root = $("#players");
-  root.innerHTML = `<h2>Players</h2><p class="sub">Click a player to see every season.</p>
-    <div class="controls"><input type="text" class="search" id="psearch" placeholder="Search players…"></div>
+  root.innerHTML = `<h2>Players</h2><p class="sub">Ranked by last season's 9-cat value. Click a player to see every season.</p>
+    <div class="controls"><div class="acwrap">
+      <input type="text" class="search" id="psearch" placeholder="Search players… (3+ letters for suggestions)" autocomplete="off">
+      <div id="acdrop" class="ac hidden"></div></div></div>
     <div id="ptable">${loading("players")}</div>`;
-  const render = async () => {
-    const q = $("#psearch").value.trim();
-    const rows = await api("/api/players?search="+encodeURIComponent(q));
+  const input = $("#psearch"), drop = $("#acdrop");
+  const render = async (q) => {
+    const rows = await api("/api/players?search="+encodeURIComponent(q||""));
     $("#ptable").innerHTML = playerTable(rows);
     bindAccordion($("#ptable"));
   };
-  let t; $("#psearch").oninput = () => { clearTimeout(t); t=setTimeout(render,200); };
-  render();
+  const suggest = async (q) => {
+    if(q.length < 3){ drop.classList.add("hidden"); return; }
+    const rows = await api("/api/players?search="+encodeURIComponent(q));
+    if(!rows.length){ drop.classList.add("hidden"); return; }
+    drop.innerHTML = rows.slice(0,8).map(r=>`<div class="acitem" data-name="${r.full_name.replace(/"/g,'&quot;')}">
+      <span class="name">${r.full_name}</span><span class="muted">${r.nba_position||''} · #${r.rank??'–'}</span></div>`).join("");
+    drop.classList.remove("hidden");
+    drop.querySelectorAll(".acitem").forEach(it=>it.onclick=()=>{ input.value=it.dataset.name; drop.classList.add("hidden"); render(it.dataset.name); });
+  };
+  let t;
+  input.oninput = () => { const q=input.value.trim(); clearTimeout(t); t=setTimeout(()=>{ render(q); suggest(q); },180); };
+  input.onblur = () => setTimeout(()=>drop.classList.add("hidden"), 150);
+  input.onfocus = () => { const q=input.value.trim(); if(q.length>=3) suggest(q); };
+  render("");
 };
 function statHead(){ return ["GP","PPG","REB","AST","STL","BLK","3PM","FG%","FT%"].map(h=>`<th>${h}</th>`).join(""); }
 function statCells(r){ return `
@@ -65,10 +79,10 @@ function statCells(r){ return `
   <td>${fmt(r.spg)}</td><td>${fmt(r.bpg)}</td><td>${fmt(r.tpm_pg)}</td>
   <td>${fmt(r.fg_pct,3)}</td><td>${fmt(r.ft_pct,3)}</td>`; }
 function playerTable(rows){
-  return `<table><thead><tr><th class="l">Player</th><th class="l">Pos</th><th class="l">Team</th>${statHead()}</tr></thead>
+  return `<table><thead><tr><th>#</th><th class="l">Player</th><th class="l">Pos</th><th class="l">Team</th>${statHead()}</tr></thead>
     <tbody>${rows.map(r=>`
       <tr class="clickable" data-pid="${r.player_id}">
-        <td class="l name">${r.full_name}</td><td class="l pos">${r.nba_position||"–"}</td>
+        <td class="muted">${r.rank??"–"}</td><td class="l name">${r.full_name}</td><td class="l pos">${r.nba_position||"–"}</td>
         <td class="l pos">${r.team||"–"}</td>${statCells(r)}</tr>`).join("")}
     </tbody></table>`;
 }
@@ -81,7 +95,7 @@ function bindAccordion(scope){
       <tr><th class="l">Season</th>${statHead()}</tr></thead><tbody>
       ${seasons.map(s=>`<tr><td class="l">${s.season}</td>${statCells(s)}</tr>`).join("")}
       </tbody></table></div>`;
-    const span = 12;
+    const span = 13;  // #, Player, Pos, Team + 9 stat cols
     tr.after(el(`<tr class="accordion"><td colspan="${span}">${inner}</td></tr>`));
   });
 }

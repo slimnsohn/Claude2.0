@@ -41,3 +41,9 @@
 **Choice:** Full test coverage required by default for all projects
 **Why:** Solo developer with no code review process — tests are the only safety net against regressions.
 **Alternatives considered:** Test critical paths only (too subjective about what's critical), no default (leads to zero tests)
+
+### Why `shipped/` Is Maintenance Mode, Not a Frozen Endpoint
+**Date:** 2026-06-14
+**Choice:** Keep the `shipped/` name; redefine it as the live/maintenance version. Post-ship changes use the same `app/<name>` branch → fix → test → security-audit → merge-to-`main` loop, and every deploy is checkpointed with an annotated git tag (`<app>-vMAJOR.MINOR`). Invariant: anything in `shipped/` on `main` is deployment-ready.
+**Why:** Shipping is the start of maintenance, not the end of work. The original pipeline (idea → `apps/` → `shipped/`) had no defined path for tweaking a live app. The gap was the *definition*, not the folder name — so renaming (e.g. to `stable/`) would have re-created the same ambiguity while churning paths, `start.bat` refs, and memory files.
+**Alternatives considered:** Rename to `stable/` (stability is a version property, not a folder; recreates "is work allowed here?" ambiguity), rename to `live/` (more accurate but not worth the rename churn), promote/demote back to `apps/` for every change (overkill — reserved for major rewrites only)
