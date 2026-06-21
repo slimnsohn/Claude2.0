@@ -92,6 +92,15 @@ def test_players_table_latest_season_with_search():
     alpha = next(r for r in rows if r["full_name"] == "Alpha")
     assert alpha["season"] == "2025-26"          # latest by default
     assert alpha["ppg"] == 20.0
+
+
+def test_players_default_ordered_by_fantasy_value():
+    con = _multi(duckdb.connect(":memory:"))
+    rows = webapi.players(con)
+    # ranked best-first by 9-cat value (Alpha 20ppg > Beta 8ppg), with a rank #
+    assert [r["full_name"] for r in rows] == ["Alpha", "Beta"]
+    assert rows[0]["rank"] == 1 and rows[1]["rank"] == 2
+    assert rows[0]["value"] is not None
     # search filters
     only = webapi.players(con, search="alph")
     assert [r["full_name"] for r in only] == ["Alpha"]

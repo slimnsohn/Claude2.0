@@ -22,8 +22,15 @@ def _round(v, n=2):
 
 
 def players(con, search: str = "", season: str | None = None) -> list[dict]:
-    """Player table for one season (default latest): one row per player."""
+    """Player table for one season (default latest), ranked best-first by 9-cat
+    fantasy value. Search narrows it; the rank stays the season-wide rank."""
     season = season or db.latest_season(con)
+
+    # Season-wide fantasy ranking (everyone who played) -> rank + value per id.
+    ranked = valuation.rank_from_db(
+        con, season=season, source="season", min_gp=1, min_min=0)
+    rankmap = {r["player_id"]: (r["rank"], round(r["total_value"], 2)) for r in ranked}
+
     sql = (
         "SELECT player_id, full_name, nba_position, team, " + ", ".join(_PLAYER_COLS) + " "
         "FROM player_season_stats "
@@ -34,11 +41,14 @@ def players(con, search: str = "", season: str | None = None) -> list[dict]:
         # accent-insensitive: "jokic" finds "Jokić"
         sql += " AND lower(strip_accents(full_name)) LIKE lower(strip_accents(?))"
         params.append(f"%{search}%")
-    sql += " ORDER BY ppg DESC NULLS LAST"
     rows = con.execute(sql, params).df().to_dict("records")
     for r in rows:
         for k, v in list(r.items()):
             r[k] = _round(v) if isinstance(v, float) else v
+        rk = rankmap.get(r["player_id"])
+        r["rank"], r["value"] = (rk[0], rk[1]) if rk else (None, None)
+
+    rows.sort(key=lambda r: (r["rank"] is None, r["rank"] or 10**9))
     return rows
 
 
