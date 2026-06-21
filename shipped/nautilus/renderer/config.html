@@ -9,25 +9,53 @@
 </head>
 <body class="config-body">
   <div id="config">
-    <h1>Nautilus Settings</h1>
+    <header id="config-head">
+      <h1>Nautilus Settings</h1>
+      <nav id="tabs" role="tablist">
+        <button class="tab" data-tab="home" role="tab">Home</button>
+        <button class="tab" data-tab="pinned" role="tab">Pinned</button>
+        <button class="tab" data-tab="apps" role="tab">All Apps</button>
+      </nav>
+    </header>
 
-    <section id="sections-config">
-      <h2>Sections</h2>
-      <div id="section-rows"></div>
+    <!-- HOME: what shows when you open the search bar -->
+    <section class="panel" data-panel="home">
+      <p class="panel-hint">Choose what appears the moment you open Nautilus, before you type.</p>
+      <div class="section-table">
+        <div class="section-head">
+          <span>Show</span><span>Section</span><span>Type filter</span><span>Max items</span>
+        </div>
+        <div id="section-rows"></div>
+      </div>
     </section>
 
-    <section id="pinned-config">
-      <h2>Pinned</h2>
+    <!-- PINNED: your hand-picked shortcuts, in order -->
+    <section class="panel" data-panel="pinned">
+      <p class="panel-hint">Pinned items always sit at the top. Drag the handle to reorder, or use the arrows.</p>
       <ul id="pinned-list"></ul>
-      <input id="pin-search" type="text" placeholder="Search apps, sites, folders to pin…" autocomplete="off" spellcheck="false" />
-      <ul id="pin-results"></ul>
+      <p id="pinned-empty" class="empty-state" hidden>
+        Nothing pinned yet. Open the <b>All Apps</b> tab and hit <b>Pin</b> on anything you want up top.
+      </p>
+    </section>
+
+    <!-- ALL APPS: browse the full index and pin from here -->
+    <section class="panel" data-panel="apps">
+      <p class="panel-hint">Everything Nautilus has indexed. Search or filter, then pin what you use most.</p>
+      <div class="apps-controls">
+        <input id="apps-search" type="text" placeholder="Search applications…" autocomplete="off" spellcheck="false" />
+        <div id="apps-filter" class="filter-chips"></div>
+      </div>
+      <div id="apps-count" class="apps-count"></div>
+      <ul id="apps-list"></ul>
     </section>
 
     <div id="config-footer">
       <span id="save-status"></span>
-      <button id="save-btn">Save</button>
+      <button id="save-btn">Save changes</button>
     </div>
   </div>
+
+  <script src="../src/core/appbrowser.js"></script>
   <script src="config.js"></script>
 </body>
 </html>
