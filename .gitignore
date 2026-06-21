@@ -33,3 +33,7 @@ desktop.ini
 # Generated / runtime
 launch-error.log
 SECURITY_AUDIT.md
+
+# Tooling scaffolding (skills/agents working dirs)
+.superpowers/
+.claire/
