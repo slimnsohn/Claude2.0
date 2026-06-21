@@ -116,27 +116,105 @@ html, body {
 }
 
 /* ---- config window ---- */
-html.config-root { overflow: auto; }
-.config-body { background: var(--surface, #16161e); color: var(--text, #e8e8f0); margin: 0; overflow: auto; }
-#config { padding: 20px 24px; font-size: 14px; }
-#config h1 { font-size: 20px; margin: 0 0 16px; }
-#config h2 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text2, #8a8a99); margin: 20px 0 8px; }
-.section-row { display: flex; align-items: center; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--border, #2a2a35); }
-.enable-label { display: flex; align-items: center; gap: 8px; flex: 1; cursor: pointer; }
-.section-name { font-size: 15px; }
+/* The window background is forced dark (main.js), so pin the palette to dark
+   regardless of the OS prefers-color-scheme — otherwise light mode renders dark
+   text on a dark window. Scoped to html.config-root so it beats base.css. */
+html.config-root {
+  --bg: #0d1117;
+  --surface: #161b22;
+  --surface2: #1f2633;
+  --border: #30363d;
+  --text: #f5f7fa;
+  --text2: #aeb6c0;
+  --accent: #6aa8ff;
+  --green: #4ec46f;
+  --red: #f85149;
+  --orange: #d29922;
+  --purple: #bc8cff;
+  overflow: hidden;
+}
+.config-body { background: var(--surface, #16161e); color: var(--text, #e8e8f0); margin: 0; }
+#config { display: flex; flex-direction: column; height: 100vh; box-sizing: border-box; padding: 18px 22px 0; font-size: 14px; }
+#config-head { flex: 0 0 auto; }
+#config h1 { font-size: 19px; margin: 0 0 12px; color: var(--text, #e8e8f0); }
+
+/* tabs */
+#tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--border, #2a2a35); }
+.tab { background: none; border: none; color: var(--text2, #8a8a99); font-size: 14px; padding: 9px 14px;
+       cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; border-radius: 6px 6px 0 0; }
+.tab:hover { color: var(--text, #e8e8f0); background: var(--surface2, #20202c); }
+.tab.active { color: var(--text, #e8e8f0); border-bottom-color: var(--accent, #7c5cff); }
+
+/* panels */
+.panel { flex: 1 1 auto; overflow: auto; padding: 14px 2px 8px; min-height: 0; }
+.panel[hidden] { display: none; }
+/* All Apps: keep the hint + search + filters fixed; only the list scrolls. */
+.panel[data-panel="apps"]:not([hidden]) { display: flex; flex-direction: column; overflow: hidden; }
+.panel[data-panel="apps"] .panel-hint,
+.panel[data-panel="apps"] .apps-controls,
+.panel[data-panel="apps"] .apps-count { flex: 0 0 auto; }
+.panel[data-panel="apps"] #apps-list { flex: 1 1 auto; overflow: auto; min-height: 0; }
+.panel-hint { color: var(--text2, #8a8a99); font-size: 13px; margin: 0 0 14px; line-height: 1.5; }
+.empty-state { color: var(--text2, #8a8a99); font-size: 13.5px; line-height: 1.6; background: var(--surface2, #20202c);
+               border: 1px dashed var(--border, #2a2a35); border-radius: 10px; padding: 16px 18px; }
+.empty-state b { color: var(--text, #e8e8f0); }
+
+/* shared row icon / badge */
+.row-icon { width: 24px; height: 24px; flex: 0 0 24px; object-fit: contain; }
+.row-badge { width: 24px; height: 24px; flex: 0 0 24px; display: grid; place-items: center; border-radius: 6px;
+             font-size: 11px; font-weight: 700; color: var(--text2, #8a8a99); background: var(--surface2, #20202c); }
+.row-title { flex: 1 1 auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text, #e8e8f0); }
+.row-sub { color: var(--text2, #8a8a99); font-size: 12px; margin-right: 8px; max-width: 38%;
+           overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* HOME: sections table */
+.section-table { border: 1px solid var(--border, #2a2a35); border-radius: 10px; overflow: hidden; }
+.section-head, .section-row { display: grid; grid-template-columns: 52px 1fr 132px 92px; align-items: center; gap: 12px; padding: 10px 14px; }
+.section-head { font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text2, #8a8a99);
+                background: var(--surface2, #20202c); }
+.section-row { border-top: 1px solid var(--border, #2a2a35); }
+.section-row.off { opacity: 0.5; }
+.section-toggle { width: 17px; height: 17px; accent-color: var(--accent, #7c5cff); cursor: pointer; }
+.section-title { display: block; font-size: 14.5px; color: var(--text, #e8e8f0); font-weight: 500; }
+.section-help { display: block; font-size: 12px; color: var(--text2, #8a8a99); }
 .section-row select, .section-row input.limit-input,
-#pin-search { background: var(--surface2, #20202c); color: var(--text, #e8e8f0); border: 1px solid var(--border, #2a2a35); border-radius: 6px; padding: 6px 8px; outline: none; }
-.limit-input { width: 60px; }
-#pin-search { width: 100%; margin: 10px 0 6px; font-size: 14px; box-sizing: border-box; }
-#pinned-list, #pin-results { list-style: none; margin: 0; padding: 0; }
-#pinned-list li { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 8px; }
-#pinned-list li:hover { background: var(--surface2, #20202c); }
-.pin-title { flex: 1; }
-#pinned-list button { background: var(--surface2, #20202c); color: var(--text, #e8e8f0); border: 1px solid var(--border, #2a2a35); border-radius: 6px; width: 28px; height: 28px; cursor: pointer; }
-#pinned-list button:disabled { opacity: 0.35; cursor: default; }
-#pin-results li { padding: 8px 10px; border-radius: 8px; cursor: pointer; }
-#pin-results li:hover { background: var(--surface2, #20202c); }
-#pin-results li.pinned-already { color: var(--text2, #8a8a99); cursor: default; }
-#config-footer { display: flex; align-items: center; justify-content: flex-end; gap: 12px; margin-top: 24px; }
+#apps-search { background: var(--surface2, #20202c); color: var(--text, #e8e8f0); border: 1px solid var(--border, #2a2a35);
+               border-radius: 7px; padding: 7px 9px; outline: none; font-size: 13.5px; box-sizing: border-box; }
+.section-row select:focus, .limit-input:focus, #apps-search:focus { border-color: var(--accent, #7c5cff); }
+.limit-input { width: 100%; }
+
+/* PINNED list */
+#pinned-list, #apps-list { list-style: none; margin: 0; padding: 0; }
+.pinned-row { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 9px; border: 1px solid transparent; }
+.pinned-row:hover { background: var(--surface2, #20202c); }
+.pinned-row.dragging { opacity: 0.4; }
+.pinned-row.drop-target { border-color: var(--accent, #7c5cff); }
+.drag-handle { color: var(--text2, #8a8a99); cursor: grab; font-size: 15px; flex: 0 0 auto; }
+.icon-btn { background: var(--surface2, #20202c); color: var(--text, #e8e8f0); border: 1px solid var(--border, #2a2a35);
+            border-radius: 6px; width: 28px; height: 28px; cursor: pointer; flex: 0 0 auto; }
+.icon-btn:hover:not(:disabled) { border-color: var(--accent, #7c5cff); }
+.icon-btn:disabled { opacity: 0.3; cursor: default; }
+.icon-btn.danger:hover { border-color: #ff6b6b; color: #ff6b6b; }
+
+/* ALL APPS */
+.apps-controls { display: flex; gap: 10px; align-items: center; margin-bottom: 10px; flex-wrap: wrap; }
+#apps-search { flex: 1 1 200px; }
+.filter-chips { display: flex; gap: 6px; }
+.chip { background: var(--surface2, #20202c); color: var(--text2, #8a8a99); border: 1px solid var(--border, #2a2a35);
+        border-radius: 999px; padding: 6px 13px; font-size: 12.5px; cursor: pointer; }
+.chip:hover { color: var(--text, #e8e8f0); }
+.chip.active { background: var(--accent, #7c5cff); border-color: var(--accent, #7c5cff); color: #fff; }
+.apps-count { color: var(--text2, #8a8a99); font-size: 12px; margin: 0 2px 8px; }
+.app-row { display: flex; align-items: center; gap: 10px; padding: 7px 10px; border-radius: 9px; }
+.app-row:hover { background: var(--surface2, #20202c); }
+.pin-btn { flex: 0 0 auto; background: none; color: var(--accent, #7c5cff); border: 1px solid var(--accent, #7c5cff);
+           border-radius: 7px; padding: 5px 12px; font-size: 12.5px; cursor: pointer; min-width: 78px; }
+.pin-btn:hover { background: color-mix(in srgb, var(--accent, #7c5cff) 16%, transparent); }
+.pin-btn.pinned { color: var(--green, #3ecf8e); border-color: color-mix(in srgb, var(--green, #3ecf8e) 45%, transparent); }
+
+/* footer */
+#config-footer { flex: 0 0 auto; display: flex; align-items: center; justify-content: flex-end; gap: 14px;
+                 padding: 12px 0; border-top: 1px solid var(--border, #2a2a35); }
 #save-status { color: var(--green, #3ecf8e); font-size: 13px; }
 #save-btn { background: var(--accent, #7c5cff); color: #fff; border: none; border-radius: 8px; padding: 9px 20px; font-size: 14px; cursor: pointer; }
+#save-btn:hover { filter: brightness(1.08); }

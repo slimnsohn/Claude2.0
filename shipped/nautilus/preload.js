@@ -9,6 +9,7 @@ contextBridge.exposeInMainWorld('nautilus', {
   getConfig: () => ipcRenderer.invoke('getConfig'),
   saveConfig: (config) => ipcRenderer.invoke('saveConfig', config),
   searchIndex: (query) => ipcRenderer.invoke('searchIndex', query),
+  listIndex: () => ipcRenderer.invoke('listIndex'),
   hide: () => ipcRenderer.send('window:hide'),
   onShown: (cb) => ipcRenderer.on('window:shown', cb),
 });

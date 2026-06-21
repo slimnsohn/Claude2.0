@@ -15,6 +15,7 @@ const { createIndexer } = require('./src/indexer.js');
 const { launchItem } = require('./src/launch.js');
 const { createLogger } = require('./src/log.js');
 const { buildHome } = require('./src/core/sections.js');
+const { iconFor, ICON_DIR } = require('./src/core/iconmap.js');
 const { record } = require('./src/core/history.js');
 const { mergeConfig, seedPinned } = require('./src/core/config.js');
 const { loadConfig, saveConfig: persistConfig } = require('./src/configStore.js');
@@ -261,21 +262,27 @@ if (!app.requestSingleInstanceLock()) {
   });
 
   // ---------- icons ----------
-  const iconCache = new Map(); // target -> data URL ('' = extraction failed)
-  async function attachIcons(results) {
-    return Promise.all(results.map(async (item) => {
-      if (item.type !== 'app' && item.type !== 'folder') return item;
-      if (!iconCache.has(item.target)) {
-        try {
-          const img = await app.getFileIcon(item.target, { size: 'normal' });
-          iconCache.set(item.target, img.isEmpty() ? '' : img.toDataURL());
-        } catch {
-          iconCache.set(item.target, '');
-        }
+  // Bundled flat SVGs, inlined as data: URLs. Electron's app.getFileIcon returns
+  // generic placeholders for .lnk/.exe on this setup, so we map by name instead.
+  const iconCache = new Map(); // svg filename -> data URL ('' = missing file)
+  function svgDataUrl(file) {
+    if (!iconCache.has(file)) {
+      try {
+        const svg = fs.readFileSync(path.join(ICON_DIR, file), 'utf8');
+        iconCache.set(file, `data:image/svg+xml;base64,${Buffer.from(svg, 'utf8').toString('base64')}`);
+      } catch {
+        iconCache.set(file, '');
       }
-      const icon = iconCache.get(item.target);
+    }
+    return iconCache.get(file);
+  }
+  function attachIcons(results) {
+    return results.map((item) => {
+      const file = iconFor(item);
+      if (!file) return item;
+      const icon = svgDataUrl(file);
       return icon ? { ...item, icon } : item;
-    }));
+    });
   }
 
   // ---------- IPC ----------
@@ -315,6 +322,9 @@ if (!app.requestSingleInstanceLock()) {
     const { results } = route(query, indexer.getItems());
     return { results: await attachIcons(results) };
   });
+
+  // Full index (apps + sites + folders) with icons, for the Settings app browser.
+  ipcMain.handle('listIndex', async () => attachIcons(indexer.getItems()));
 
   ipcMain.on('window:hide', () => hideWindow());
 }
